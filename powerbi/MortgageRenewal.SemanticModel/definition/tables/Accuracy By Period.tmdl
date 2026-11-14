@@ -1,0 +1,90 @@
+/// ETS and naive backtest error split by rate period.
+table 'Accuracy By Period'
+	lineageTag: bfb07f38-3821-5a5c-b518-1ba425516ea6
+
+	column 'Period order'
+		dataType: int64
+		isHidden
+		lineageTag: 6b650c28-66c6-5220-9f05-4b1b805c6d7a
+		summarizeBy: none
+		sourceColumn: Period order
+
+		annotation SummarizationSetBy = User
+
+	column Period
+		dataType: string
+		lineageTag: 80ce24b6-eba6-5ec5-b13e-e20ccfd705bd
+		summarizeBy: none
+		sourceColumn: Period
+		sortByColumn: 'Period order'
+
+		annotation SummarizationSetBy = User
+
+	column Model
+		dataType: string
+		lineageTag: b57dbbf6-7882-58c9-b705-696d74530e84
+		summarizeBy: none
+		sourceColumn: Model
+
+		annotation SummarizationSetBy = User
+
+	column Horizon
+		dataType: int64
+		lineageTag: 7fc96566-e57b-516e-84fb-a68c224d1fad
+		summarizeBy: none
+		sourceColumn: Horizon
+
+		annotation SummarizationSetBy = User
+
+	column 'MAE bps'
+		dataType: double
+		formatString: 0.0
+		lineageTag: d90e2fa0-ad10-5a54-9577-5f3a8fc5b2de
+		summarizeBy: none
+		sourceColumn: MAE bps
+
+		annotation SummarizationSetBy = User
+
+	column 'MAE CAD'
+		dataType: double
+		formatString: \$#,0.00
+		lineageTag: d8d59c5b-91ca-5c94-9183-f28c920ac8e3
+		summarizeBy: none
+		sourceColumn: MAE CAD
+
+		annotation SummarizationSetBy = User
+
+	column 'Bias bps'
+		dataType: double
+		formatString: 0.0
+		lineageTag: 46cf53e6-712d-5764-837f-ea29d2b4856a
+		summarizeBy: none
+		sourceColumn: Bias bps
+
+		annotation SummarizationSetBy = User
+
+	column Forecasts
+		dataType: int64
+		lineageTag: d9c809c2-b81c-57e6-86ce-3eeba13a62dc
+		summarizeBy: none
+		sourceColumn: Forecasts
+
+		annotation SummarizationSetBy = User
+
+	partition 'Accuracy By Period' = m
+		mode: import
+		source =
+				let
+				    IsWeb = Text.StartsWith(DataFolder, "http"),
+				    Folder = Text.TrimEnd(DataFolder, {"\", "/"}) & (if IsWeb then "/" else "\"),
+				    Raw = if IsWeb then Web.Contents(Folder & "vw_backtest_by_period.csv") else File.Contents(Folder & "vw_backtest_by_period.csv"),
+				    Source = Csv.Document(Raw, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Kept = Table.SelectColumns(Promoted, {"period_order", "period_name", "model", "horizon_months", "mae_bps", "mae_cad_per_month", "bias_bps", "n_forecasts"}),
+				    Blanks = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, Table.ColumnNames(Kept)),
+				    Typed = Table.TransformColumnTypes(Blanks, {{"period_order", Int64.Type}, {"period_name", type text}, {"model", type text}, {"horizon_months", Int64.Type}, {"mae_bps", type number}, {"mae_cad_per_month", type number}, {"bias_bps", type number}, {"n_forecasts", Int64.Type}}, "en-US"),
+				    Renamed = Table.RenameColumns(Typed, {{"period_order", "Period order"}, {"period_name", "Period"}, {"model", "Model"}, {"horizon_months", "Horizon"}, {"mae_bps", "MAE bps"}, {"mae_cad_per_month", "MAE CAD"}, {"bias_bps", "Bias bps"}, {"n_forecasts", "Forecasts"}})
+				in
+				    Renamed
+
+	annotation PBI_ResultType = Table

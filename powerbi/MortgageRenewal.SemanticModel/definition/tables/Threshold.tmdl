@@ -1,0 +1,30 @@
+/// Payment increase the user wants to watch.
+table Threshold
+	lineageTag: 68a00827-3676-56f7-89c6-f8408db54431
+
+	column 'Threshold label'
+		dataType: string
+		lineageTag: 90f34f4e-5e38-59f9-beeb-6b500f943e6c
+		summarizeBy: none
+		sourceColumn: Threshold label
+		sortByColumn: Threshold
+
+		annotation SummarizationSetBy = User
+
+	column Threshold
+		dataType: double
+		lineageTag: fad34eac-4c5b-559f-8a87-89d7ba4dc4bf
+		summarizeBy: none
+		sourceColumn: Threshold
+
+		annotation SummarizationSetBy = User
+
+	partition Threshold = m
+		mode: import
+		source =
+				let
+				    Source = #table(type table [#"Threshold label" = text, Threshold = number], {{"$100", 100.0}, {"$250", 250.0}, {"$500", 500.0}})
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

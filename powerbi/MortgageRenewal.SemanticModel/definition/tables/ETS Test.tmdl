@@ -1,0 +1,78 @@
+/// Diebold-Mariano test of ETS against the naive model.
+table 'ETS Test'
+	lineageTag: 779c44c8-b298-5331-a869-f758962f4f61
+
+	column Horizon
+		dataType: int64
+		isHidden
+		lineageTag: ae2b70ff-0081-5adc-b9a8-c42c98c90310
+		summarizeBy: none
+		sourceColumn: Horizon
+
+		annotation SummarizationSetBy = User
+
+	column Origins
+		dataType: int64
+		isHidden
+		lineageTag: 6c5fe32a-ddf7-5976-8784-8e48bac56af4
+		summarizeBy: none
+		sourceColumn: Origins
+
+		annotation SummarizationSetBy = User
+
+	column 'Mean difference bps'
+		dataType: double
+		isHidden
+		formatString: 0.00
+		lineageTag: d9187a9b-2d16-5907-af10-bea5127aacb1
+		summarizeBy: none
+		sourceColumn: Mean difference bps
+
+		annotation SummarizationSetBy = User
+
+	column 'DM statistic'
+		dataType: double
+		isHidden
+		formatString: 0.000
+		lineageTag: 2be225c8-ca12-5735-b08f-9edfd25f67c4
+		summarizeBy: none
+		sourceColumn: DM statistic
+
+		annotation SummarizationSetBy = User
+
+	column 'p-value'
+		dataType: double
+		isHidden
+		formatString: 0.000
+		lineageTag: 71dbf159-4da4-565a-8958-8929b75962ce
+		summarizeBy: none
+		sourceColumn: p-value
+
+		annotation SummarizationSetBy = User
+
+	column Significant
+		dataType: boolean
+		isHidden
+		lineageTag: cb5fc0ba-bd43-5287-9f33-33aa3d8a0569
+		summarizeBy: none
+		sourceColumn: Significant
+
+		annotation SummarizationSetBy = User
+
+	partition 'ETS Test' = m
+		mode: import
+		source =
+				let
+				    IsWeb = Text.StartsWith(DataFolder, "http"),
+				    Folder = Text.TrimEnd(DataFolder, {"\", "/"}) & (if IsWeb then "/" else "\"),
+				    Raw = if IsWeb then Web.Contents(Folder & "fact_dm_test.csv") else File.Contents(Folder & "fact_dm_test.csv"),
+				    Source = Csv.Document(Raw, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Kept = Table.SelectColumns(Promoted, {"horizon_months", "n_origins", "mean_abs_error_diff_bps", "dm_stat_hln", "p_value", "significant_at_5pct"}),
+				    Blanks = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, Table.ColumnNames(Kept)),
+				    Typed = Table.TransformColumnTypes(Blanks, {{"horizon_months", Int64.Type}, {"n_origins", Int64.Type}, {"mean_abs_error_diff_bps", type number}, {"dm_stat_hln", type number}, {"p_value", type number}, {"significant_at_5pct", type logical}}, "en-US"),
+				    Renamed = Table.RenameColumns(Typed, {{"horizon_months", "Horizon"}, {"n_origins", "Origins"}, {"mean_abs_error_diff_bps", "Mean difference bps"}, {"dm_stat_hln", "DM statistic"}, {"p_value", "p-value"}, {"significant_at_5pct", "Significant"}})
+				in
+				    Renamed
+
+	annotation PBI_ResultType = Table

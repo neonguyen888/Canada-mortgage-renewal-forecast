@@ -1,0 +1,3 @@
+horizon_months,n_origins,mean_abs_error_diff_bps,dm_stat_hln,p_value,significant_at_5pct
+3,122,-5.5,-1.972,0.0509,False
+6,122,-3.35,-0.706,0.4817,False

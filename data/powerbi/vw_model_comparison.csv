@@ -1,0 +1,31 @@
+model,horizon_months,mae_bps,mae_cad_per_month,bias_bps,n_origins,rank_at_horizon
+Bond-yield regression,1,5.74,11.71,-0.03,122,1
+"Regression, 1 month of extra yields",1,5.74,11.71,-0.03,122,1
+"Regression, yields to origin only",1,5.85,11.95,-0.23,122,3
+ETS damped trend,1,6.21,12.82,-0.05,122,4
+Naive (last observed),1,9.07,18.58,-1.11,122,5
+"Regression, 1 month of extra yields",2,9.16,18.67,-0.08,122,1
+Bond-yield regression,2,9.26,18.88,0.13,122,2
+"Regression, yields to origin only",2,10.64,21.72,-0.52,122,3
+ETS damped trend,2,12.16,25.03,-0.12,122,4
+Naive (last observed),2,17.13,35.1,-2.13,122,5
+Bond-yield regression,3,11.71,23.82,-0.05,122,1
+"Regression, 1 month of extra yields",3,13.08,26.64,-0.52,122,2
+"Regression, yields to origin only",3,16.05,32.81,-1.29,122,3
+ETS damped trend,3,18.93,38.92,-0.44,122,4
+Naive (last observed),3,24.43,50.01,-3.28,122,5
+Bond-yield regression,4,15.48,31.55,-0.53,122,1
+"Regression, 1 month of extra yields",4,18.27,37.32,-1.34,122,2
+"Regression, yields to origin only",4,22.04,45.16,-2.33,122,3
+ETS damped trend,4,26.16,53.88,-0.99,122,4
+Naive (last observed),4,30.86,63.14,-4.55,122,5
+Bond-yield regression,5,20.61,42.18,-1.46,122,1
+"Regression, 1 month of extra yields",5,23.71,48.58,-2.51,122,2
+"Regression, yields to origin only",5,28.69,58.86,-3.95,122,3
+ETS damped trend,5,32.52,66.95,-1.82,122,4
+Naive (last observed),5,37.11,75.94,-6.02,122,5
+Bond-yield regression,6,25.05,51.39,-2.75,122,1
+"Regression, 1 month of extra yields",6,29.69,60.95,-4.26,122,2
+"Regression, yields to origin only",6,34.57,70.98,-5.69,122,3
+ETS damped trend,6,39.41,81.24,-2.86,122,4
+Naive (last observed),6,42.76,87.47,-7.61,122,5

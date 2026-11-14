@@ -1,0 +1,7 @@
+origin_month,target_month,horizon_months,forecast_rate_pct,n_errors,lower_80_pct,upper_80_pct,band_width_bps,model
+2026-08-01,2026-09-01,1,4.6565,122,4.5608,4.7676,20.7,ETS damped trend
+2026-08-01,2026-10-01,2,4.7173,122,4.5099,4.889,37.9,ETS damped trend
+2026-08-01,2026-11-01,3,4.766,122,4.4498,5.0352,58.5,ETS damped trend
+2026-08-01,2026-12-01,4,4.8049,122,4.3645,5.2303,86.6,ETS damped trend
+2026-08-01,2027-01-01,5,4.836,122,4.2883,5.4694,118.1,ETS damped trend
+2026-08-01,2027-02-01,6,4.8609,122,4.2126,5.5773,136.5,ETS damped trend

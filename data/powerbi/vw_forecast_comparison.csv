@@ -1,0 +1,7 @@
+target_month,horizon_months,ets_rate_pct,regression_rate_pct,gap_bps,yield_known
+2026-09-01,1,4.6565,4.6456,-1.1,True
+2026-10-01,2,4.7173,4.7209,0.4,True
+2026-11-01,3,4.766,4.8245,5.8,False
+2026-12-01,4,4.8049,4.9005,9.6,False
+2027-01-01,5,4.836,4.9646,12.9,False
+2027-02-01,6,4.8609,4.9658,10.5,False

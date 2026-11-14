@@ -1,0 +1,31 @@
+model,horizon_months,mae_bps,mae_cad_per_month,bias_bps,n_origins,first_origin,last_origin
+Bond-yield regression,1,5.7365,11.7139,-0.0317,122,2016-01,2026-02
+Bond-yield regression,2,9.263,18.8807,0.1257,122,2016-01,2026-02
+Bond-yield regression,3,11.7107,23.8159,-0.046,122,2016-01,2026-02
+Bond-yield regression,4,15.4848,31.5489,-0.5302,122,2016-01,2026-02
+Bond-yield regression,5,20.6101,42.1804,-1.4634,122,2016-01,2026-02
+Bond-yield regression,6,25.0497,51.3887,-2.7523,122,2016-01,2026-02
+ETS damped trend,1,6.2132,12.8197,-0.0471,122,2016-01,2026-02
+ETS damped trend,2,12.1597,25.0261,-0.1207,122,2016-01,2026-02
+ETS damped trend,3,18.9307,38.9212,-0.4402,122,2016-01,2026-02
+ETS damped trend,4,26.1561,53.877,-0.9854,122,2016-01,2026-02
+ETS damped trend,5,32.5166,66.9537,-1.8176,122,2016-01,2026-02
+ETS damped trend,6,39.4125,81.2398,-2.8607,122,2016-01,2026-02
+Naive (last observed),1,9.0656,18.5823,-1.1148,122,2016-01,2026-02
+Naive (last observed),2,17.1311,35.1031,-2.1311,122,2016-01,2026-02
+Naive (last observed),3,24.4262,50.0092,-3.2787,122,2016-01,2026-02
+Naive (last observed),4,30.8607,63.1432,-4.5492,122,2016-01,2026-02
+Naive (last observed),5,37.1148,75.9358,-6.0164,122,2016-01,2026-02
+Naive (last observed),6,42.7623,87.4731,-7.6148,122,2016-01,2026-02
+"Regression, 1 month of extra yields",1,5.7365,11.7139,-0.0317,122,2016-01,2026-02
+"Regression, 1 month of extra yields",2,9.1634,18.6666,-0.0766,122,2016-01,2026-02
+"Regression, 1 month of extra yields",3,13.0784,26.6447,-0.5152,122,2016-01,2026-02
+"Regression, 1 month of extra yields",4,18.2745,37.324,-1.3422,122,2016-01,2026-02
+"Regression, 1 month of extra yields",5,23.7091,48.5825,-2.5139,122,2016-01,2026-02
+"Regression, 1 month of extra yields",6,29.6877,60.9541,-4.2592,122,2016-01,2026-02
+"Regression, yields to origin only",1,5.8456,11.946,-0.2311,122,2016-01,2026-02
+"Regression, yields to origin only",2,10.6403,21.7208,-0.522,122,2016-01,2026-02
+"Regression, yields to origin only",3,16.0549,32.8123,-1.2861,122,2016-01,2026-02
+"Regression, yields to origin only",4,22.0406,45.1573,-2.333,122,2016-01,2026-02
+"Regression, yields to origin only",5,28.6874,58.8599,-3.9477,122,2016-01,2026-02
+"Regression, yields to origin only",6,34.568,70.9757,-5.6935,122,2016-01,2026-02

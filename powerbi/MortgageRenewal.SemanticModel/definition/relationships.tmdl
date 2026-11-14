@@ -1,0 +1,8 @@
+relationship cca41c77-65d5-56ea-8a6c-6a7c927ffb8f
+	fromColumn: 'Rate Outlook'.Month
+	toColumn: Calendar.Month
+
+relationship f076b3f1-11d8-5f17-b622-b616569c28bb
+	fromColumn: 'Forecast Comparison'.'Target month'
+	toColumn: Calendar.Month
+

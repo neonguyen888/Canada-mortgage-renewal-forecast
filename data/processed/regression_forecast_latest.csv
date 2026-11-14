@@ -1,0 +1,7 @@
+origin_month,target_month,horizon_months,forecast_rate_pct,model,yield_known
+2026-08-01,2026-09-01,1,4.6456,Bond-yield regression,True
+2026-08-01,2026-10-01,2,4.7209,Bond-yield regression,True
+2026-08-01,2026-11-01,3,4.8245,Bond-yield regression,False
+2026-08-01,2026-12-01,4,4.9005,Bond-yield regression,False
+2026-08-01,2027-01-01,5,4.9646,Bond-yield regression,False
+2026-08-01,2027-02-01,6,4.9658,Bond-yield regression,False

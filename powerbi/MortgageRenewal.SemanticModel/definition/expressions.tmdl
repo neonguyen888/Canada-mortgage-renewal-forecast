@@ -1,0 +1,7 @@
+/// Where the CSVs exported by src/run_sql.py live: the GitHub copy by default, or a local
+/// data/powerbi folder. Change it in Transform data > Edit parameters, then refresh.
+expression DataFolder = "https://raw.githubusercontent.com/neonguyen888/canadian-mortgage-renewal/main/data/powerbi/" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+	lineageTag: f501d73e-d934-5c08-b05c-2a71239a57dc
+
+	annotation PBI_ResultType = Text
+

@@ -1,0 +1,30 @@
+/// Rate on the term that is ending.
+table 'Rate Before Choice'
+	lineageTag: d975084d-4e84-51c3-8ac1-1409d2379a14
+
+	column 'Rate before label'
+		dataType: string
+		lineageTag: d9d05a08-f3b4-5f34-84ea-d8f3abb663e1
+		summarizeBy: none
+		sourceColumn: Rate before label
+		sortByColumn: Rate
+
+		annotation SummarizationSetBy = User
+
+	column Rate
+		dataType: double
+		lineageTag: ed6bfc1b-8731-55c0-af40-4be72704681b
+		summarizeBy: none
+		sourceColumn: Rate
+
+		annotation SummarizationSetBy = User
+
+	partition 'Rate Before Choice' = m
+		mode: import
+		source =
+				let
+				    Source = #table(type table [#"Rate before label" = text, Rate = number], {{"1.9%", 1.9}, {"2.2%", 2.2}, {"2.6%", 2.6}, {"3.0%", 3.0}})
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,37 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_QueryOrder = ["DataFolder", "Rate Outlook", "Calendar", "Forecast Comparison", "Loans", "Model Accuracy", "Accuracy By Period", "ETS Test", "Bond-yield Test", "Rate vs Yield", "Pass-through", "Rate Grid", "Call Capacity", "Segments", "Scenario", "Scenario Axis", "Threshold", "Balance Choice", "Years Choice", "Rate Before Choice", "Horizon Choice", "Capacity Choice", "Renewal Rate Choice", "Measures"]
+
+ref table 'Rate Outlook'
+ref table Calendar
+ref table 'Forecast Comparison'
+ref table Loans
+ref table 'Model Accuracy'
+ref table 'Accuracy By Period'
+ref table 'ETS Test'
+ref table 'Bond-yield Test'
+ref table 'Rate vs Yield'
+ref table 'Pass-through'
+ref table 'Rate Grid'
+ref table 'Call Capacity'
+ref table Segments
+ref table Scenario
+ref table 'Scenario Axis'
+ref table Threshold
+ref table 'Balance Choice'
+ref table 'Years Choice'
+ref table 'Rate Before Choice'
+ref table 'Horizon Choice'
+ref table 'Capacity Choice'
+ref table 'Renewal Rate Choice'
+ref table Measures
+

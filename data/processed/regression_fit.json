@@ -1,0 +1,65 @@
+{
+  "model": "Bond-yield regression",
+  "equation": "change in mortgage rate(t) = a + sum over k=0..K of b_k * change in 5-year yield(t-k)",
+  "selected_max_lag_months": 4,
+  "lag_selection": {
+    "criterion": "BIC",
+    "data_through": "2015-12",
+    "table": [
+      {
+        "max_lag_months": 0,
+        "bic": -71.01,
+        "aic": -74.12,
+        "n_months": 35
+      },
+      {
+        "max_lag_months": 1,
+        "bic": -71.99,
+        "aic": -76.66,
+        "n_months": 35
+      },
+      {
+        "max_lag_months": 2,
+        "bic": -76.55,
+        "aic": -82.77,
+        "n_months": 35
+      },
+      {
+        "max_lag_months": 3,
+        "bic": -80.32,
+        "aic": -88.09,
+        "n_months": 35
+      },
+      {
+        "max_lag_months": 4,
+        "bic": -84.91,
+        "aic": -94.24,
+        "n_months": 35
+      },
+      {
+        "max_lag_months": 5,
+        "bic": -83.77,
+        "aic": -94.66,
+        "n_months": 35
+      },
+      {
+        "max_lag_months": 6,
+        "bic": -80.23,
+        "aic": -92.67,
+        "n_months": 35
+      }
+    ]
+  },
+  "fit_sample": "2013-02 to 2026-08",
+  "n_months": 163,
+  "r_squared": 0.6338,
+  "adj_r_squared": 0.6222,
+  "durbin_watson": 1.381,
+  "standard_errors": "Newey-West HAC, 3 lags",
+  "pass_through": 0.8954,
+  "pass_through_se": 0.0924,
+  "pass_through_p_value": 0.0,
+  "yields_known_months_in_backtest": 2,
+  "latest_yield_month": "2026-10",
+  "latest_mortgage_month": "2026-08"
+}

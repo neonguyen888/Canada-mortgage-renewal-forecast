@@ -1,0 +1,67 @@
+/// Mortgage rate next to the GoC 5-year bond yield, monthly.
+table 'Rate vs Yield'
+	lineageTag: e291527e-9e50-5947-a9a4-d1a7b2d6b814
+
+	column Month
+		dataType: dateTime
+		formatString: mmm yyyy
+		lineageTag: f93be7d5-b880-57db-95cb-153747eca442
+		summarizeBy: none
+		sourceColumn: Month
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = User
+
+	column 'Mortgage rate'
+		dataType: double
+		formatString: 0.00
+		lineageTag: c5daa4ed-fa16-5af8-9801-504395f27676
+		summarizeBy: none
+		sourceColumn: Mortgage rate
+
+		annotation SummarizationSetBy = User
+
+	column 'Bond yield'
+		dataType: double
+		formatString: 0.00
+		lineageTag: ee8b9284-0ca3-58a5-a349-fba92e87c8ae
+		summarizeBy: none
+		sourceColumn: Bond yield
+
+		annotation SummarizationSetBy = User
+
+	column 'Spread bps'
+		dataType: double
+		formatString: 0
+		lineageTag: c14eee7a-7330-521c-bfd3-3c83c5676e66
+		summarizeBy: none
+		sourceColumn: Spread bps
+
+		annotation SummarizationSetBy = User
+
+	column 'Mortgage rate published'
+		dataType: boolean
+		lineageTag: 387ed30c-7258-5e00-9f92-add388fd2909
+		summarizeBy: none
+		sourceColumn: Mortgage rate published
+
+		annotation SummarizationSetBy = User
+
+	partition 'Rate vs Yield' = m
+		mode: import
+		source =
+				let
+				    IsWeb = Text.StartsWith(DataFolder, "http"),
+				    Folder = Text.TrimEnd(DataFolder, {"\", "/"}) & (if IsWeb then "/" else "\"),
+				    Raw = if IsWeb then Web.Contents(Folder & "vw_rate_vs_yield.csv") else File.Contents(Folder & "vw_rate_vs_yield.csv"),
+				    Source = Csv.Document(Raw, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Kept = Table.SelectColumns(Promoted, {"month", "rate_pct", "yield_pct", "spread_bps", "mortgage_rate_published"}),
+				    Blanks = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, Table.ColumnNames(Kept)),
+				    Typed = Table.TransformColumnTypes(Blanks, {{"month", type date}, {"rate_pct", type number}, {"yield_pct", type number}, {"spread_bps", type number}, {"mortgage_rate_published", type logical}}, "en-US"),
+				    Renamed = Table.RenameColumns(Typed, {{"month", "Month"}, {"rate_pct", "Mortgage rate"}, {"yield_pct", "Bond yield"}, {"spread_bps", "Spread bps"}, {"mortgage_rate_published", "Mortgage rate published"}})
+				in
+				    Renamed
+
+	annotation PBI_ResultType = Table

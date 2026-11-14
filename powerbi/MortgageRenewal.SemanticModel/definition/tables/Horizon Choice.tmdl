@@ -1,0 +1,30 @@
+/// Forecast horizon for the accuracy page.
+table 'Horizon Choice'
+	lineageTag: 38830e5c-4324-51e5-8f95-7bada124f25f
+
+	column 'Horizon label'
+		dataType: string
+		lineageTag: c3e28245-a192-5bb8-9fd6-e79b1639dfef
+		summarizeBy: none
+		sourceColumn: Horizon label
+		sortByColumn: Months
+
+		annotation SummarizationSetBy = User
+
+	column Months
+		dataType: int64
+		lineageTag: 21ed6467-54ef-557c-9cb9-ee44fec2702c
+		summarizeBy: none
+		sourceColumn: Months
+
+		annotation SummarizationSetBy = User
+
+	partition 'Horizon Choice' = m
+		mode: import
+		source =
+				let
+				    Source = #table(type table [#"Horizon label" = text, Months = Int64.Type], {{"3 months", 3}, {"6 months", 6}})
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

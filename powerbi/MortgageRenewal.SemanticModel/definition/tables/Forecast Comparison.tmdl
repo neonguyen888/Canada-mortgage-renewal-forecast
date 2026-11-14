@@ -1,0 +1,81 @@
+/// ETS and bond-yield forecasts for the same six months.
+table 'Forecast Comparison'
+	lineageTag: 4c0a74d6-81e4-53f0-9cb8-1bbc4b83a229
+
+	column 'Target month'
+		dataType: dateTime
+		isHidden
+		formatString: mmm yyyy
+		lineageTag: c753f5d0-c975-5aa7-b78a-c339bcb35b84
+		summarizeBy: none
+		sourceColumn: Target month
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = User
+
+	column Horizon
+		dataType: int64
+		isHidden
+		lineageTag: 878ca04f-48c3-5e91-92f6-03dd7848c67d
+		summarizeBy: none
+		sourceColumn: Horizon
+
+		annotation SummarizationSetBy = User
+
+	column 'ETS rate'
+		dataType: double
+		isHidden
+		formatString: 0.00
+		lineageTag: cdc4fdad-a754-5f13-85d1-8365986e3e77
+		summarizeBy: none
+		sourceColumn: ETS rate
+
+		annotation SummarizationSetBy = User
+
+	column 'Bond-yield rate'
+		dataType: double
+		isHidden
+		formatString: 0.00
+		lineageTag: 88016063-5f1d-5290-9def-3c5c7f0b515d
+		summarizeBy: none
+		sourceColumn: Bond-yield rate
+
+		annotation SummarizationSetBy = User
+
+	column 'Gap bps'
+		dataType: double
+		isHidden
+		formatString: 0.0
+		lineageTag: 4b4267f3-0eec-5c4f-82e5-23090affa036
+		summarizeBy: none
+		sourceColumn: Gap bps
+
+		annotation SummarizationSetBy = User
+
+	column 'Yield known'
+		dataType: boolean
+		isHidden
+		lineageTag: 8f3231fd-52c3-5180-a347-f45885e789bc
+		summarizeBy: none
+		sourceColumn: Yield known
+
+		annotation SummarizationSetBy = User
+
+	partition 'Forecast Comparison' = m
+		mode: import
+		source =
+				let
+				    IsWeb = Text.StartsWith(DataFolder, "http"),
+				    Folder = Text.TrimEnd(DataFolder, {"\", "/"}) & (if IsWeb then "/" else "\"),
+				    Raw = if IsWeb then Web.Contents(Folder & "vw_forecast_comparison.csv") else File.Contents(Folder & "vw_forecast_comparison.csv"),
+				    Source = Csv.Document(Raw, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Kept = Table.SelectColumns(Promoted, {"target_month", "horizon_months", "ets_rate_pct", "regression_rate_pct", "gap_bps", "yield_known"}),
+				    Blanks = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, Table.ColumnNames(Kept)),
+				    Typed = Table.TransformColumnTypes(Blanks, {{"target_month", type date}, {"horizon_months", Int64.Type}, {"ets_rate_pct", type number}, {"regression_rate_pct", type number}, {"gap_bps", type number}, {"yield_known", type logical}}, "en-US"),
+				    Renamed = Table.RenameColumns(Typed, {{"target_month", "Target month"}, {"horizon_months", "Horizon"}, {"ets_rate_pct", "ETS rate"}, {"regression_rate_pct", "Bond-yield rate"}, {"gap_bps", "Gap bps"}, {"yield_known", "Yield known"}})
+				in
+				    Renamed
+
+	annotation PBI_ResultType = Table

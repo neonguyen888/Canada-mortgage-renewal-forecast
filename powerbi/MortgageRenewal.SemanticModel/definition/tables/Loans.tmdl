@@ -1,0 +1,129 @@
+/// Synthetic book of 5,000 loans renewing in the next 90 days, with the payment rise in three rate scenarios.
+table Loans
+	lineageTag: a59b2efd-adf7-53e1-8a48-ba7e269554a1
+
+	column 'Loan ID'
+		dataType: string
+		lineageTag: a4b7b916-0ed8-5a80-b58f-ace4e3850697
+		summarizeBy: none
+		sourceColumn: Loan ID
+
+		annotation SummarizationSetBy = User
+
+	column 'Renewal date'
+		dataType: dateTime
+		formatString: d mmm yyyy
+		lineageTag: fe6e65b6-5da8-58b6-b6f1-477d1721e89b
+		summarizeBy: none
+		sourceColumn: Renewal date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = User
+
+	column 'Renewal month'
+		dataType: dateTime
+		formatString: mmm yyyy
+		lineageTag: 5df5ef60-c5d4-55b8-baa8-f5ea96a86ea7
+		summarizeBy: none
+		sourceColumn: Renewal month
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = User
+
+	column 'Days to renewal'
+		dataType: int64
+		lineageTag: 5df69b30-7ba0-5e42-9aeb-5f892ae67df4
+		summarizeBy: none
+		sourceColumn: Days to renewal
+
+		annotation SummarizationSetBy = User
+
+	column Balance
+		dataType: double
+		formatString: \$#,0
+		lineageTag: 196a81b4-2891-52e1-990b-41a6181d5ef3
+		summarizeBy: none
+		sourceColumn: Balance
+
+		annotation SummarizationSetBy = User
+
+	column 'Rise if rates fall'
+		dataType: double
+		formatString: \$#,0.00
+		lineageTag: 18af5680-88a7-5ec0-9540-4b8defd683b4
+		summarizeBy: none
+		sourceColumn: Rise if rates fall
+
+		annotation SummarizationSetBy = User
+
+	column 'Rise at forecast'
+		dataType: double
+		formatString: \$#,0.00
+		lineageTag: 642cd82b-9079-531f-b726-d3f9b2a0466c
+		summarizeBy: none
+		sourceColumn: Rise at forecast
+
+		annotation SummarizationSetBy = User
+
+	column 'Rise if rates rise'
+		dataType: double
+		formatString: \$#,0.00
+		lineageTag: d2e8d149-95cb-5473-af3f-07d85bfbbba6
+		summarizeBy: none
+		sourceColumn: Rise if rates rise
+
+		annotation SummarizationSetBy = User
+
+	column 'Segment order'
+		dataType: int64
+		isHidden
+		lineageTag: 7b53794a-6e96-5049-837b-adbbc20da389
+		summarizeBy: none
+		sourceColumn: Segment order
+
+		annotation SummarizationSetBy = User
+
+	column Segment
+		dataType: string
+		lineageTag: 45dbf32d-4f46-5fbc-9330-915a4cede0b6
+		summarizeBy: none
+		sourceColumn: Segment
+		sortByColumn: 'Segment order'
+
+		annotation SummarizationSetBy = User
+
+	column 'Priority rank'
+		dataType: int64
+		lineageTag: 3945f66b-ac35-56bf-b685-5d77a95601d4
+		summarizeBy: none
+		sourceColumn: Priority rank
+
+		annotation SummarizationSetBy = User
+
+	column 'Call week at 300'
+		dataType: int64
+		lineageTag: 14f639cc-fe74-54bd-aeb5-e1c02112ee00
+		summarizeBy: none
+		sourceColumn: Call week at 300
+
+		annotation SummarizationSetBy = User
+
+	partition Loans = m
+		mode: import
+		source =
+				let
+				    IsWeb = Text.StartsWith(DataFolder, "http"),
+				    Folder = Text.TrimEnd(DataFolder, {"\", "/"}) & (if IsWeb then "/" else "\"),
+				    Raw = if IsWeb then Web.Contents(Folder & "fact_triage_loan.csv") else File.Contents(Folder & "fact_triage_loan.csv"),
+				    Source = Csv.Document(Raw, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Kept = Table.SelectColumns(Promoted, {"loan_id", "renewal_date", "renewal_month", "days_to_renewal", "balance_at_renewal", "payment_change_low", "payment_change_base", "payment_change_high", "segment_order", "segment", "priority_rank", "contact_week"}),
+				    Blanks = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, Table.ColumnNames(Kept)),
+				    Typed = Table.TransformColumnTypes(Blanks, {{"loan_id", type text}, {"renewal_date", type date}, {"renewal_month", type date}, {"days_to_renewal", Int64.Type}, {"balance_at_renewal", type number}, {"payment_change_low", type number}, {"payment_change_base", type number}, {"payment_change_high", type number}, {"segment_order", Int64.Type}, {"segment", type text}, {"priority_rank", Int64.Type}, {"contact_week", Int64.Type}}, "en-US"),
+				    Renamed = Table.RenameColumns(Typed, {{"loan_id", "Loan ID"}, {"renewal_date", "Renewal date"}, {"renewal_month", "Renewal month"}, {"days_to_renewal", "Days to renewal"}, {"balance_at_renewal", "Balance"}, {"payment_change_low", "Rise if rates fall"}, {"payment_change_base", "Rise at forecast"}, {"payment_change_high", "Rise if rates rise"}, {"segment_order", "Segment order"}, {"segment", "Segment"}, {"priority_rank", "Priority rank"}, {"contact_week", "Call week at 300"}})
+				in
+				    Renamed
+
+	annotation PBI_ResultType = Table

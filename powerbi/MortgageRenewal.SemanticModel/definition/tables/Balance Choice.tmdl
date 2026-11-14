@@ -1,0 +1,30 @@
+/// Balance at renewal.
+table 'Balance Choice'
+	lineageTag: 75d7feb7-45bb-5711-92fe-d3110cc2712e
+
+	column 'Balance label'
+		dataType: string
+		lineageTag: 58cdc138-46be-5e37-a705-c148f6877651
+		summarizeBy: none
+		sourceColumn: Balance label
+		sortByColumn: Balance
+
+		annotation SummarizationSetBy = User
+
+	column Balance
+		dataType: double
+		lineageTag: e2efcdbb-1854-5dfc-817b-5f0010f2eded
+		summarizeBy: none
+		sourceColumn: Balance
+
+		annotation SummarizationSetBy = User
+
+	partition 'Balance Choice' = m
+		mode: import
+		source =
+				let
+				    Source = #table(type table [#"Balance label" = text, Balance = number], {{"$250k", 250000.0}, {"$400k", 400000.0}, {"$600k", 600000.0}, {"$800k", 800000.0}})
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

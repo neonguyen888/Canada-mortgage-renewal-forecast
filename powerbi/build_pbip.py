@@ -1,0 +1,1064 @@
+"""Build the Power BI project (PBIP) for the mortgage renewal report.
+
+Author: Neo Nguyen
+
+Power BI Desktop runs on Windows only, so the report is written as a Power BI Project: plain
+text files (TMDL for the data model, PBIR JSON for the report) that Desktop opens directly.
+Everything comes from this script, so layout, colours and DAX live in one place and the whole
+report can be rebuilt with:
+
+    .venv/bin/python powerbi/build_pbip.py
+
+What it writes:
+  MortgageRenewal.pbip                    the file you double-click in Power BI Desktop
+  MortgageRenewal.SemanticModel/          tables, relationships and DAX measures (TMDL)
+  MortgageRenewal.Report/                 4 pages, their visuals, the theme and background images
+
+The data itself is not copied. The model reads the CSVs in data/powerbi through a parameter
+called DataFolder, which you point at your own copy of that folder once.
+
+File formats follow Microsoft's published schemas (developer.microsoft.com/json-schemas/fabric)
+and the PBIP sample projects Microsoft's team publishes on GitHub.
+"""
+from __future__ import annotations
+
+import json
+import shutil
+import uuid
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch, Rectangle
+
+HERE = Path(__file__).resolve().parent
+NAME = "MortgageRenewal"
+SM = HERE / f"{NAME}.SemanticModel"
+RP = HERE / f"{NAME}.Report"
+PAGE_W, PAGE_H = 1280, 720
+# Public copy of data/powerbi on GitHub, so the report refreshes on any machine. A local folder
+# path such as C:\repo\data\powerbi works too.
+DEFAULT_DATA_FOLDER = "https://raw.githubusercontent.com/neonguyen888/canadian-mortgage-renewal/main/data/powerbi/"
+
+# ---------------------------------------------------------------------------------------------
+# Design tokens. Navy canvas, one warm accent (amber) for whatever needs attention, teal for the
+# ETS forecast, light blue for observed data, lavender for the bond-yield model.
+# ---------------------------------------------------------------------------------------------
+C = {
+    "canvas": "#0A1322", "panel": "#0F1B2D", "line": "#1C2A40", "tile_hi": "#1A1C26",
+    "ink": "#E9EEF5", "ink2": "#A3B0C2", "ink3": "#6D7C91", "grid": "#1A2639",
+    "blue": "#7FB2F0", "teal": "#4FD1B5", "teal_dim": "#2F7F6E", "amber": "#F2B05E",
+    "purple": "#B49CF5", "purple2": "#8E7CC3", "purple3": "#6B5E96", "slate": "#3B4B63", "coral": "#F27E6B",
+}
+FONT, FONT_SEMI, FONT_BOLD, FONT_NUM = "Segoe UI", "Segoe UI Semibold", "Segoe (Bold)", "DIN"
+
+SCHEMA = "https://developer.microsoft.com/json-schemas/fabric"
+S_VISUAL = f"{SCHEMA}/item/report/definition/visualContainer/2.0.0/schema.json"
+S_PAGE = f"{SCHEMA}/item/report/definition/page/1.4.0/schema.json"
+
+
+def tag(*parts: str) -> str:
+    """Stable lineage tag, so rebuilding the project doesn't change every file."""
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, "mortgage-renewal/" + "/".join(parts)))
+
+
+def write(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def write_json(path: Path, obj) -> None:
+    write(path, json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
+
+
+# =============================================================================================
+# Semantic model (TMDL)
+# =============================================================================================
+def q(name: str) -> str:
+    """Quote a TMDL/DAX object name when it isn't a plain identifier."""
+    return name if name.replace("_", "").isalnum() else "'" + name.replace("'", "''") + "'"
+
+
+M_TYPES = {"date": "type date", "double": "type number", "int64": "Int64.Type", "string": "type text", "boolean": "type logical"}
+TMDL_TYPES = {"date": "dateTime", "double": "double", "int64": "int64", "string": "string", "boolean": "boolean"}
+
+
+class Col:
+    def __init__(self, name, src=None, typ="string", fmt=None, hidden=False, sort_by=None, summarize="none", desc=None):
+        self.name, self.src, self.typ, self.fmt = name, src or name, typ, fmt
+        self.hidden, self.sort_by, self.summarize, self.desc = hidden, sort_by, summarize, desc
+
+
+class Table:
+    def __init__(self, name, cols, m_source=None, csv=None, extra_steps="", desc=None, hidden=False):
+        self.name, self.cols, self.csv, self.desc, self.hidden = name, cols, csv, desc, hidden
+        self.m_source, self.extra_steps = m_source, extra_steps
+        self.measures: list[tuple[str, str, str | None, str, str | None]] = []
+
+    def m(self) -> str:
+        if self.m_source:
+            return self.m_source
+        keep = ", ".join(f'"{c.src}"' for c in self.cols if c.src in self.csv_cols)
+        types = ", ".join(f'{{"{c.src}", {M_TYPES[c.typ]}}}' for c in self.cols if c.src in self.csv_cols)
+        renames = ", ".join(f'{{"{c.src}", "{c.name}"}}' for c in self.cols if c.src in self.csv_cols and c.src != c.name)
+        last = "Typed"
+        lines = [
+            "let",
+            # DataFolder can be a web address (the GitHub copy) or a folder on this machine
+            '    IsWeb = Text.StartsWith(DataFolder, "http"),',
+            '    Folder = Text.TrimEnd(DataFolder, {"\\", "/"}) & (if IsWeb then "/" else "\\"),',
+            f'    Raw = if IsWeb then Web.Contents(Folder & "{self.csv}") else File.Contents(Folder & "{self.csv}"),',
+            '    Source = Csv.Document(Raw, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),',
+            "    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),",
+            f"    Kept = Table.SelectColumns(Promoted, {{{keep}}}),",
+            "    Blanks = Table.ReplaceValue(Kept, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Kept)),",
+            # en-US so "4.58" stays 4.58 on a Windows machine set to a comma-decimal locale
+            f'    Typed = Table.TransformColumnTypes(Blanks, {{{types}}}, "en-US")',
+        ]
+        if renames:
+            lines[-1] += ","
+            lines.append(f"    Renamed = Table.RenameColumns(Typed, {{{renames}}})")
+            last = "Renamed"
+        if self.extra_steps:
+            lines[-1] += ","
+            lines += ["    " + s for s in self.extra_steps.strip().splitlines()]
+            last = self.extra_steps.strip().splitlines()[-1].split("=")[0].strip()
+        lines += ["in", f"    {last}"]
+        return "\n".join(lines)
+
+    def measure(self, name, expr, fmt=None, folder="", desc=None):
+        self.measures.append((name, expr.strip("\n").rstrip(), fmt, folder, desc))
+
+    def tmdl(self) -> str:
+        out = []
+        if self.desc:
+            out.append(f"/// {self.desc}")
+        out += [f"table {q(self.name)}", f"\tlineageTag: {tag(self.name)}", ""]
+        for name, expr, fmt, folder, desc in self.measures:
+            if desc:
+                out.append(f"\t/// {desc}")
+            body = [ln for ln in expr.splitlines()]
+            if len(body) == 1:
+                out.append(f"\tmeasure {q(name)} = {body[0].strip()}")
+            else:
+                out.append(f"\tmeasure {q(name)} =")
+                base = min(len(ln) - len(ln.lstrip()) for ln in body if ln.strip())
+                out += ["\t\t\t" + ln[base:] if ln.strip() else "" for ln in body]
+            if fmt:
+                out.append(f"\t\tformatString: {fmt}")
+            if folder:
+                out.append(f"\t\tdisplayFolder: {folder}")
+            out += [f"\t\tlineageTag: {tag(self.name, 'measure', name)}", ""]
+        for c in self.cols:
+            if c.desc:
+                out.append(f"\t/// {c.desc}")
+            out += [f"\tcolumn {q(c.name)}", f"\t\tdataType: {TMDL_TYPES[c.typ]}"]
+            if c.hidden or self.hidden:
+                out.append("\t\tisHidden")
+            if c.fmt:
+                out.append(f"\t\tformatString: {c.fmt}")
+            out += [f"\t\tlineageTag: {tag(self.name, 'col', c.name)}", f"\t\tsummarizeBy: {c.summarize}",
+                    f"\t\tsourceColumn: {c.name}"]
+            if c.sort_by:
+                out.append(f"\t\tsortByColumn: {q(c.sort_by)}")
+            out.append("")
+            if c.typ == "date":
+                out += ["\t\tannotation UnderlyingDateTimeDataType = Date", ""]
+            out += ["\t\tannotation SummarizationSetBy = User", ""]
+        out += [f"\tpartition {q(self.name)} = m", "\t\tmode: import", "\t\tsource ="]
+        out += ["\t\t\t\t" + ln for ln in self.m().splitlines()]
+        out += ["", "\tannotation PBI_ResultType = Table", ""]
+        return "\n".join(out)
+
+
+def small_table(name, cols, rows, desc):
+    """A short lookup table typed in M, for slicer choices and scenario axes."""
+    tdef = ", ".join(f"{q_m(c.name)} = {M_TYPES[c.typ].replace('type ', '')}" for c in cols)
+    body = ", ".join("{" + ", ".join(json.dumps(v) for v in r) + "}" for r in rows)
+    src = f"let\n    Source = #table(type table [{tdef}], {{{body}}})\nin\n    Source"
+    return Table(name, cols, m_source=src, desc=desc)
+
+
+def q_m(name):
+    return name if name.replace("_", "").isalnum() else f'#"{name}"'
+
+
+def payment_dax(balance, years, rate):
+    """DAX variables for the Canadian payment formula (same as src/mortgage.py and the SQL function).
+    The result is in _pay; the caller writes the RETURN."""
+    return (f"VAR _b = {balance}\nVAR _n = {years} * 12\nVAR _r = {rate}\n"
+            "VAR _i = POWER(1 + _r / 200, 1 / 6) - 1\n"
+            "VAR _pay = IF(_r = 0, DIVIDE(_b, _n), _b * _i / (1 - POWER(1 + _i, -_n)))")
+
+
+def build_tables() -> list[Table]:
+    T = []
+    # ---- data tables -------------------------------------------------------------------------
+    T.append(Table("Rate Outlook", [
+        Col("Month", "month", "date", "mmm yyyy"), Col("Rate", "rate_pct", "double", hidden=True),
+        Col("Series", "series", hidden=True), Col("Horizon", "horizon_months", "int64", hidden=True),
+        Col("Model", "model", hidden=True), Col("Lower 80", "lower_80_pct", "double", hidden=True),
+        Col("Upper 80", "upper_80_pct", "double", hidden=True),
+    ], csv="vw_rate_outlook_band.csv", hidden=True,
+        desc="Market reference rate, actual and ETS forecast, with the 80% band on forecast months."))
+    T.append(Table("Calendar", [
+        Col("Month", "month", "date", "mmm yyyy"), Col("Year", "year", "int64"),
+        Col("Month number", "month_num", "int64", hidden=True), Col("Month label", "month_label", sort_by="Month"),
+    ], csv="dim_month.csv", desc="One row per month, from the first observation to the last forecast month."))
+    T.append(Table("Forecast Comparison", [
+        Col("Target month", "target_month", "date", "mmm yyyy"), Col("Horizon", "horizon_months", "int64"),
+        Col("ETS rate", "ets_rate_pct", "double", "0.00"), Col("Bond-yield rate", "regression_rate_pct", "double", "0.00"),
+        Col("Gap bps", "gap_bps", "double", "0.0"), Col("Yield known", "yield_known", "boolean"),
+    ], csv="vw_forecast_comparison.csv", hidden=True, desc="ETS and bond-yield forecasts for the same six months."))
+    T.append(Table("Loans", [
+        Col("Loan ID", "loan_id"), Col("Renewal date", "renewal_date", "date", "d mmm yyyy"),
+        Col("Renewal month", "renewal_month", "date", "mmm yyyy"), Col("Days to renewal", "days_to_renewal", "int64"),
+        Col("Balance", "balance_at_renewal", "double", "\\$#,0"),
+        Col("Rise if rates fall", "payment_change_low", "double", "\\$#,0.00"),
+        Col("Rise at forecast", "payment_change_base", "double", "\\$#,0.00"),
+        Col("Rise if rates rise", "payment_change_high", "double", "\\$#,0.00"),
+        Col("Segment order", "segment_order", "int64", hidden=True), Col("Segment", "segment", sort_by="Segment order"),
+        Col("Priority rank", "priority_rank", "int64"), Col("Call week at 300", "contact_week", "int64"),
+    ], csv="fact_triage_loan.csv",
+        desc="Synthetic book of 5,000 loans renewing in the next 90 days, with the payment rise in three rate scenarios."))
+    T.append(Table("Model Accuracy", [
+        Col("Model", "model", hidden=True), Col("Horizon", "horizon_months", "int64"),
+        Col("MAE bps", "mae_bps", "double", "0.0"), Col("MAE CAD", "mae_cad_per_month", "double", "\\$#,0.00"),
+        Col("Bias bps", "bias_bps", "double", "0.0"), Col("Origins", "n_origins", "int64"),
+        Col("Rank", "rank_at_horizon", "int64"),
+        Col("Model label", "Model label", sort_by="Model order"), Col("Model order", "Model order", "int64", hidden=True),
+    ], csv="vw_model_comparison.csv", desc="Backtest error for every model, 1 to 6 months ahead.", extra_steps="""
+Labels = [#"Bond-yield regression" = "Bond-yield model", #"Regression, 1 month of extra yields" = "Bond yield, 1-month head start", #"Regression, yields to origin only" = "Bond yield, no head start", #"ETS damped trend" = "ETS", #"Naive (last observed)" = "Naive"],
+Orders = [#"Bond-yield regression" = 1, #"Regression, 1 month of extra yields" = 2, #"Regression, yields to origin only" = 3, #"ETS damped trend" = 4, #"Naive (last observed)" = 5],
+WithLabel = Table.AddColumn(Renamed, "Model label", each Record.FieldOrDefault(Labels, [Model], [Model]), type text),
+WithOrder = Table.AddColumn(WithLabel, "Model order", each Record.FieldOrDefault(Orders, [Model], 9), Int64.Type)
+"""))
+    T.append(Table("Accuracy By Period", [
+        Col("Period order", "period_order", "int64", hidden=True), Col("Period", "period_name", sort_by="Period order"),
+        Col("Model", "model"), Col("Horizon", "horizon_months", "int64"), Col("MAE bps", "mae_bps", "double", "0.0"),
+        Col("MAE CAD", "mae_cad_per_month", "double", "\\$#,0.00"), Col("Bias bps", "bias_bps", "double", "0.0"),
+        Col("Forecasts", "n_forecasts", "int64"),
+    ], csv="vw_backtest_by_period.csv", desc="ETS and naive backtest error split by rate period."))
+    T.append(Table("ETS Test", [
+        Col("Horizon", "horizon_months", "int64"), Col("Origins", "n_origins", "int64"),
+        Col("Mean difference bps", "mean_abs_error_diff_bps", "double", "0.00"), Col("DM statistic", "dm_stat_hln", "double", "0.000"),
+        Col("p-value", "p_value", "double", "0.000"), Col("Significant", "significant_at_5pct", "boolean"),
+    ], csv="fact_dm_test.csv", hidden=True, desc="Diebold-Mariano test of ETS against the naive model."))
+    T.append(Table("Bond-yield Test", [
+        Col("Comparison", "comparison"), Col("Horizon", "horizon_months", "int64"), Col("Origins", "n_origins", "int64"),
+        Col("Mean difference bps", "mean_abs_error_diff_bps", "double", "0.00"), Col("DM statistic", "dm_stat_hln", "double", "0.000"),
+        Col("p-value", "p_value", "double", "0.0000"), Col("Significant", "significant_at_5pct", "boolean"),
+    ], csv="fact_regression_dm.csv", hidden=True, desc="Diebold-Mariano tests of the bond-yield model against ETS and naive."))
+    T.append(Table("Rate vs Yield", [
+        Col("Month", "month", "date", "mmm yyyy"), Col("Mortgage rate", "rate_pct", "double", "0.00"),
+        Col("Bond yield", "yield_pct", "double", "0.00"), Col("Spread bps", "spread_bps", "double", "0"),
+        Col("Mortgage rate published", "mortgage_rate_published", "boolean"),
+    ], csv="vw_rate_vs_yield.csv", desc="Mortgage rate next to the GoC 5-year bond yield, monthly."))
+    T.append(Table("Pass-through", [
+        Col("Term", "term"), Col("Lag months", "lag_months", "int64"), Col("Coefficient", "coef", "double", "0.00"),
+        Col("Std error", "std_err_hac", "double", "0.000"), Col("t stat", "t_stat", "double", "0.00"),
+        Col("p-value", "p_value", "double", "0.000"), Col("CI low", "ci95_low", "double", "0.00"),
+        Col("CI high", "ci95_high", "double", "0.00"), Col("Cumulative", "cumulative_pass_through", "double", "0.00"),
+    ], csv="fact_regression_coef.csv", hidden=True, desc="Share of a bond-yield move that reaches the mortgage rate, by month."))
+    T.append(Table("Rate Grid", [
+        Col("Rate", "rate_pct", "double", "0.00"), Col("Rate bps", "rate_bps", "int64", hidden=True),
+    ], csv="vw_rate_grid.csv", desc="Every rate from 0.00% to 10.00% in 0.01 steps, for the payment curve and threshold search."))
+    T.append(Table("Call Capacity", [
+        Col("Calls per week", "capacity_per_week", "int64"), Col("Contacted", "n_contacted", "int64"),
+        Col("Over threshold", "n_over_threshold", "int64"), Col("Over contacted", "over_contacted", "int64"),
+        Col("Over missed", "over_missed", "int64"), Col("Too soon to reach", "over_too_soon_to_reach", "int64"),
+        Col("Segment 1 missed", "segment1_missed", "int64"), Col("Segment 2 missed", "segment2_missed", "int64"),
+        Col("Missed rise per month", "missed_rise_per_month", "double", "\\$#,0"),
+        Col("Over missed, date order", "over_missed_if_by_date_only", "int64"),
+        Col("Segment 1 missed, date order", "segment1_missed_if_by_date_only", "int64"),
+        Col("Missed rise per month, date order", "missed_rise_per_month_if_by_date_only", "double", "\\$#,0"),
+        Col("List changes if rates fall", "single_scenario_list_changes_if_rates_fall", "int64"),
+        Col("List changes if rates rise", "single_scenario_list_changes_if_rates_rise", "int64"),
+        Col("Capacity", "Capacity", sort_by="Calls per week"),
+    ], csv="fact_triage_capacity.csv", desc="Borrowers reached and missed at each weekly call capacity, triage rule against renewal-date order.",
+        extra_steps='Labelled = Table.AddColumn(Renamed, "Capacity", each Text.From([Calls per week]) & " calls a week", type text)'))
+    T.append(Table("Segments", [
+        Col("Segment order", "segment_order", "int64", hidden=True), Col("Segment", "segment", sort_by="Segment order"),
+        Col("Loans", "n_loans", "int64", "#,0"), Col("Median rise", "median_rise_at_forecast", "double", "\\$#,0"),
+        Col("Lowest rise if rates fall", "lowest_rise_if_rates_fall", "double", "\\$#,0"),
+        Col("Called at 300 a week", "n_contacted_at_300", "int64", "#,0"),
+        Col("Share called at 300", "pct_contacted_at_300", "double", "0.0"),
+    ], csv="vw_triage_segment.csv", desc="The four triage segments with their size and typical payment rise."))
+
+    # ---- small lookup tables (slicer choices and scenario axes) ---------------------------------
+    T.append(small_table("Scenario", [Col("Scenario", sort_by="Order"), Col("Shift bps", typ="int64"), Col("Order", typ="int64", hidden=True)],
+                         [["-50 bps", -50, 1], ["Base", 0, 2], ["+50 bps", 50, 3]], "Rate scenario chosen on the overview page."))
+    T.append(small_table("Scenario Axis", [Col("Scenario", sort_by="Order"), Col("Shift bps", typ="int64"), Col("Order", typ="int64", hidden=True)],
+                         [["-50 bps", -50, 1], ["Base forecast", 0, 2], ["+50 bps", 50, 3]],
+                         "A copy of the scenarios used as a chart axis, so every bar stays visible whatever the slicer says."))
+    T.append(small_table("Threshold", [Col("Threshold label", sort_by="Threshold"), Col("Threshold", typ="double")],
+                         [["$100", 100.0], ["$250", 250.0], ["$500", 500.0]], "Payment increase the user wants to watch."))
+    T.append(small_table("Balance Choice", [Col("Balance label", sort_by="Balance"), Col("Balance", typ="double")],
+                         [["$250k", 250000.0], ["$400k", 400000.0], ["$600k", 600000.0], ["$800k", 800000.0]], "Balance at renewal."))
+    T.append(small_table("Years Choice", [Col("Years label", sort_by="Years"), Col("Years", typ="int64")],
+                         [["15 yrs", 15], ["20 yrs", 20], ["25 yrs", 25]], "Years left on the amortization."))
+    T.append(small_table("Rate Before Choice", [Col("Rate before label", sort_by="Rate"), Col("Rate", typ="double")],
+                         [["1.9%", 1.9], ["2.2%", 2.2], ["2.6%", 2.6], ["3.0%", 3.0]], "Rate on the term that is ending."))
+    T.append(small_table("Horizon Choice", [Col("Horizon label", sort_by="Months"), Col("Months", typ="int64")],
+                         [["3 months", 3], ["6 months", 6]], "Forecast horizon for the accuracy page."))
+    T.append(small_table("Capacity Choice", [Col("Calls per week label", sort_by="Calls per week"), Col("Calls per week", typ="int64")],
+                         [["100", 100], ["200", 200], ["300", 300], ["400", 400]], "Weekly call capacity of the renewal team."))
+    # The rates behind these options are measures, so they follow the data without a second CSV read.
+    T.append(small_table("Renewal Rate Choice", [Col("Renewal rate option", sort_by="Order"), Col("Order", typ="int64", hidden=True)],
+                         [["Latest", 1], ["ETS 3 mo", 2], ["ETS 6 mo", 3], ["Bond yield 6 mo", 4]],
+                         "Renewal rates to try: today's market rate and the forecasts."))
+
+    measures = Table("Measures", [Col("Placeholder", hidden=True)],
+                     m_source="let\n    Source = #table(type table [Placeholder = text], {})\nin\n    Source",
+                     desc="All report measures live here.")
+    add_measures(measures)
+    T.append(measures)
+    return T
+
+
+def add_measures(t: Table) -> None:
+    pct, cad, cad2 = "0.00\\%", "\\$#,0", "\\$#,0.00"
+    F = "Rates"
+    t.measure("Last Actual Month", "CALCULATE(MAX('Rate Outlook'[Month]), 'Rate Outlook'[Series] = \"Actual\", REMOVEFILTERS())",
+              "mmm yyyy", F, "Latest month the Bank of Canada has published.")
+    t.measure("Latest Rate", """
+        VAR _m = [Last Actual Month]
+        RETURN CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = "Actual", 'Rate Outlook'[Month] = _m, REMOVEFILTERS())
+        """, pct, F, "Market reference rate in the latest published month.")
+    t.measure("Latest Rate Caption", 'FORMAT([Last Actual Month], "mmm yyyy") & ", observed"', None, F)
+    t.measure("Data Through Label", '"BANK OF CANADA DATA THROUGH " & UPPER(FORMAT([Last Actual Month], "mmm yyyy"))', None, F)
+    t.measure("ETS 3-Month Forecast", "CALCULATE(MAX('Forecast Comparison'[ETS rate]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())", pct, F)
+    t.measure("ETS 3-Month Caption", """
+        VAR _m = CALCULATE(MAX('Forecast Comparison'[Target month]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())
+        RETURN FORMAT(_m, "mmm yyyy") & ", ETS forecast"
+        """, None, F)
+    t.measure("Observed Rate", "CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = \"Actual\")", pct, F)
+    t.measure("ETS Forecast", "CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = \"Forecast\")", pct, F,
+              "ETS forecast. The last observed month is included so the line starts where the actuals end.")
+    for name, col in [("Band Low", "Lower 80"), ("Band High", "Upper 80")]:
+        t.measure(name, f"""
+            VAR _v = MAX('Rate Outlook'[{col}])
+            RETURN IF(ISBLANK(_v), IF(MAX('Calendar'[Month]) = [Last Actual Month], [Observed Rate]), _v)
+            """, pct, F, "Edge of the 80% band built from past ETS errors.")
+    t.measure("Bond-yield Forecast", """
+        VAR _v = MAX('Forecast Comparison'[Bond-yield rate])
+        RETURN IF(ISBLANK(_v), IF(MAX('Calendar'[Month]) = [Last Actual Month], [Observed Rate]), _v)
+        """, pct, F, "Forecast from the regression on the 5-year bond yield.")
+    t.measure("Mortgage Rate Line", "MAX('Rate vs Yield'[Mortgage rate])", pct, F)
+    t.measure("Bond Yield Line", "MAX('Rate vs Yield'[Bond yield])", pct, F)
+    t.measure("Pass-through Share", "CALCULATE(MAX('Pass-through'[Cumulative]), REMOVEFILTERS())", "0.00", F,
+              "Share of a 1-point bond-yield move that reaches the mortgage rate within four months.")
+    t.measure("Latest Bond Yield", """
+        VAR _m = CALCULATE(MAX('Rate vs Yield'[Month]), REMOVEFILTERS())
+        RETURN CALCULATE(MAX('Rate vs Yield'[Bond yield]), 'Rate vs Yield'[Month] = _m, REMOVEFILTERS())
+        """, pct, F)
+
+    F = "Renewal book"
+    rise = "SWITCH(_s, -50, 'Loans'[Rise if rates fall], 50, 'Loans'[Rise if rates rise], 'Loans'[Rise at forecast])"
+    t.measure("Scenario Shift", "SELECTEDVALUE('Scenario'[Shift bps], 0)", "0", F, "Rate scenario picked on the overview page, in bps.")
+    t.measure("Threshold Value", "SELECTEDVALUE('Threshold'[Threshold], 250)", cad, F, "Payment increase being watched, $250 unless changed.")
+    t.measure("Loan Count", "COUNTROWS('Loans')", "#,0", F)
+    t.measure("Loans Above Threshold", f"""
+        VAR _s = [Scenario Shift]
+        VAR _t = [Threshold Value]
+        RETURN COUNTROWS(FILTER('Loans', {rise} > _t)) + 0
+        """, "#,0", F, "Loans whose monthly payment rises by more than the threshold in the chosen scenario.")
+    t.measure("Share Above Threshold", "DIVIDE([Loans Above Threshold], [Loan Count])", "0.0%", F)
+    t.measure("Total Payment Increase", f"""
+        VAR _s = [Scenario Shift]
+        RETURN SUMX('Loans', {rise})
+        """, '\\$#,0.00,,"M"', F, "Extra paid each month by the whole book in the chosen scenario.")
+    t.measure("Loans Above Caption", 'FORMAT([Share Above Threshold], "0.0%") & " of " & FORMAT([Loan Count], "#,0") & " simulated loans"', None, F)
+    t.measure("Payment Increase Caption", '"CAD a month across the book"', None, F)
+    t.measure("Renewal Window Label", """
+        VAR _a = CALCULATE(MIN('Loans'[Renewal date]), REMOVEFILTERS())
+        VAR _b = CALCULATE(MAX('Loans'[Renewal date]), REMOVEFILTERS())
+        RETURN "90-day renewal window, " & FORMAT(_a, "d mmm yyyy") & " to " & FORMAT(_b, "d mmm yyyy")
+        """, None, F)
+    t.measure("Share Above, Each Scenario", f"""
+        VAR _s = SELECTEDVALUE('Scenario Axis'[Shift bps])
+        VAR _t = [Threshold Value]
+        RETURN DIVIDE(COUNTROWS(FILTER('Loans', {rise} > _t)), COUNTROWS('Loans'))
+        """, "0.0%", F, "Share over the threshold for the scenario on the chart axis, whatever the slicer says.")
+    t.measure("Scenario Bar Colour", f"""IF(SELECTEDVALUE('Scenario Axis'[Shift bps]) = [Scenario Shift], "{C['amber']}", "{C['slate']}")""",
+              None, F, "Amber for the scenario picked in the slicer.")
+
+    F = "Accuracy"
+    t.measure("Selected Horizon", "SELECTEDVALUE('Horizon Choice'[Months], 3)", "0", F)
+    t.measure("MAE at Horizon", """
+        VAR _h = [Selected Horizon]
+        RETURN CALCULATE(MAX('Model Accuracy'[MAE bps]), 'Model Accuracy'[Horizon] = _h)
+        """, '0.0" bps"', F, "Average size of a forecast miss, in basis points, at the chosen horizon.")
+    for short, model in [("ETS", "ETS damped trend"), ("Naive", "Naive (last observed)"), ("Bond-yield", "Bond-yield regression")]:
+        t.measure(f"{short} MAE", f"""
+            VAR _h = [Selected Horizon]
+            RETURN CALCULATE(MAX('Model Accuracy'[MAE bps]), 'Model Accuracy'[Model] = "{model}", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
+            """, '0.0" bps"', F)
+        t.measure(f"{short} MAE CAD", f"""
+            VAR _h = [Selected Horizon]
+            RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), 'Model Accuracy'[Model] = "{model}", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
+            """, cad2, F)
+    t.measure("ETS MAE Caption", """
+        VAR _h = [Selected Horizon]
+        VAR _p = CALCULATE(MAX('ETS Test'[p-value]), 'ETS Test'[Horizon] = _h)
+        RETURN FORMAT(1 - DIVIDE([ETS MAE], [Naive MAE]), "0%") & " smaller than naive, p = " & FORMAT(_p, "0.00")
+        """, None, F)
+    t.measure("Bond-yield MAE Caption", """
+        VAR _h = [Selected Horizon]
+        VAR _p = CALCULATE(MAX('Bond-yield Test'[p-value]), 'Bond-yield Test'[Comparison] = "Bond-yield regression vs ETS damped trend", 'Bond-yield Test'[Horizon] = _h)
+        RETURN FORMAT(1 - DIVIDE([Bond-yield MAE], [ETS MAE]), "0%") & " smaller than ETS, " & IF(_p < 0.001, "p < 0.001", "p = " & FORMAT(_p, "0.000"))
+        """, None, F)
+    t.measure("Naive MAE Caption", 'FORMAT([Naive MAE CAD], "$#,0.00") & " a month on a $400k loan"', None, F)
+    t.measure("Pass-through Caption", '"of a 1-point yield move, within 4 months"', None, F)
+    t.measure("Model Bar Colour", f"""
+        SWITCH(
+            SELECTEDVALUE('Model Accuracy'[Model label]),
+            "Bond-yield model", "{C['purple']}",
+            "Bond yield, 1-month head start", "{C['purple2']}",
+            "Bond yield, no head start", "{C['purple3']}",
+            "ETS", "{C['teal']}",
+            "{C['slate']}"
+        )
+        """, None, F)
+    for short, model in [("ETS", "ETS damped trend"), ("Naive", "Naive (last observed)")]:
+        t.measure(f"{short} MAE by Period", f"""
+            VAR _h = [Selected Horizon]
+            RETURN CALCULATE(MAX('Accuracy By Period'[MAE bps]), 'Accuracy By Period'[Model] = "{model}", 'Accuracy By Period'[Horizon] = _h)
+            """, "0.0", F)
+
+    F = "Payment impact"
+    t.measure("Chosen Balance", "SELECTEDVALUE('Balance Choice'[Balance], 400000)", cad, F)
+    t.measure("Chosen Years Left", "SELECTEDVALUE('Years Choice'[Years], 20)", "0", F)
+    t.measure("Chosen Rate Before", "SELECTEDVALUE('Rate Before Choice'[Rate], 2.2)", pct, F)
+    t.measure("ETS 6-Month Forecast", "CALCULATE(MAX('Forecast Comparison'[ETS rate]), 'Forecast Comparison'[Horizon] = 6, REMOVEFILTERS())", pct, "Rates")
+    t.measure("Bond-yield 6-Month Forecast", "CALCULATE(MAX('Forecast Comparison'[Bond-yield rate]), 'Forecast Comparison'[Horizon] = 6, REMOVEFILTERS())", pct, "Rates")
+    t.measure("Chosen Renewal Rate", """
+        SWITCH(
+            SELECTEDVALUE('Renewal Rate Choice'[Renewal rate option], "Latest"),
+            "ETS 3 mo", [ETS 3-Month Forecast],
+            "ETS 6 mo", [ETS 6-Month Forecast],
+            "Bond yield 6 mo", [Bond-yield 6-Month Forecast],
+            [Latest Rate]
+        )
+        """, pct, F, "Renewal rate picked in the slicer: today's rate or one of the forecasts.")
+    t.measure("Payment Before", payment_dax("[Chosen Balance]", "[Chosen Years Left]", "[Chosen Rate Before]") + "\nRETURN _pay", cad2, F,
+              "Monthly payment before renewal. Canadian semi-annual compounding, same formula as the Python and SQL code.")
+    t.measure("Payment After", payment_dax("[Chosen Balance]", "[Chosen Years Left]", "[Chosen Renewal Rate]") + "\nRETURN _pay", cad2, F,
+              "Monthly payment at the chosen renewal rate.")
+    t.measure("Monthly Change", "[Payment After] - [Payment Before]", "+\\$#,0.00;-\\$#,0.00;\\$0.00", F)
+    t.measure("Payment Before Caption", '"at " & FORMAT([Chosen Rate Before], "0.00") & "%"', None, F)
+    t.measure("Payment After Caption", '"at " & FORMAT([Chosen Renewal Rate], "0.00") & "%"', None, F)
+    t.measure("Monthly Change Caption", 'FORMAT([Monthly Change] * 12, "$#,0") & " a year, threshold " & FORMAT([Threshold Value], "$#,0")', None, F)
+    curve = payment_dax("[Chosen Balance]", "[Chosen Years Left]", "_rate")
+    t.measure("Threshold Rate", f"""
+        VAR _base = [Payment Before]
+        VAR _t = [Threshold Value]
+        VAR _bal = [Chosen Balance]
+        VAR _n = [Chosen Years Left] * 12
+        RETURN
+            MINX(
+                FILTER(
+                    'Rate Grid',
+                    VAR _r = 'Rate Grid'[Rate]
+                    VAR _i = POWER(1 + _r / 200, 1 / 6) - 1
+                    VAR _p = IF(_r = 0, DIVIDE(_bal, _n), _bal * _i / (1 - POWER(1 + _i, -_n)))
+                    RETURN _p - _base >= _t - 0.000000001
+                ),
+                'Rate Grid'[Rate]
+            )
+        """, pct, F, "Lowest rate on the 1 bp grid where the payment rise reaches the threshold. Within 1 bp of the exact answer.")
+    t.measure("Threshold Rate Caption", """
+        VAR _tr = [Threshold Rate]
+        VAR _d = ([Chosen Renewal Rate] - _tr) * 100
+        RETURN IF(ISBLANK(_tr), "Not reached between 0% and 10%",
+                  "Renewal rate is " & FORMAT(ABS(_d), "0") & " bps " & IF(_d >= 0, "above", "below") & " it")
+        """, None, F)
+    t.measure("Change on Curve", "VAR _rate = SELECTEDVALUE('Rate Grid'[Rate])\n" + curve
+              + "\nRETURN IF(NOT ISBLANK(_rate) && _rate >= 0.5 && _rate <= 8, _pay - [Payment Before])",
+              cad, F, "Payment change at each rate on the curve, 0.5% to 8%.")
+    t.measure("Threshold Line", """
+        VAR _rate = SELECTEDVALUE('Rate Grid'[Rate])
+        RETURN IF(NOT ISBLANK(_rate) && _rate >= 0.5 && _rate <= 8, [Threshold Value])
+        """, cad, F)
+    t.measure("Selected Rate Point", """
+        VAR _rate = SELECTEDVALUE('Rate Grid'[Rate])
+        RETURN IF(NOT ISBLANK(_rate) && ABS(_rate - ROUND([Chosen Renewal Rate], 2)) < 0.00001, [Monthly Change])
+        """, cad, F, "One point on the curve at the chosen renewal rate.")
+    t.measure("Change at Scenario", "VAR _rate = [Chosen Renewal Rate] + SELECTEDVALUE('Scenario Axis'[Shift bps], 0) / 100\n" + curve
+              + "\nRETURN _pay - [Payment Before]", "+\\$#,0;-\\$#,0", F, "Payment change at the renewal rate, 50 bps lower and 50 bps higher.")
+    t.measure("Scenario Change Colour", f"""IF([Change at Scenario] > [Threshold Value], "{C['amber']}", "{C['slate']}")""", None, F)
+
+    F = "Triage"
+    t.measure("Chosen Calls per Week", "SELECTEDVALUE('Capacity Choice'[Calls per week], 300)", "#,0", F)
+    for name, col, desc in [
+        ("Missed with Triage", "Over missed", "Borrowers over the $250 threshold who never get a call, using the triage rule."),
+        ("Missed in Date Order", "Over missed, date order", "Same, when the team simply calls in renewal-date order."),
+        ("Near-certain Missed", "Segment 1 missed", None),
+        ("Near-certain Missed, Date Order", "Segment 1 missed, date order", None),
+        ("Missed Rise with Triage", "Missed rise per month", None),
+        ("Missed Rise in Date Order", "Missed rise per month, date order", None),
+    ]:
+        t.measure(name, f"""
+            VAR _c = [Chosen Calls per Week]
+            RETURN CALCULATE(SUM('Call Capacity'[{col}]), 'Call Capacity'[Calls per week] = _c)
+            """, cad if "Rise" in name else "#,0", F, desc)
+    t.measure("Extra Borrowers Reached", "[Missed in Date Order] - [Missed with Triage]", "+#,0;-#,0;0", F)
+    t.measure("Missed with Triage Caption", '"borrowers over +$250 never called"', None, F)
+    t.measure("Missed in Date Order Caption", '"same capacity, calling by renewal date"', None, F)
+    t.measure("Extra Reached Caption", 'FORMAT([Missed Rise in Date Order] - [Missed Rise with Triage], "$#,0") & " a month of rises caught in time"', None, F)
+    t.measure("Near-certain Caption", '"against " & FORMAT([Near-certain Missed, Date Order], "#,0") & " in date order"', None, F)
+    t.measure("Missed by Capacity, Date Order", "SUM('Call Capacity'[Over missed, date order])", "#,0", F)
+    t.measure("Missed by Capacity, Triage", "SUM('Call Capacity'[Over missed])", "#,0", F)
+
+
+def check_names(tables: list[Table]) -> None:
+    taken = {t.name.lower() for t in tables} | {c.name.lower() for t in tables for c in t.cols}
+    clashes = [m[0] for t in tables for m in t.measures if m[0].lower() in taken]
+    assert not clashes, f"measures that share a name with a table or column: {clashes}"
+
+
+def write_model(tables: list[Table]) -> None:
+    check_names(tables)
+    if SM.exists():
+        shutil.rmtree(SM)
+    write_json(SM / "definition.pbism", {"$schema": f"{SCHEMA}/item/semanticModel/definitionProperties/1.0.0/schema.json",
+                                         "version": "4.0", "settings": {}})
+    d = SM / "definition"
+    write(d / "database.tmdl", "database\n\tcompatibilityLevel: 1601\n\n")
+    order = ["DataFolder"] + [t.name for t in tables]
+    write(d / "model.tmdl", "\n".join([
+        "model Model", "\tculture: en-US", "\tdefaultPowerBIDataSourceVersion: powerBI_V3",
+        "\tdiscourageImplicitMeasures", "\tsourceQueryCulture: en-US", "\tdataAccessOptions",
+        "\t\tlegacyRedirects", "\t\treturnErrorValuesAsNull", "",
+        "annotation __PBI_TimeIntelligenceEnabled = 0", "",
+        f"annotation PBI_QueryOrder = {json.dumps(order)}", "",
+    ] + [f"ref table {q(t.name)}" for t in tables]) + "\n\n")
+    write(d / "expressions.tmdl", "\n".join([
+        "/// Where the CSVs exported by src/run_sql.py live: the GitHub copy by default, or a local",
+        "/// data/powerbi folder. Change it in Transform data > Edit parameters, then refresh.",
+        f'expression DataFolder = "{DEFAULT_DATA_FOLDER}" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]',
+        f"\tlineageTag: {tag('DataFolder')}", "", "\tannotation PBI_ResultType = Text", "", ""]))
+    write(d / "relationships.tmdl", "\n".join([
+        f"relationship {tag('rel', 'outlook-calendar')}", "\tfromColumn: 'Rate Outlook'.Month", "\ttoColumn: Calendar.Month", "",
+        f"relationship {tag('rel', 'forecast-calendar')}", "\tfromColumn: 'Forecast Comparison'.'Target month'", "\ttoColumn: Calendar.Month", "", ""]))
+    for t in tables:
+        if t.csv:
+            t.csv_cols = set(csv_header(t.csv))
+            missing = [c.src for c in t.cols if c.src not in t.csv_cols and not t.extra_steps]
+            assert not missing, (t.name, missing)
+        write(d / "tables" / f"{t.name}.tmdl", t.tmdl())
+
+
+def csv_header(name: str) -> list[str]:
+    return (HERE.parent / "data" / "powerbi" / name).read_text(encoding="utf-8").splitlines()[0].split(",")
+
+
+# =============================================================================================
+# Report (PBIR JSON)
+# =============================================================================================
+def lit(v: str) -> dict:
+    return {"expr": {"Literal": {"Value": v}}}
+
+
+def text(s: str) -> dict:
+    return lit("'" + s.replace("'", "''") + "'")
+
+
+def num(n) -> dict:
+    return lit(f"{n}D")
+
+
+def boolean(b: bool) -> dict:
+    return lit("true" if b else "false")
+
+
+def colour(hex_: str) -> dict:
+    return {"solid": {"color": text(hex_)}}
+
+
+def measure_colour(name: str) -> dict:
+    return {"solid": {"color": {"expr": {"Measure": {"Expression": {"SourceRef": {"Entity": "Measures"}}, "Property": name}}}}}
+
+
+def mref(name):
+    return {"Measure": {"Expression": {"SourceRef": {"Entity": "Measures"}}, "Property": name}}
+
+
+def cref(table, col):
+    return {"Column": {"Expression": {"SourceRef": {"Entity": table}}, "Property": col}}
+
+
+DISPLAY = {
+    "Observed Rate": "Observed", "ETS Forecast": "ETS forecast", "Band Low": "80% band", "Band High": "80% band (upper)",
+    "Bond-yield Forecast": "Bond-yield forecast", "Mortgage Rate Line": "Mortgage rate", "Bond Yield Line": "5-year bond yield",
+    "Missed by Capacity, Date Order": "Calling by renewal date", "Missed by Capacity, Triage": "Triage rule",
+    "ETS MAE by Period": "ETS", "Naive MAE by Period": "Naive", "Loan Count": "Loans", "Loans Above Threshold": "Above +$250",
+    "Share Above Threshold": "Share above", "Change on Curve": "Payment change", "Threshold Line": "Threshold",
+    "Selected Rate Point": "Chosen rate", "MAE at Horizon": "Average miss (bps)", "Share Above, Each Scenario": "Share above +$250",
+    "Change at Scenario": "Payment change",
+}
+
+
+def proj_m(name):
+    p = {"field": mref(name), "queryRef": f"Measures.{name}", "nativeQueryRef": name}
+    if name in DISPLAY:
+        p["displayName"] = DISPLAY[name]
+    return p
+
+
+def proj_c(table, col):
+    return {"field": cref(table, col), "queryRef": f"{table}.{col}", "nativeQueryRef": col, "active": True}
+
+
+def props(**kw) -> list:
+    return [{"properties": kw}]
+
+
+def series(qref: str, **kw) -> dict:
+    return {"properties": kw, "selector": {"metadata": qref}}
+
+
+NO_CHROME = {"title": props(show=boolean(False)), "background": props(show=boolean(False)),
+             "border": props(show=boolean(False)), "dropShadow": props(show=boolean(False))}
+
+
+class Page:
+    def __init__(self, name, display, bg_panels):
+        self.name, self.display, self.bg_panels, self.visuals, self._z = name, display, bg_panels, [], 1000
+
+    def add(self, vname, x, y, w, h, visual, filters=None):
+        self._z += 100
+        v = {"$schema": S_VISUAL, "name": vname,
+             "position": {"x": x, "y": y, "z": self._z, "height": h, "width": w, "tabOrder": self._z}, "visual": visual}
+        if filters:
+            v["filterConfig"] = {"filters": filters}
+        self.visuals.append(v)
+
+    # ---- building blocks ---------------------------------------------------------------------
+    def label(self, vname, x, y, w, h, runs, align="left"):
+        """Static text. runs = [(text, size_pt, colour, font)]."""
+        para = {"textRuns": [{"value": t, "textStyle": {"fontFamily": f, "fontSize": f"{s}pt", "color": c}} for t, s, c, f in runs]}
+        if align != "left":
+            para["horizontalTextAlignment"] = align
+        self.add(vname, x, y, w, h, {"visualType": "textbox", "objects": {"general": props(paragraphs=[para])},
+                                     "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
+
+    def card(self, vname, x, y, w, h, measure, size=26, colour_hex=C["ink"], font=FONT_NUM):
+        self.add(vname, x, y, w, h, {
+            "visualType": "card",
+            "query": {"queryState": {"Values": {"projections": [proj_m(measure)]}}},
+            "objects": {"labels": props(color=colour(colour_hex), fontSize=num(size), fontFamily=text(font)),
+                        "categoryLabels": props(show=boolean(False))},
+            "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
+
+    def kpi(self, prefix, x, y, w, title, value_measure, caption_measure, accent=None):
+        self.label(f"{prefix}_label", x + 8, y + 10, w - 16, 26, [(title, 10, C["ink2"], FONT)], align="center")
+        self.card(f"{prefix}_value", x + 8, y + 34, w - 16, 44, value_measure, 26, accent or C["ink"])
+        self.card(f"{prefix}_caption", x + 8, y + 76, w - 16, 26, caption_measure, 10, C["ink2"], FONT)
+
+    def slicer(self, vname, x, y, w, h, table, col, default, header=None):
+        objects = {
+            "data": props(mode=text("HorizontalList")),
+            "general": [{"properties": {
+                "orientation": lit("1D"),
+                "filter": {"filter": {"Version": 2, "From": [{"Name": "s", "Entity": table, "Type": 0}], "Where": [{"Condition": {"In": {
+                    "Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "s"}}, "Property": col}}],
+                    "Values": [[text(default)["expr"]]]}}}]}}}}],
+            "selection": props(singleSelect=boolean(True), strictSingleSelect=boolean(True), selectAllCheckboxEnabled=boolean(False)),
+            "items": props(fontColor=colour(C["ink"]), background=colour(C["panel"]), textSize=num(10), fontFamily=text(FONT)),
+            "header": props(show=boolean(header is not None), **({"text": text(header), "fontColor": colour(C["ink2"]),
+                                                                 "textSize": num(9), "fontFamily": text(FONT)} if header else {})),
+        }
+        self.add(vname, x, y, w, h, {
+            "visualType": "slicer",
+            "query": {"queryState": {"Values": {"projections": [proj_c(table, col)]}},
+                      "sortDefinition": {"sort": [{"field": cref(table, col), "direction": "Ascending"}], "isDefaultSort": True}},
+            "objects": objects, "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
+
+    def line_chart(self, vname, x, y, w, h, category, measures, styles, filters=None, value_fmt=None, legend=True, x_scalar=True):
+        """measures: list of names; styles: {name: dict(colour, width, dash, marker)}."""
+        data_points, line_styles = [], []
+        for m in measures:
+            st = styles[m]
+            data_points.append(series(f"Measures.{m}", fill=colour(st["colour"])))
+            ls = {"strokeWidth": num(st.get("width", 2)), "lineStyle": text(st.get("dash", "solid")),
+                  "showMarker": boolean(st.get("marker", False))}
+            if st.get("marker"):
+                ls["markerSize"] = num(7)
+                ls["markerShape"] = text("circle")
+            line_styles.append(series(f"Measures.{m}", **ls))
+        objects = {
+            "dataPoint": data_points, "lineStyles": line_styles,
+            "legend": props(show=boolean(legend), position=text("Top"), labelColor=colour(C["ink2"]), fontSize=num(9), showTitle=boolean(False)),
+            "categoryAxis": props(axisType=text("Scalar" if x_scalar else "Categorical"), labelColor=colour(C["ink3"]), fontSize=num(9),
+                                  showAxisTitle=boolean(False), gridlineShow=boolean(False)),
+            "valueAxis": props(labelColor=colour(C["ink3"]), fontSize=num(9), showAxisTitle=boolean(False),
+                               gridlineColor=colour(C["grid"]), gridlineStyle=text("solid")),
+        }
+        if value_fmt:
+            objects["valueAxis"][0]["properties"]["labelDisplayUnits"] = num(1)
+        self.add(vname, x, y, w, h, {
+            "visualType": "lineChart",
+            "query": {"queryState": {"Category": {"projections": [proj_c(*category)]},
+                                     "Y": {"projections": [proj_m(m) for m in measures]}},
+                      "sortDefinition": {"sort": [{"field": cref(*category), "direction": "Ascending"}], "isDefaultSort": True}},
+            "objects": objects, "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True}, filters)
+
+    def bar_chart(self, vname, x, y, w, h, category, measure, colour_measure=None, fixed_colour=None, horizontal=True, label_fmt=None):
+        fill = measure_colour(colour_measure) if colour_measure else colour(fixed_colour or C["slate"])
+        selector = {"data": [{"dataViewWildcard": {"matchingOption": 1}}]} if colour_measure else None
+        dp = {"properties": {"fill": fill}}
+        if selector:
+            dp["selector"] = selector
+        self.add(vname, x, y, w, h, {
+            "visualType": "clusteredBarChart" if horizontal else "clusteredColumnChart",
+            "query": {"queryState": {"Category": {"projections": [proj_c(*category)]}, "Y": {"projections": [proj_m(measure)]}},
+                      "sortDefinition": {"sort": [{"field": cref(*category), "direction": "Ascending"}], "isDefaultSort": True}},
+            "objects": {
+                "dataPoint": [dp],
+                "labels": props(show=boolean(True), color=colour(C["ink"]), fontSize=num(10), fontFamily=text(FONT_SEMI)),
+                "valueAxis": props(show=boolean(False), gridlineShow=boolean(False)),
+                "categoryAxis": props(labelColor=colour(C["ink2"]), fontSize=num(10), showAxisTitle=boolean(False)),
+                "legend": props(show=boolean(False)),
+            },
+            "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
+
+    def column_pair(self, vname, x, y, w, h, category, measures, colours):
+        self.add(vname, x, y, w, h, {
+            "visualType": "clusteredColumnChart",
+            "query": {"queryState": {"Category": {"projections": [proj_c(*category)]}, "Y": {"projections": [proj_m(m) for m in measures]}},
+                      "sortDefinition": {"sort": [{"field": cref(*category), "direction": "Ascending"}], "isDefaultSort": True}},
+            "objects": {
+                "dataPoint": [series(f"Measures.{m}", fill=colour(c)) for m, c in zip(measures, colours)],
+                "labels": props(show=boolean(True), color=colour(C["ink"]), fontSize=num(9)),
+                "legend": props(show=boolean(True), position=text("Top"), labelColor=colour(C["ink2"]), fontSize=num(9), showTitle=boolean(False)),
+                "valueAxis": props(labelColor=colour(C["ink3"]), fontSize=num(9), showAxisTitle=boolean(False),
+                                   gridlineColor=colour(C["grid"]), gridlineStyle=text("solid")),
+                "categoryAxis": props(labelColor=colour(C["ink2"]), fontSize=num(10), showAxisTitle=boolean(False)),
+            },
+            "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
+
+    def table(self, vname, x, y, w, h, fields, sort=None):
+        projections = [proj_c(*f) if isinstance(f, tuple) else proj_m(f) for f in fields]
+        query = {"queryState": {"Values": {"projections": projections}}}
+        if sort:
+            query["sortDefinition"] = {"sort": [{"field": cref(*sort), "direction": "Ascending"}], "isDefaultSort": True}
+        self.add(vname, x, y, w, h, {
+            "visualType": "tableEx", "query": query,
+            "objects": {
+                "columnHeaders": props(fontColor=colour(C["ink2"]), backColor=colour(C["panel"]), fontFamily=text(FONT_SEMI),
+                                       fontSize=num(10), outlineStyle=lit("0D")),
+                "values": props(fontColorPrimary=colour(C["ink"]), backColorPrimary=colour(C["panel"]),
+                                fontColorSecondary=colour(C["ink"]), backColorSecondary=colour(C["panel"]), fontSize=num(10),
+                                fontFamily=text(FONT)),
+                "grid": props(gridVertical=boolean(False), gridHorizontal=boolean(True), gridHorizontalColor=colour(C["line"]),
+                              rowPadding=num(5), outlineColor=colour(C["line"])),
+                "total": props(totals=boolean(False)),
+            },
+            "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
+
+    def json(self) -> dict:
+        return {
+            "$schema": S_PAGE, "name": self.name, "displayName": self.display, "displayOption": "FitToPage",
+            "height": PAGE_H, "width": PAGE_W,
+            "objects": {
+                "background": props(image={"image": {
+                    "name": text(f"{self.name}.png"),
+                    "url": {"expr": {"ResourcePackageItem": {"PackageName": "RegisteredResources", "PackageType": 1, "ItemName": f"bg_{self.name}.png"}}},
+                    "scaling": text("Fit")}}, transparency=num(0)),
+                "outspace": props(color=colour(C["canvas"]), transparency=num(0)),
+            },
+        }
+
+
+def date_from(day: str) -> list:
+    """Visual-level filter: Calendar[Month] on or after a date."""
+    return [{"name": "FilterCalendarFrom", "field": cref("Calendar", "Month"), "type": "Advanced", "howCreated": "User",
+             "filter": {"Version": 2, "From": [{"Name": "c", "Entity": "Calendar", "Type": 0}], "Where": [{"Condition": {"Comparison": {
+                 "ComparisonKind": 2, "Left": {"Column": {"Expression": {"SourceRef": {"Source": "c"}}, "Property": "Month"}},
+                 "Right": {"Literal": {"Value": f"datetime'{day}T00:00:00'"}}}}}]}}]
+
+
+# ---- page layouts --------------------------------------------------------------------------------
+M = 24                      # outer margin
+TILE_Y, TILE_H = 128, 104
+LEFT_W, RIGHT_X = 760, 800  # two-column panels
+RIGHT_W = PAGE_W - M - RIGHT_X
+
+
+def header(p: Page, section: str, title: str, subtitle_measure: str | None = None, subtitle_text: str | None = None):
+    p.label("hdr_brand", M, 10, 420, 28, [("●  ", 9, C["teal"], FONT), (section, 9, C["teal"], FONT_SEMI)])
+    # cards centre their text, so these boxes are sized to the text to keep it near the margins
+    p.card("hdr_data_through", PAGE_W - M - 250, 8, 250, 30, "Data Through Label", 9, C["ink3"], FONT)
+    p.label("hdr_title", M - 4, 52, 900, 46, [(title, 24, C["ink"], FONT_BOLD)])
+    if subtitle_measure:
+        p.card("hdr_subtitle", M - 6, 96, 340, 26, subtitle_measure, 10, C["ink2"], FONT)
+    elif subtitle_text:
+        p.label("hdr_subtitle", M - 4, 94, 900, 28, [(subtitle_text, 10, C["ink2"], FONT)])
+
+
+def panel_title(p: Page, vname, x, y, w, title, note=None):
+    p.label(f"{vname}_title", x + 10, y + 8, w * 0.6 if note else w - 20, 30, [(title, 12, C["ink"], FONT_SEMI)])
+    if note:
+        p.label(f"{vname}_note", x + w * 0.45, y + 10, w * 0.55 - 12, 26, [(note, 9, C["ink3"], FONT)], align="right")
+
+
+def tiles(n, highlight_first=False, y=TILE_Y, h=TILE_H):
+    w = (PAGE_W - 2 * M) / n
+    out = [("tilebar", M, y, PAGE_W - 2 * M, h)]
+    if highlight_first:
+        out.append(("tile_hi", M, y, w, h))
+    out += [("divider", M + i * w, y + 14, 1, h - 28) for i in range(1, n)]
+    return out, w
+
+
+def build_pages() -> list[Page]:
+    pages = []
+    line_styles = {
+        "Observed Rate": {"colour": C["blue"], "width": 2.5},
+        "ETS Forecast": {"colour": C["teal"], "width": 2.5, "dash": "dashed"},
+        "Band Low": {"colour": C["teal_dim"], "width": 1, "dash": "dotted"},
+        "Band High": {"colour": C["teal_dim"], "width": 1, "dash": "dotted"},
+        "Bond-yield Forecast": {"colour": C["purple"], "width": 2.5, "dash": "dashed"},
+    }
+
+    # ---- 1. Overview: the shape of the brief -------------------------------------------------
+    bg, tw = tiles(4, highlight_first=True)
+    bg += [("panel", M, 244, LEFT_W, 296), ("panel", RIGHT_X, 244, RIGHT_W, 296), ("panel", M, 552, PAGE_W - 2 * M, 148)]
+    p = Page("overview", "Overview", bg)
+    header(p, "MORTGAGE ANALYTICS", "Canadian Mortgage Renewal", subtitle_measure="Renewal Window Label")
+    p.kpi("kpi_above", M, TILE_Y, tw, "Loans above +$250 a month", "Loans Above Threshold", "Loans Above Caption", C["amber"])
+    p.kpi("kpi_total", M + tw, TILE_Y, tw, "Total payment increase", "Total Payment Increase", "Payment Increase Caption")
+    p.kpi("kpi_latest", M + 2 * tw, TILE_Y, tw, "Market benchmark", "Latest Rate", "Latest Rate Caption")
+    p.kpi("kpi_ets3", M + 3 * tw, TILE_Y, tw, "3-month forecast", "ETS 3-Month Forecast", "ETS 3-Month Caption", C["teal"])
+    panel_title(p, "outlook", M, 244, LEFT_W, "Mortgage rate outlook", "5-year+ fixed, uninsured")
+    p.line_chart("outlook_chart", M + 8, 282, LEFT_W - 16, 250, ("Calendar", "Month"),
+                 ["Observed Rate", "ETS Forecast", "Band Low", "Band High"], line_styles, filters=date_from("2021-01-01"))
+    panel_title(p, "stress", RIGHT_X, 244, RIGHT_W, "Rate stress test", "Portfolio scenario")
+    p.slicer("stress_slicer", RIGHT_X + 12, 284, RIGHT_W - 24, 44, "Scenario", "Scenario", "Base")
+    p.bar_chart("stress_bars", RIGHT_X + 8, 334, RIGHT_W - 16, 166, ("Scenario Axis", "Scenario"), "Share Above, Each Scenario",
+                colour_measure="Scenario Bar Colour")
+    p.label("stress_note", RIGHT_X + 12, 502, RIGHT_W - 24, 30, [("Share of renewing loans with a payment rise above $250 a month", 9, C["ink3"], FONT)])
+    panel_title(p, "months", M, 552, PAGE_W - 2 * M, "Renewals by month", "Chosen scenario. November and February are part months.")
+    p.table("months_table", M + 10, 588, PAGE_W - 2 * M - 20, 106,
+            [("Loans", "Renewal month"), "Loan Count", "Loans Above Threshold", "Share Above Threshold"], sort=("Loans", "Renewal month"))
+    p.label("footer_left", M - 4, 700, 640, 20, [("Source: Bank of Canada series V122667786. Loans are simulated.", 8, C["ink3"], FONT)])
+    p.label("footer_right", 900, 700, PAGE_W - M - 900, 20, [("Neo Nguyen", 8, C["ink3"], FONT)], align="right")
+    pages.append(p)
+
+    # ---- 2. Rates and forecast accuracy -------------------------------------------------------
+    bg, tw = tiles(4)
+    bg += [("panel", M, 244, LEFT_W, 228), ("panel", RIGHT_X, 244, RIGHT_W, 228),
+           ("panel", M, 484, LEFT_W, 216), ("panel", RIGHT_X, 484, RIGHT_W, 216)]
+    p = Page("accuracy", "Rates & accuracy", bg)
+    header(p, "RATE FORECAST", "Where rates are heading, and how far to trust it",
+           subtitle_text="Backtest: 122 rolling forecasts made each month from January 2016 to February 2026")
+    p.kpi("kpi_ets", M, TILE_Y, tw, "ETS, average miss", "ETS MAE", "ETS MAE Caption", C["teal"])
+    p.kpi("kpi_bond", M + tw, TILE_Y, tw, "Bond-yield model, average miss", "Bond-yield MAE", "Bond-yield MAE Caption", C["purple"])
+    p.kpi("kpi_naive", M + 2 * tw, TILE_Y, tw, "Naive, average miss", "Naive MAE", "Naive MAE Caption")
+    p.kpi("kpi_pass", M + 3 * tw, TILE_Y, tw, "Bond-yield pass-through", "Pass-through Share", "Pass-through Caption")
+    panel_title(p, "history", M, 244, LEFT_W, "Rate history and the two forecasts", "Dotted: ETS 80% band")
+    p.line_chart("history_chart", M + 8, 280, LEFT_W - 16, 186, ("Calendar", "Month"),
+                 ["Observed Rate", "ETS Forecast", "Bond-yield Forecast", "Band Low", "Band High"], line_styles, filters=date_from("2016-01-01"))
+    panel_title(p, "models", RIGHT_X, 244, RIGHT_W, "Average miss by model")
+    p.slicer("horizon_slicer", RIGHT_X + 210, 252, RIGHT_W - 222, 32, "Horizon Choice", "Horizon label", "3 months")
+    p.bar_chart("models_bars", RIGHT_X + 8, 290, RIGHT_W - 16, 176, ("Model Accuracy", "Model label"), "MAE at Horizon",
+                colour_measure="Model Bar Colour")
+    panel_title(p, "yield", M, 484, LEFT_W, "Mortgage rate and the 5-year bond yield", "The yield moves first")
+    p.line_chart("yield_chart", M + 8, 520, LEFT_W - 16, 174, ("Rate vs Yield", "Month"), ["Mortgage Rate Line", "Bond Yield Line"],
+                 {"Mortgage Rate Line": {"colour": C["blue"], "width": 2.5}, "Bond Yield Line": {"colour": C["purple"], "width": 2}})
+    panel_title(p, "periods", RIGHT_X, 484, RIGHT_W, "ETS and naive, by rate period", "Average miss, bps")
+    p.column_pair("periods_chart", RIGHT_X + 8, 520, RIGHT_W - 16, 174, ("Accuracy By Period", "Period"),
+                  ["ETS MAE by Period", "Naive MAE by Period"], [C["teal"], C["slate"]])
+    pages.append(p)
+
+    # ---- 3. Payment impact for one borrower --------------------------------------------------
+    bg = [("panel", M, 126, PAGE_W - 2 * M, 72)]
+    tb, tw = tiles(4, y=210, h=100)
+    bg += tb + [("panel", M, 322, LEFT_W, 378), ("panel", RIGHT_X, 322, RIGHT_W, 378)]
+    p = Page("payment", "Payment impact", bg)
+    header(p, "PAYMENT IMPACT", "What renewal costs one borrower",
+           subtitle_text="Fixed-rate renewal, Canadian semi-annual compounding, principal and interest only")
+    x = M + 12
+    for vname, w, table, col, default, head in [
+        ("s_balance", 262, "Balance Choice", "Balance label", "$400k", "Balance at renewal"),
+        ("s_years", 168, "Years Choice", "Years label", "20 yrs", "Years left to pay"),
+        ("s_before", 236, "Rate Before Choice", "Rate before label", "2.2%", "Rate before renewal"),
+        ("s_renewal", 330, "Renewal Rate Choice", "Renewal rate option", "Latest", "Renewal rate"),
+        ("s_threshold", 160, "Threshold", "Threshold label", "$250", "Payment rise to watch"),
+    ]:
+        p.slicer(vname, x, 132, w, 60, table, col, default, header=head)
+        x += w + 10
+    p.kpi("kpi_before", M, 210, tw, "Payment before renewal", "Payment Before", "Payment Before Caption")
+    p.kpi("kpi_after", M + tw, 210, tw, "Payment after renewal", "Payment After", "Payment After Caption")
+    p.kpi("kpi_change", M + 2 * tw, 210, tw, "Change each month", "Monthly Change", "Monthly Change Caption", C["amber"])
+    p.kpi("kpi_threshold", M + 3 * tw, 210, tw, "Rate where the rise hits the threshold", "Threshold Rate", "Threshold Rate Caption", C["teal"])
+    panel_title(p, "curve", M, 322, LEFT_W, "Change in monthly payment by renewal rate", "Dot: chosen rate. Dashed: threshold")
+    p.line_chart("curve_chart", M + 8, 358, LEFT_W - 16, 334, ("Rate Grid", "Rate"), ["Change on Curve", "Threshold Line", "Selected Rate Point"],
+                 {"Change on Curve": {"colour": C["blue"], "width": 2.5},
+                  "Threshold Line": {"colour": C["amber"], "width": 1.5, "dash": "dashed"},
+                  "Selected Rate Point": {"colour": C["amber"], "width": 0, "marker": True}}, legend=False)
+    panel_title(p, "scen", RIGHT_X, 322, RIGHT_W, "Same borrower, rate 50 bps lower or higher")
+    p.bar_chart("scen_bars", RIGHT_X + 8, 362, RIGHT_W - 16, 300, ("Scenario Axis", "Scenario"), "Change at Scenario",
+                colour_measure="Scenario Change Colour", horizontal=False)
+    p.label("scen_note", RIGHT_X + 12, 664, RIGHT_W - 24, 30, [("Amber: rise above the threshold", 9, C["ink3"], FONT)])
+    pages.append(p)
+
+    # ---- 4. Renewal triage ---------------------------------------------------------------------
+    bg, tw = tiles(4)
+    bg += [("panel", M, 244, LEFT_W, 456), ("panel", RIGHT_X, 244, RIGHT_W, 236), ("panel", RIGHT_X, 492, RIGHT_W, 208)]
+    p = Page("triage", "Renewal triage", bg)
+    header(p, "RENEWAL TRIAGE", "Who the renewal team should call first",
+           subtitle_text="Each week: borrowers whose last chance it is, then by segment, renewal date and size of rise")
+    p.slicer("capacity_slicer", 960, 60, PAGE_W - M - 960, 58, "Capacity Choice", "Calls per week label", "300", header="Calls per week")
+    p.kpi("kpi_missed", M, TILE_Y, tw, "Missed with triage", "Missed with Triage", "Missed with Triage Caption", C["amber"])
+    p.kpi("kpi_date", M + tw, TILE_Y, tw, "Missed in date order", "Missed in Date Order", "Missed in Date Order Caption")
+    p.kpi("kpi_extra", M + 2 * tw, TILE_Y, tw, "Extra borrowers reached", "Extra Borrowers Reached", "Extra Reached Caption", C["teal"])
+    p.kpi("kpi_certain", M + 3 * tw, TILE_Y, tw, "Near-certain cases missed", "Near-certain Missed", "Near-certain Caption")
+    panel_title(p, "capacity", M, 244, LEFT_W, "Borrowers over +$250 not reached, by weekly capacity", "339 renew in week one, before any call")
+    p.column_pair("capacity_chart", M + 8, 284, LEFT_W - 16, 408, ("Call Capacity", "Capacity"),
+                  ["Missed by Capacity, Date Order", "Missed by Capacity, Triage"], [C["slate"], C["teal"]])
+    panel_title(p, "segments", RIGHT_X, 244, RIGHT_W, "Segments", "Called at 300 a week")
+    p.table("segments_table", RIGHT_X + 10, 282, RIGHT_W - 20, 190,
+            [("Segments", "Segment"), ("Segments", "Loans"), ("Segments", "Median rise"), ("Segments", "Called at 300 a week")],
+            sort=("Segments", "Segment"))
+    panel_title(p, "rule", RIGHT_X, 492, RIGHT_W, "How the call list works")
+    p.label("rule_text", RIGHT_X + 10, 528, RIGHT_W - 20, 166, [
+        ("A borrower can be called from 60 days to 7 days before renewal. Each week the team first calls the people for whom "
+         "this week is the last chance, then fills spare slots with the most certain cases.\n\n"
+         "Ranking by segment alone did worse than calling by date, because certain cases renewing in two months took the slots.\n\n"
+         "A rise over $250 is not the same as unaffordable. That needs income and other debts.", 9, C["ink2"], FONT)])
+    pages.append(p)
+    return pages
+
+
+# =============================================================================================
+# Theme and background images
+# =============================================================================================
+def theme() -> dict:
+    ink, ink2, ink3 = C["ink"], C["ink2"], C["ink3"]
+    solid = lambda h: {"solid": {"color": h}}
+    return {
+        "name": "Mortgage Navy",
+        "dataColors": [C["blue"], C["teal"], C["amber"], C["purple"], C["slate"], C["coral"], "#5E8BC7", "#8FD9C4"],
+        "foreground": ink, "foregroundNeutralSecondary": ink2, "foregroundNeutralTertiary": ink3,
+        "background": C["panel"], "backgroundLight": "#16243B", "backgroundNeutral": C["line"],
+        "tableAccent": C["teal"], "good": C["teal"], "neutral": C["amber"], "bad": C["coral"],
+        "maximum": C["amber"], "center": C["slate"], "minimum": C["panel"],
+        "textClasses": {
+            "callout": {"fontSize": 26, "fontFace": FONT_NUM, "color": ink},
+            "title": {"fontSize": 12, "fontFace": FONT_SEMI, "color": ink},
+            "header": {"fontSize": 12, "fontFace": FONT_SEMI, "color": ink},
+            "label": {"fontSize": 10, "fontFace": FONT, "color": ink2},
+        },
+        "visualStyles": {
+            "*": {"*": {
+                "background": [{"show": False}],
+                "border": [{"show": False}],
+                "dropShadow": [{"show": False}],
+                "title": [{"fontColor": solid(ink), "fontSize": 12, "fontFamily": FONT_SEMI}],
+                "categoryAxis": [{"labelColor": solid(ink3), "gridlineShow": False, "showAxisTitle": False}],
+                "valueAxis": [{"labelColor": solid(ink3), "gridlineColor": solid(C["grid"]), "showAxisTitle": False}],
+                "legend": [{"labelColor": solid(ink2)}],
+                "outspacePane": [{"backgroundColor": solid(C["panel"]), "foregroundColor": solid(ink), "transparency": 0,
+                                  "borderColor": solid(C["line"])}],
+                "filterCard": [{"$id": "Applied", "backgroundColor": solid("#16243B"), "foregroundColor": solid(ink), "transparency": 0},
+                               {"$id": "Available", "backgroundColor": solid(C["panel"]), "foregroundColor": solid(ink), "transparency": 0}],
+            }},
+            "page": {"*": {"background": [{"color": solid(C["canvas"]), "transparency": 0}],
+                           "outspace": [{"color": solid(C["canvas"]), "transparency": 0}]}},
+            "card": {"*": {"labels": [{"color": solid(ink), "fontSize": 26, "fontFamily": FONT_NUM}],
+                           "categoryLabels": [{"show": False}]}},
+            "slicer": {"*": {"items": [{"fontColor": solid(ink), "background": solid(C["panel"])}],
+                             "header": [{"fontColor": solid(ink2)}]}},
+            "tableEx": {"*": {"columnHeaders": [{"fontColor": solid(ink2), "backColor": solid(C["panel"])}],
+                              "values": [{"fontColorPrimary": solid(ink), "backColorPrimary": solid(C["panel"]),
+                                          "fontColorSecondary": solid(ink), "backColorSecondary": solid(C["panel"])}],
+                              "grid": [{"gridVertical": False, "gridHorizontalColor": solid(C["line"])}]}},
+        },
+    }
+
+
+def draw_background(page: Page, path: Path) -> None:
+    """2x PNG with the panels and tiles. Visuals sit on top with transparent backgrounds."""
+    s = 2
+    fig = plt.figure(figsize=(PAGE_W * s / 100, PAGE_H * s / 100), dpi=100)
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, PAGE_W)
+    ax.set_ylim(PAGE_H, 0)
+    ax.axis("off")
+    fig.patch.set_facecolor(C["canvas"])
+    ax.add_patch(Rectangle((0, 46), PAGE_W, 1, color=C["line"], lw=0))           # under the brand line
+    for kind, x, y, w, h in page.bg_panels:
+        if kind in ("panel", "tilebar"):
+            ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0,rounding_size=10",
+                                        facecolor=C["panel"], edgecolor=C["line"], linewidth=1.2))
+        elif kind == "tile_hi":
+            ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0,rounding_size=10",
+                                        facecolor=C["tile_hi"], edgecolor=C["line"], linewidth=1.2))
+            ax.add_patch(Rectangle((x + 1, y), w - 2, 3, color=C["amber"], lw=0))
+        elif kind == "divider":
+            ax.add_patch(Rectangle((x, y), w, h, color=C["line"], lw=0))
+    fig.savefig(path, facecolor=C["canvas"])
+    plt.close(fig)
+
+
+# =============================================================================================
+# Write the report
+# =============================================================================================
+def write_report(pages: list[Page]) -> None:
+    for sub in ("definition", "StaticResources/RegisteredResources"):
+        if (RP / sub).exists():
+            shutil.rmtree(RP / sub)
+    base = RP / "StaticResources/SharedResources/BaseThemes/CY24SU10.json"
+    assert base.exists(), "the Power BI base theme file is missing"
+    write_json(RP / "definition.pbir", {"$schema": f"{SCHEMA}/item/report/definitionProperties/2.0.0/schema.json",
+                                        "version": "4.0", "datasetReference": {"byPath": {"path": f"../{NAME}.SemanticModel"}}})
+    d = RP / "definition"
+    write_json(d / "version.json", {"$schema": f"{SCHEMA}/item/report/definition/versionMetadata/1.0.0/schema.json", "version": "2.0.0"})
+    images = [{"name": f"bg_{p.name}.png", "path": f"bg_{p.name}.png", "type": "Image"} for p in pages]
+    write_json(d / "report.json", {
+        "$schema": f"{SCHEMA}/item/report/definition/report/1.3.0/schema.json",
+        "layoutOptimization": "None",
+        "themeCollection": {
+            "baseTheme": {"name": "CY24SU10", "reportVersionAtImport": "5.61", "type": "SharedResources"},
+            "customTheme": {"name": "MortgageNavy.json", "reportVersionAtImport": "5.61", "type": "RegisteredResources"},
+        },
+        "objects": {"outspacePane": [{"properties": {"expanded": boolean(False), "visible": boolean(True)}}]},
+        "resourcePackages": [
+            {"name": "SharedResources", "type": "SharedResources",
+             "items": [{"name": "CY24SU10", "path": "BaseThemes/CY24SU10.json", "type": "BaseTheme"}]},
+            {"name": "RegisteredResources", "type": "RegisteredResources",
+             "items": [{"name": "MortgageNavy.json", "path": "MortgageNavy.json", "type": "CustomTheme"}] + images},
+        ],
+        "settings": {"useStylableVisualContainerHeader": True, "exportDataMode": "AllowSummarized",
+                     "defaultDrillFilterOtherVisuals": True, "allowChangeFilterTypes": True, "useEnhancedTooltips": True},
+    })
+    write_json(d / "pages" / "pages.json", {"$schema": f"{SCHEMA}/item/report/definition/pagesMetadata/1.0.0/schema.json",
+                                            "pageOrder": [p.name for p in pages], "activePageName": pages[0].name})
+    res = RP / "StaticResources" / "RegisteredResources"
+    res.mkdir(parents=True, exist_ok=True)
+    write_json(res / "MortgageNavy.json", theme())
+    for p in pages:
+        write_json(d / "pages" / p.name / "page.json", p.json())
+        for v in p.visuals:
+            write_json(d / "pages" / p.name / "visuals" / v["name"] / "visual.json", v)
+        draw_background(p, res / f"bg_{p.name}.png")
+
+
+def main():
+    tables = build_tables()
+    write_model(tables)
+    pages = build_pages()
+    write_report(pages)
+    write_json(HERE / f"{NAME}.pbip", {"$schema": f"{SCHEMA}/pbip/pbipProperties/1.0.0/schema.json", "version": "1.0",
+                                       "artifacts": [{"report": {"path": f"{NAME}.Report"}}], "settings": {"enableAutoRecovery": True}})
+    n_measures = sum(len(t.measures) for t in tables)
+    print(f"Wrote {len(tables)} tables, {n_measures} measures, {len(pages)} pages, "
+          f"{sum(len(p.visuals) for p in pages)} visuals to {HERE.relative_to(HERE.parent)}/")
+
+
+if __name__ == "__main__":
+    main()

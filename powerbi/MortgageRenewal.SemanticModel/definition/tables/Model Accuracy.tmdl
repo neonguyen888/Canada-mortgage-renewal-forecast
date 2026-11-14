@@ -1,0 +1,103 @@
+/// Backtest error for every model, 1 to 6 months ahead.
+table 'Model Accuracy'
+	lineageTag: 62c5e631-920a-5fe9-80c8-9947af76bfb1
+
+	column Model
+		dataType: string
+		isHidden
+		lineageTag: 31d2abc6-c9fe-5eb7-adc7-445bf89c5d8b
+		summarizeBy: none
+		sourceColumn: Model
+
+		annotation SummarizationSetBy = User
+
+	column Horizon
+		dataType: int64
+		lineageTag: 02524b94-a31e-593e-b697-ab8d6f02b2c9
+		summarizeBy: none
+		sourceColumn: Horizon
+
+		annotation SummarizationSetBy = User
+
+	column 'MAE bps'
+		dataType: double
+		formatString: 0.0
+		lineageTag: 8799157d-bf83-57ae-879e-c9f3753c3339
+		summarizeBy: none
+		sourceColumn: MAE bps
+
+		annotation SummarizationSetBy = User
+
+	column 'MAE CAD'
+		dataType: double
+		formatString: \$#,0.00
+		lineageTag: 180b7a3e-fbec-5e72-b774-e58507563418
+		summarizeBy: none
+		sourceColumn: MAE CAD
+
+		annotation SummarizationSetBy = User
+
+	column 'Bias bps'
+		dataType: double
+		formatString: 0.0
+		lineageTag: 33832a53-f32d-5bed-8f05-ae45c832b8d0
+		summarizeBy: none
+		sourceColumn: Bias bps
+
+		annotation SummarizationSetBy = User
+
+	column Origins
+		dataType: int64
+		lineageTag: e93d52f2-24c2-51cd-82ce-c87022e65b88
+		summarizeBy: none
+		sourceColumn: Origins
+
+		annotation SummarizationSetBy = User
+
+	column Rank
+		dataType: int64
+		lineageTag: f18b14b9-a708-5ff3-b9e3-8990f41cd377
+		summarizeBy: none
+		sourceColumn: Rank
+
+		annotation SummarizationSetBy = User
+
+	column 'Model label'
+		dataType: string
+		lineageTag: 331f908f-6bad-50eb-87d9-d80c8d3f5208
+		summarizeBy: none
+		sourceColumn: Model label
+		sortByColumn: 'Model order'
+
+		annotation SummarizationSetBy = User
+
+	column 'Model order'
+		dataType: int64
+		isHidden
+		lineageTag: 2875c79a-a196-535a-b8e8-0ff5c1ea239e
+		summarizeBy: none
+		sourceColumn: Model order
+
+		annotation SummarizationSetBy = User
+
+	partition 'Model Accuracy' = m
+		mode: import
+		source =
+				let
+				    IsWeb = Text.StartsWith(DataFolder, "http"),
+				    Folder = Text.TrimEnd(DataFolder, {"\", "/"}) & (if IsWeb then "/" else "\"),
+				    Raw = if IsWeb then Web.Contents(Folder & "vw_model_comparison.csv") else File.Contents(Folder & "vw_model_comparison.csv"),
+				    Source = Csv.Document(Raw, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Kept = Table.SelectColumns(Promoted, {"model", "horizon_months", "mae_bps", "mae_cad_per_month", "bias_bps", "n_origins", "rank_at_horizon"}),
+				    Blanks = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, Table.ColumnNames(Kept)),
+				    Typed = Table.TransformColumnTypes(Blanks, {{"model", type text}, {"horizon_months", Int64.Type}, {"mae_bps", type number}, {"mae_cad_per_month", type number}, {"bias_bps", type number}, {"n_origins", Int64.Type}, {"rank_at_horizon", Int64.Type}}, "en-US"),
+				    Renamed = Table.RenameColumns(Typed, {{"model", "Model"}, {"horizon_months", "Horizon"}, {"mae_bps", "MAE bps"}, {"mae_cad_per_month", "MAE CAD"}, {"bias_bps", "Bias bps"}, {"n_origins", "Origins"}, {"rank_at_horizon", "Rank"}}),
+				    Labels = [#"Bond-yield regression" = "Bond-yield model", #"Regression, 1 month of extra yields" = "Bond yield, 1-month head start", #"Regression, yields to origin only" = "Bond yield, no head start", #"ETS damped trend" = "ETS", #"Naive (last observed)" = "Naive"],
+				    Orders = [#"Bond-yield regression" = 1, #"Regression, 1 month of extra yields" = 2, #"Regression, yields to origin only" = 3, #"ETS damped trend" = 4, #"Naive (last observed)" = 5],
+				    WithLabel = Table.AddColumn(Renamed, "Model label", each Record.FieldOrDefault(Labels, [Model], [Model]), type text),
+				    WithOrder = Table.AddColumn(WithLabel, "Model order", each Record.FieldOrDefault(Orders, [Model], 9), Int64.Type)
+				in
+				    WithOrder
+
+	annotation PBI_ResultType = Table

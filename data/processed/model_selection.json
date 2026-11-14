@@ -1,0 +1,9 @@
+{
+  "rule": "Adopt damped-trend ETS only if its MAE (bps) beats the naive baseline at both 3- and 6-month horizons on identical origins; otherwise use the naive baseline.",
+  "selected_model": "ETS damped trend",
+  "cad_profile": {
+    "balance": 400000.0,
+    "years_remaining": 20,
+    "note": "Same hypothetical loan priced at forecast rate vs actual rate"
+  }
+}

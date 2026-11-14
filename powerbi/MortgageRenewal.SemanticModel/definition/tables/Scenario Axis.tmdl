@@ -1,0 +1,39 @@
+/// A copy of the scenarios used as a chart axis, so every bar stays visible whatever the slicer says.
+table 'Scenario Axis'
+	lineageTag: d088338c-bf0a-55ff-903c-737bcc109355
+
+	column Scenario
+		dataType: string
+		lineageTag: ddf7b703-7eb7-57b0-9b2e-3eac0232c177
+		summarizeBy: none
+		sourceColumn: Scenario
+		sortByColumn: Order
+
+		annotation SummarizationSetBy = User
+
+	column 'Shift bps'
+		dataType: int64
+		lineageTag: 7752d203-de61-5ed8-b1a6-9d429c2c4e26
+		summarizeBy: none
+		sourceColumn: Shift bps
+
+		annotation SummarizationSetBy = User
+
+	column Order
+		dataType: int64
+		isHidden
+		lineageTag: 497b6258-563c-5e52-b4e5-90d3066d6e91
+		summarizeBy: none
+		sourceColumn: Order
+
+		annotation SummarizationSetBy = User
+
+	partition 'Scenario Axis' = m
+		mode: import
+		source =
+				let
+				    Source = #table(type table [Scenario = text, #"Shift bps" = Int64.Type, Order = Int64.Type], {{"-50 bps", -50, 1}, {"Base forecast", 0, 2}, {"+50 bps", 50, 3}})
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+.pytest_cache/
+# Files Power BI Desktop writes next to a PBIP project for this machine only
+powerbi/**/.pbi/localSettings.json
+powerbi/**/.pbi/cache.abf

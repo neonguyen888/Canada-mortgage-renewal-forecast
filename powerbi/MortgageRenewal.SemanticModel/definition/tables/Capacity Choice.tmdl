@@ -1,0 +1,30 @@
+/// Weekly call capacity of the renewal team.
+table 'Capacity Choice'
+	lineageTag: dc117f45-1319-5788-9277-1a7c36e0e514
+
+	column 'Calls per week label'
+		dataType: string
+		lineageTag: ad312c7f-1173-5b71-99ec-b152f34af3dd
+		summarizeBy: none
+		sourceColumn: Calls per week label
+		sortByColumn: 'Calls per week'
+
+		annotation SummarizationSetBy = User
+
+	column 'Calls per week'
+		dataType: int64
+		lineageTag: 73956229-8600-5676-a8e1-2ed5d0c02fd9
+		summarizeBy: none
+		sourceColumn: Calls per week
+
+		annotation SummarizationSetBy = User
+
+	partition 'Capacity Choice' = m
+		mode: import
+		source =
+				let
+				    Source = #table(type table [#"Calls per week label" = text, #"Calls per week" = Int64.Type], {{"100", 100}, {"200", 200}, {"300", 300}, {"400", 400}})
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

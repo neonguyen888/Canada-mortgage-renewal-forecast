@@ -1,0 +1,87 @@
+/// Market reference rate, actual and ETS forecast, with the 80% band on forecast months.
+table 'Rate Outlook'
+	lineageTag: f9af8377-f473-5622-a4b2-475099a8c519
+
+	column Month
+		dataType: dateTime
+		isHidden
+		formatString: mmm yyyy
+		lineageTag: 19d777f5-f819-58a7-8ddd-3bfef4557916
+		summarizeBy: none
+		sourceColumn: Month
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = User
+
+	column Rate
+		dataType: double
+		isHidden
+		lineageTag: 2dbb5cae-42ee-5c2e-8893-037e531483b9
+		summarizeBy: none
+		sourceColumn: Rate
+
+		annotation SummarizationSetBy = User
+
+	column Series
+		dataType: string
+		isHidden
+		lineageTag: 52ccb78e-09e8-5889-b9a5-dfaa2507b73d
+		summarizeBy: none
+		sourceColumn: Series
+
+		annotation SummarizationSetBy = User
+
+	column Horizon
+		dataType: int64
+		isHidden
+		lineageTag: 2662b57c-2551-5252-bfe2-ff290f91fcd2
+		summarizeBy: none
+		sourceColumn: Horizon
+
+		annotation SummarizationSetBy = User
+
+	column Model
+		dataType: string
+		isHidden
+		lineageTag: 5dc9abdf-f023-590b-b7a0-4faf7af01298
+		summarizeBy: none
+		sourceColumn: Model
+
+		annotation SummarizationSetBy = User
+
+	column 'Lower 80'
+		dataType: double
+		isHidden
+		lineageTag: d752e70f-5d23-5df2-9ab2-e38ba88f31df
+		summarizeBy: none
+		sourceColumn: Lower 80
+
+		annotation SummarizationSetBy = User
+
+	column 'Upper 80'
+		dataType: double
+		isHidden
+		lineageTag: 2e1af821-d918-51bc-abe4-033fe7770b6b
+		summarizeBy: none
+		sourceColumn: Upper 80
+
+		annotation SummarizationSetBy = User
+
+	partition 'Rate Outlook' = m
+		mode: import
+		source =
+				let
+				    IsWeb = Text.StartsWith(DataFolder, "http"),
+				    Folder = Text.TrimEnd(DataFolder, {"\", "/"}) & (if IsWeb then "/" else "\"),
+				    Raw = if IsWeb then Web.Contents(Folder & "vw_rate_outlook_band.csv") else File.Contents(Folder & "vw_rate_outlook_band.csv"),
+				    Source = Csv.Document(Raw, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Kept = Table.SelectColumns(Promoted, {"month", "rate_pct", "series", "horizon_months", "model", "lower_80_pct", "upper_80_pct"}),
+				    Blanks = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, Table.ColumnNames(Kept)),
+				    Typed = Table.TransformColumnTypes(Blanks, {{"month", type date}, {"rate_pct", type number}, {"series", type text}, {"horizon_months", Int64.Type}, {"model", type text}, {"lower_80_pct", type number}, {"upper_80_pct", type number}}, "en-US"),
+				    Renamed = Table.RenameColumns(Typed, {{"month", "Month"}, {"rate_pct", "Rate"}, {"series", "Series"}, {"horizon_months", "Horizon"}, {"model", "Model"}, {"lower_80_pct", "Lower 80"}, {"upper_80_pct", "Upper 80"}})
+				in
+				    Renamed
+
+	annotation PBI_ResultType = Table

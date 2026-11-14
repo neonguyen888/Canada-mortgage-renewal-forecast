@@ -1,0 +1,31 @@
+/// Renewal rates to try: today's market rate and the forecasts.
+table 'Renewal Rate Choice'
+	lineageTag: 5a009060-f777-5087-9c30-c910c82b5117
+
+	column 'Renewal rate option'
+		dataType: string
+		lineageTag: 27c96768-a865-5edd-8f94-c54e5fdff215
+		summarizeBy: none
+		sourceColumn: Renewal rate option
+		sortByColumn: Order
+
+		annotation SummarizationSetBy = User
+
+	column Order
+		dataType: int64
+		isHidden
+		lineageTag: 677a478e-4e23-5925-a996-866b7037bd78
+		summarizeBy: none
+		sourceColumn: Order
+
+		annotation SummarizationSetBy = User
+
+	partition 'Renewal Rate Choice' = m
+		mode: import
+		source =
+				let
+				    Source = #table(type table [#"Renewal rate option" = text, Order = Int64.Type], {{"Latest", 1}, {"ETS 3 mo", 2}, {"ETS 6 mo", 3}, {"Bond yield 6 mo", 4}})
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

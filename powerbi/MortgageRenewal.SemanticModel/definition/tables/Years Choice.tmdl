@@ -1,0 +1,30 @@
+/// Years left on the amortization.
+table 'Years Choice'
+	lineageTag: 767a88e3-2c12-5574-8b5d-1f3c62c9ec5c
+
+	column 'Years label'
+		dataType: string
+		lineageTag: 0e4ee062-37aa-5230-a692-3b8135ac638a
+		summarizeBy: none
+		sourceColumn: Years label
+		sortByColumn: Years
+
+		annotation SummarizationSetBy = User
+
+	column Years
+		dataType: int64
+		lineageTag: 6d408054-a1f8-53cf-bdde-2d19c3c4b0a3
+		summarizeBy: none
+		sourceColumn: Years
+
+		annotation SummarizationSetBy = User
+
+	partition 'Years Choice' = m
+		mode: import
+		source =
+				let
+				    Source = #table(type table [#"Years label" = text, Years = Int64.Type], {{"15 yrs", 15}, {"20 yrs", 20}, {"25 yrs", 25}})
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
