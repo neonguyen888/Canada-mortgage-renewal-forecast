@@ -40,7 +40,7 @@ RP = HERE / f"{NAME}.Report"
 PAGE_W, PAGE_H = 1280, 720
 # Public copy of data/powerbi on GitHub, so the report refreshes on any machine. A local folder
 # path such as C:\repo\data\powerbi works too.
-DEFAULT_DATA_FOLDER = "https://raw.githubusercontent.com/neonguyen888/canadian-mortgage-renewal/main/data/powerbi/"
+DEFAULT_DATA_FOLDER = "https://raw.githubusercontent.com/neonguyen888/Canada-mortgage-renewal-forecast/main/data/powerbi/"
 
 # ---------------------------------------------------------------------------------------------
 # Design tokens. Navy canvas, one warm accent (amber) for whatever needs attention, teal for the

@@ -2,7 +2,9 @@
 
 **Author:** Neo Nguyen · **Stack:** Python (pandas, statsmodels, matplotlib) · PostgreSQL · Power BI
 
-Forecasts the market reference rate for 5-year fixed uninsured mortgages, then shows what a rate change means for a household's monthly payment at renewal, and for a lender's book of loans renewing in the next 90 days.
+A household that locked in a 5-year fixed rate of 2.2% in 2021 and renews today, with $400,000 left to pay, owes about $479 more every month.
+
+This project forecasts where the 5-year fixed rate goes next, using Bank of Canada data, and works out what that means at renewal: for one borrower, and for a lender with 5,000 loans renewing in the next 90 days that has to decide whom to call first.
 
 **[Read the full report with charts](reports/report.md)**
 
@@ -28,7 +30,7 @@ Forecasts the market reference rate for 5-year fixed uninsured mortgages, then s
 | Synthetic 90-day book above +$250 | 4,614 of 5,000 loans (92%) at the forecast rate |
 | Triage at 300 calls a week | Misses 1,014 borrowers facing +$250, against 1,264 when calling in renewal-date order |
 
-**Backtest** (122 rolling origins, January 2016 to February 2026, same origins for both models)
+**Backtest** (122 rolling origins, January 2016 to February 2026, same origins for every model)
 
 | Model | Horizon | MAE (bps) | MAE (CAD/month) | Diebold–Mariano p |
 |---|---|---|---|---|
@@ -55,9 +57,9 @@ Bank of Canada series [`BD.CDN.5YR.DQ.YLD`](https://www.bankofcanada.ca/valet/ob
 
 Every run saves the raw response and a metadata file with the URL, download time and latest month.
 
-## Run it (Mac)
+## Run the pipeline
 
-You need PostgreSQL 14 or later running on `localhost:5432`. On a Mac the simplest way is [Postgres.app](https://postgresapp.com): install it, open it, click Initialize. The pipeline creates the `mortgage_renewal` database and a `mortgage` schema by itself. To use another server, set `MORTGAGE_PG_DSN`, for example `host=localhost dbname=mortgage_renewal user=me password=...`.
+You only need this to rebuild the numbers; opening the Power BI report doesn't. The script is for macOS or Linux (on Windows, use WSL). You need Python 3 (tested on 3.15) and PostgreSQL 14 or later running on `localhost:5432`. On a Mac the simplest way to get PostgreSQL is [Postgres.app](https://postgresapp.com): install it, open it, click Initialize. The pipeline creates the `mortgage_renewal` database and a `mortgage` schema by itself. To use another server, set `MORTGAGE_PG_DSN`, for example `host=localhost dbname=mortgage_renewal user=me password=...`.
 
 ```bash
 ./run_pipeline.sh
@@ -109,6 +111,6 @@ reports/           report.md and figures/
 - Check the regression against ETS on September to November 2026 once they are published, and switch the headline forecast if it keeps winning.
 - Rerun the triage at each backtest origin from 2018 to see whether a better rate forecast changes who gets called.
 
-## CV bullet
+## Licence
 
-> Built an end-to-end Canadian mortgage-renewal analytics pipeline (Python, PostgreSQL, Power BI) on Bank of Canada data. A 122-origin rolling backtest showed damped-trend ETS reduced 3-month forecast error by 23% vs a naive baseline ($38.92 vs $50.01 per month in payment error), tested with Diebold–Mariano. A distributed-lag regression on the GoC 5-year bond yield (0.90 pass-through within 4 months) cut that error by a further 38%. Simulated a 5,000-loan 90-day renewal book and used SQL cohorts to show 92% of renewals would rise more than $250/month; a capacity-aware call rule reached 250 more of those borrowers than renewal-date order at 300 calls a week, with 30 automated SQL checks and SQL-to-Python reconciliation, and built a four-page Power BI report as a PBIP project.
+The code is under the [MIT licence](LICENSE). The rate data comes from the Bank of Canada and is subject to the Bank's [terms of use](https://www.bankofcanada.ca/terms/). The loan portfolio is simulated.

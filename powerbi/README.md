@@ -12,9 +12,9 @@ A four-page Power BI report built on the CSVs the pipeline exports to `data/powe
 ## Open it (Windows)
 
 1. Install a recent Power BI Desktop. On a version from before 2025, turn on the PBIP and PBIR options under File > Options and settings > Options > Preview features, then restart.
-2. Clone the repository: `git clone https://github.com/neonguyen888/canadian-mortgage-renewal.git`
+2. Clone the repository: `git clone https://github.com/neonguyen888/Canada-mortgage-renewal-forecast.git`
 3. Double-click `powerbi/MortgageRenewal.pbip`, then Home > Refresh. The model reads the CSVs straight from this repository on GitHub. If Power BI asks how to connect to `raw.githubusercontent.com`, choose Anonymous.
-4. To read your own local copy instead, go to Home > Transform data > Edit parameters and set `DataFolder` to the full path of `data\powerbi`, for example `C:\Users\you\canadian-mortgage-renewal\data\powerbi`, then refresh.
+4. To read your own local copy instead, go to Home > Transform data > Edit parameters and set `DataFolder` to the full path of `data\powerbi`, for example `C:\Users\you\Canada-mortgage-renewal-forecast\data\powerbi`, then refresh.
 
 Save with File > Save. Power BI Desktop rewrites some files in its own format when it saves, which is expected.
 
