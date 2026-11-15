@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "s_balance",
   "position": {
-    "x": 36,
-    "y": 132,
+    "x": 46,
+    "y": 130,
     "z": 1500,
-    "height": 60,
-    "width": 262,
+    "height": 64,
+    "width": 202,
     "tabOrder": 1500
   },
   "visual": {
@@ -59,7 +59,7 @@
             "mode": {
               "expr": {
                 "Literal": {
-                  "Value": "'HorizontalList'"
+                  "Value": "'Dropdown'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "textSize": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
+                  "Value": "9D"
                 }
               }
             },

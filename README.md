@@ -60,6 +60,13 @@ All 17 charts are in the [full report](reports/report.md).
 
 A four-page report in a dark navy theme: an overview of the renewal book, forecast accuracy, payment impact for one borrower, and the triage call list. Slicers change the rate scenario, the forecast horizon, the loan and the weekly call capacity. It is saved as a Power BI Project (PBIP), so the model, the DAX and every visual are plain text in this repository. [How to open it and check the numbers](powerbi/README.md).
 
+| | |
+|---|---|
+| ![Overview page](powerbi/screenshots/01_overview.png) | ![Rates and accuracy page](powerbi/screenshots/02_accuracy.png) |
+| Overview: the renewal book and where the rate is going | Rates & accuracy: how far off past forecasts were |
+| ![Payment impact page](powerbi/screenshots/03_payment.png) | ![Renewal triage page](powerbi/screenshots/04_triage.png) |
+| Payment impact: what renewal costs one borrower | Renewal triage: who to call first with limited capacity |
+
 ## Data
 
 Bank of Canada series [`V122667786`](https://www.bankofcanada.ca/valet/observations/V122667786/json): *Mortgages, funds advanced, residential mortgages, uninsured, total; fixed rate, 5 years and over*. Monthly, January 2013 to August 2026, in percent.
@@ -118,7 +125,6 @@ reports/           report.md and figures/
 
 ## Next
 
-- Add screenshots of the four Power BI pages to this README once the report has been opened on Windows.
 - Check the regression against ETS on September to November 2026 once they are published, and switch the headline forecast if it keeps winning.
 - Rerun the triage at each backtest origin from 2018 to see whether a better rate forecast changes who gets called.
 

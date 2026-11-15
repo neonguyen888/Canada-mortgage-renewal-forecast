@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "s_renewal",
   "position": {
-    "x": 732,
-    "y": 132,
+    "x": 664,
+    "y": 130,
     "z": 1800,
-    "height": 60,
-    "width": 330,
+    "height": 64,
+    "width": 362,
     "tabOrder": 1800
   },
   "visual": {
@@ -175,7 +175,7 @@
             "textSize": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
+                  "Value": "9D"
                 }
               }
             },

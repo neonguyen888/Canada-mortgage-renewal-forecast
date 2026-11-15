@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "s_years",
   "position": {
-    "x": 308,
-    "y": 132,
+    "x": 252,
+    "y": 130,
     "z": 1600,
-    "height": 60,
-    "width": 168,
+    "height": 64,
+    "width": 202,
     "tabOrder": 1600
   },
   "visual": {
@@ -175,7 +175,7 @@
             "textSize": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
+                  "Value": "9D"
                 }
               }
             },

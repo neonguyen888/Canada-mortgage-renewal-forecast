@@ -128,7 +128,7 @@ table measures_calc
 	measure 'Total Payment Increase' =
 			VAR _s = [Scenario Shift]
 			RETURN SUMX('Loans', SWITCH(_s, -50, 'Loans'[Rise if rates fall], 50, 'Loans'[Rise if rates rise], 'Loans'[Rise at forecast]))
-		formatString: \$#,0.00,,"M"
+		formatString: \$#,0.00
 		displayFolder: Renewal book
 		lineageTag: 9ccde1ed-8c2f-5f8f-8e87-e4d4ac85bcd2
 

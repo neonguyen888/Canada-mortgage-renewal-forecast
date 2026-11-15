@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "kpi_total_value",
   "position": {
-    "x": 340.0,
+    "x": 340,
     "y": 162,
     "z": 1900,
     "height": 44,
-    "width": 292.0,
+    "width": 292,
     "tabOrder": 1900
   },
   "visual": {
@@ -59,6 +59,20 @@
               "expr": {
                 "Literal": {
                   "Value": "'DIN'"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1000000D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "2L"
                 }
               }
             }
@@ -135,4 +149,4 @@
     },
     "drillFilterOtherVisuals": true
   }
-}
+}

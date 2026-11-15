@@ -3,9 +3,9 @@
   "name": "months_table",
   "position": {
     "x": 34,
-    "y": 588,
+    "y": 581,
     "z": 3700,
-    "height": 106,
+    "height": 113,
     "width": 1212,
     "tabOrder": 3700
   },
@@ -43,7 +43,8 @@
               },
               "queryRef": "measures_calc.Loan Count",
               "nativeQueryRef": "Loan Count",
-              "displayName": "Loans"
+              "displayName": "Loans",
+              "active": true
             },
             {
               "field": {
@@ -58,7 +59,8 @@
               },
               "queryRef": "measures_calc.Loans Above Threshold",
               "nativeQueryRef": "Loans Above Threshold",
-              "displayName": "Above +$250"
+              "displayName": "Above +$250",
+              "active": true
             },
             {
               "field": {
@@ -73,7 +75,8 @@
               },
               "queryRef": "measures_calc.Share Above Threshold",
               "nativeQueryRef": "Share Above Threshold",
-              "displayName": "Share above"
+              "displayName": "Share above",
+              "active": true
             }
           ]
         }
@@ -133,7 +136,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
+                  "Value": "9D"
                 }
               }
             },
@@ -197,7 +200,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
+                  "Value": "9D"
                 }
               }
             },
@@ -242,7 +245,7 @@
             "rowPadding": {
               "expr": {
                 "Literal": {
-                  "Value": "5D"
+                  "Value": "1D"
                 }
               }
             },

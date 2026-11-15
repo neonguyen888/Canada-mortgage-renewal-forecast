@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "hdr_data_through",
   "position": {
-    "x": 1006,
+    "x": 916,
     "y": 8,
     "z": 1200,
     "height": 30,
-    "width": 250,
+    "width": 330,
     "tabOrder": 1200
   },
   "visual": {

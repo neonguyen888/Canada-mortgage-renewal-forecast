@@ -3,9 +3,9 @@
   "name": "footer_right",
   "position": {
     "x": 900,
-    "y": 700,
+    "y": 684,
     "z": 3900,
-    "height": 20,
+    "height": 36,
     "width": 356,
     "tabOrder": 3900
   },

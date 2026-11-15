@@ -23,6 +23,7 @@ and the PBIP sample projects Microsoft's team publishes on GitHub.
 from __future__ import annotations
 
 import json
+import math
 import shutil
 import uuid
 from pathlib import Path
@@ -369,7 +370,7 @@ def add_measures(t: Table) -> None:
     t.measure("Total Payment Increase", f"""
         VAR _s = [Scenario Shift]
         RETURN SUMX('Loans', {rise})
-        """, '\\$#,0.00,,"M"', F, "Extra paid each month by the whole book in the chosen scenario.")
+        """, "\\$#,0.00", F, "Extra paid each month by the whole book in the chosen scenario.")
     t.measure("Loans Above Caption", 'FORMAT([Share Above Threshold], "0.0%") & " of " & FORMAT([Loan Count], "#,0") & " simulated loans"', None, F)
     t.measure("Payment Increase Caption", '"CAD a month across the book"', None, F)
     t.measure("Renewal Window Label", """
@@ -616,6 +617,11 @@ def props(**kw) -> list:
     return [{"properties": kw}]
 
 
+def label_height(size_pt: float) -> int:
+    """Smallest text box height (px) that shows one line of size_pt text without a scrollbar."""
+    return math.ceil(size_pt * 4 / 3 * 1.45) + 20
+
+
 def series(qref: str, **kw) -> dict:
     return {"properties": kw, "selector": {"metadata": qref}}
 
@@ -642,32 +648,45 @@ class Page:
         para = {"textRuns": [{"value": t, "textStyle": {"fontFamily": f, "fontSize": f"{s}pt", "color": c}} for t, s, c, f in runs]}
         if align != "left":
             para["horizontalTextAlignment"] = align
+        # Power BI pads text boxes, so a box sized to the font clips the text and shows a scrollbar.
+        # The text sits at the top, so a taller transparent box only adds room underneath.
+        h = max(h, label_height(max(s for _, s, _, _ in runs)))
+        y = min(y, PAGE_H - h)
         self.add(vname, x, y, w, h, {"visualType": "textbox", "objects": {"general": props(paragraphs=[para])},
                                      "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
 
-    def card(self, vname, x, y, w, h, measure, size=26, colour_hex=C["ink"], font=FONT_NUM):
+    def card(self, vname, x, y, w, h, measure, size=26, colour_hex=C["ink"], font=FONT_NUM, millions=False, full=False):
+        labels = dict(color=colour(colour_hex), fontSize=num(size), fontFamily=text(font))
+        if millions:
+            # Let the card scale to millions. Scaling with ",," in the format string as well
+            # makes Power BI print "$2.21,,MM".
+            labels.update(labelDisplayUnits=num(1000000), labelPrecision=lit("2L"))
+        elif full:
+            # The card's default "Auto" units turn $2,059.72 into $2.06K.
+            labels.update(labelDisplayUnits=num(1))
         self.add(vname, x, y, w, h, {
             "visualType": "card",
             "query": {"queryState": {"Values": {"projections": [proj_m(measure)]}}},
-            "objects": {"labels": props(color=colour(colour_hex), fontSize=num(size), fontFamily=text(font)),
+            "objects": {"labels": props(**labels),
                         "categoryLabels": props(show=boolean(False))},
             "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
 
-    def kpi(self, prefix, x, y, w, title, value_measure, caption_measure, accent=None):
+    def kpi(self, prefix, x, y, w, title, value_measure, caption_measure, accent=None, millions=False):
         self.label(f"{prefix}_label", x + 8, y + 10, w - 16, 26, [(title, 10, C["ink2"], FONT)], align="center")
-        self.card(f"{prefix}_value", x + 8, y + 34, w - 16, 44, value_measure, 26, accent or C["ink"])
+        self.card(f"{prefix}_value", x + 8, y + 34, w - 16, 44, value_measure, 26, accent or C["ink"],
+                  millions=millions, full=not millions)
         self.card(f"{prefix}_caption", x + 8, y + 76, w - 16, 26, caption_measure, 10, C["ink2"], FONT)
 
-    def slicer(self, vname, x, y, w, h, table, col, default, header=None):
+    def slicer(self, vname, x, y, w, h, table, col, default, header=None, item_size=10, dropdown=False):
         objects = {
-            "data": props(mode=text("HorizontalList")),
+            "data": props(mode=text("Dropdown" if dropdown else "HorizontalList")),
             "general": [{"properties": {
                 "orientation": lit("1D"),
                 "filter": {"filter": {"Version": 2, "From": [{"Name": "s", "Entity": table, "Type": 0}], "Where": [{"Condition": {"In": {
                     "Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "s"}}, "Property": col}}],
                     "Values": [[text(default)["expr"]]]}}}]}}}}],
             "selection": props(singleSelect=boolean(True), strictSingleSelect=boolean(True), selectAllCheckboxEnabled=boolean(False)),
-            "items": props(fontColor=colour(C["ink"]), background=colour(C["panel"]), textSize=num(10), fontFamily=text(FONT)),
+            "items": props(fontColor=colour(C["ink"]), background=colour(C["panel"]), textSize=num(item_size), fontFamily=text(FONT)),
             "header": props(show=boolean(header is not None), **({"text": text(header), "fontColor": colour(C["ink2"]),
                                                                  "textSize": num(9), "fontFamily": text(FONT)} if header else {})),
         }
@@ -720,7 +739,9 @@ class Page:
                 "dataPoint": [dp],
                 "labels": props(show=boolean(True), color=colour(C["ink"]), fontSize=num(10), fontFamily=text(FONT_SEMI)),
                 "valueAxis": props(show=boolean(False), gridlineShow=boolean(False)),
-                "categoryAxis": props(labelColor=colour(C["ink2"]), fontSize=num(10), showAxisTitle=boolean(False)),
+                # maxMarginFactor: room for the category names (default 25%), so long names aren't cut
+                "categoryAxis": props(labelColor=colour(C["ink2"]), fontSize=num(10), showAxisTitle=boolean(False),
+                                      maxMarginFactor=num(45)),
                 "legend": props(show=boolean(False)),
             },
             "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
@@ -740,8 +761,12 @@ class Page:
             },
             "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
 
-    def table(self, vname, x, y, w, h, fields, sort=None):
+    def table(self, vname, x, y, w, h, fields, sort=None, size=10, row_padding=5):
         projections = [proj_c(*f) if isinstance(f, tuple) else proj_m(f) for f in fields]
+        # In a table every field shares one role; Power BI shows only the "active" ones
+        # when some are marked, so mark measures too or they disappear.
+        for pr in projections:
+            pr["active"] = True
         query = {"queryState": {"Values": {"projections": projections}}}
         if sort:
             query["sortDefinition"] = {"sort": [{"field": cref(*sort), "direction": "Ascending"}], "isDefaultSort": True}
@@ -749,12 +774,12 @@ class Page:
             "visualType": "tableEx", "query": query,
             "objects": {
                 "columnHeaders": props(fontColor=colour(C["ink2"]), backColor=colour(C["panel"]), fontFamily=text(FONT_SEMI),
-                                       fontSize=num(10), outlineStyle=lit("0D")),
+                                       fontSize=num(size), outlineStyle=lit("0D")),
                 "values": props(fontColorPrimary=colour(C["ink"]), backColorPrimary=colour(C["panel"]),
-                                fontColorSecondary=colour(C["ink"]), backColorSecondary=colour(C["panel"]), fontSize=num(10),
+                                fontColorSecondary=colour(C["ink"]), backColorSecondary=colour(C["panel"]), fontSize=num(size),
                                 fontFamily=text(FONT)),
                 "grid": props(gridVertical=boolean(False), gridHorizontal=boolean(True), gridHorizontalColor=colour(C["line"]),
-                              rowPadding=num(5), outlineColor=colour(C["line"])),
+                              rowPadding=num(row_padding), outlineColor=colour(C["line"])),
                 "total": props(totals=boolean(False)),
             },
             "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
@@ -791,7 +816,7 @@ RIGHT_W = PAGE_W - M - RIGHT_X
 def header(p: Page, section: str, title: str, subtitle_measure: str | None = None, subtitle_text: str | None = None):
     p.label("hdr_brand", M, 10, 420, 28, [("●  ", 9, C["teal"], FONT), (section, 9, C["teal"], FONT_SEMI)])
     # cards centre their text, so these boxes are sized to the text to keep it near the margins
-    p.card("hdr_data_through", PAGE_W - M - 250, 8, 250, 30, "Data Through Label", 9, C["ink3"], FONT)
+    p.card("hdr_data_through", PAGE_W - M - 330, 8, 330, 30, "Data Through Label", 9, C["ink3"], FONT)
     p.label("hdr_title", M - 4, 52, 900, 46, [(title, 24, C["ink"], FONT_BOLD)])
     if subtitle_measure:
         p.card("hdr_subtitle", M - 6, 96, 340, 26, subtitle_measure, 10, C["ink2"], FONT)
@@ -830,7 +855,7 @@ def build_pages() -> list[Page]:
     p = Page("overview", "Overview", bg)
     header(p, "MORTGAGE ANALYTICS", "Canadian Mortgage Renewal", subtitle_measure="Renewal Window Label")
     p.kpi("kpi_above", M, TILE_Y, tw, "Loans above +$250 a month", "Loans Above Threshold", "Loans Above Caption", C["amber"])
-    p.kpi("kpi_total", M + tw, TILE_Y, tw, "Total payment increase", "Total Payment Increase", "Payment Increase Caption")
+    p.kpi("kpi_total", M + tw, TILE_Y, tw, "Total payment increase", "Total Payment Increase", "Payment Increase Caption", millions=True)
     p.kpi("kpi_latest", M + 2 * tw, TILE_Y, tw, "Market benchmark", "Latest Rate", "Latest Rate Caption")
     p.kpi("kpi_ets3", M + 3 * tw, TILE_Y, tw, "3-month forecast", "ETS 3-Month Forecast", "ETS 3-Month Caption", C["teal"])
     panel_title(p, "outlook", M, 244, LEFT_W, "Mortgage rate outlook", "5-year+ fixed, uninsured")
@@ -842,8 +867,10 @@ def build_pages() -> list[Page]:
                 colour_measure="Scenario Bar Colour")
     p.label("stress_note", RIGHT_X + 12, 502, RIGHT_W - 24, 30, [("Share of renewing loans with a payment rise above $250 a month", 9, C["ink3"], FONT)])
     panel_title(p, "months", M, 552, PAGE_W - 2 * M, "Renewals by month", "Chosen scenario. November and February are part months.")
-    p.table("months_table", M + 10, 588, PAGE_W - 2 * M - 20, 106,
-            [("Loans", "Renewal month"), "Loan Count", "Loans Above Threshold", "Share Above Threshold"], sort=("Loans", "Renewal month"))
+    # Compact rows so all four renewal months fit above the footer without a scrollbar.
+    p.table("months_table", M + 10, 581, PAGE_W - 2 * M - 20, 113,
+            [("Loans", "Renewal month"), "Loan Count", "Loans Above Threshold", "Share Above Threshold"], sort=("Loans", "Renewal month"),
+            size=9, row_padding=1)
     p.label("footer_left", M - 4, 700, 640, 20, [("Source: Bank of Canada series V122667786. Loans are simulated.", 8, C["ink3"], FONT)])
     p.label("footer_right", 900, 700, PAGE_W - M - 900, 20, [("Neo Nguyen", 8, C["ink3"], FONT)], align="right")
     pages.append(p)
@@ -881,16 +908,18 @@ def build_pages() -> list[Page]:
     p = Page("payment", "Payment impact", bg)
     header(p, "PAYMENT IMPACT", "What renewal costs one borrower",
            subtitle_text="Fixed-rate renewal, Canadian semi-annual compounding, principal and interest only")
+    # Power BI won't shrink a tile below about 66 px, so five tile slicers would need ~1,280 px in a
+    # 1,188 px strip. The two four-option number pickers are dropdowns so the other three fit.
     x = M + 12
-    for vname, w, table, col, default, head in [
-        ("s_balance", 262, "Balance Choice", "Balance label", "$400k", "Balance at renewal"),
-        ("s_years", 168, "Years Choice", "Years label", "20 yrs", "Years left to pay"),
-        ("s_before", 236, "Rate Before Choice", "Rate before label", "2.2%", "Rate before renewal"),
-        ("s_renewal", 330, "Renewal Rate Choice", "Renewal rate option", "Latest", "Renewal rate"),
-        ("s_threshold", 160, "Threshold", "Threshold label", "$250", "Payment rise to watch"),
+    for vname, w, table, col, default, head, dropdown in [
+        ("s_balance", 202, "Balance Choice", "Balance label", "$400k", "Balance at renewal", True),
+        ("s_years", 202, "Years Choice", "Years label", "20 yrs", "Years left to pay", False),
+        ("s_before", 202, "Rate Before Choice", "Rate before label", "2.2%", "Rate before renewal", True),
+        ("s_renewal", 362, "Renewal Rate Choice", "Renewal rate option", "Latest", "Renewal rate", False),
+        ("s_threshold", 204, "Threshold", "Threshold label", "$250", "Payment rise to watch", False),
     ]:
-        p.slicer(vname, x, 132, w, 60, table, col, default, header=head)
-        x += w + 10
+        p.slicer(vname, x, 130, w, 64, table, col, default, header=head, item_size=9, dropdown=dropdown)
+        x += w + 4
     p.kpi("kpi_before", M, 210, tw, "Payment before renewal", "Payment Before", "Payment Before Caption")
     p.kpi("kpi_after", M + tw, 210, tw, "Payment after renewal", "Payment After", "Payment After Caption")
     p.kpi("kpi_change", M + 2 * tw, 210, tw, "Change each month", "Monthly Change", "Monthly Change Caption", C["amber"])
@@ -925,7 +954,7 @@ def build_pages() -> list[Page]:
             [("Segments", "Segment"), ("Segments", "Loans"), ("Segments", "Median rise"), ("Segments", "Called at 300 a week")],
             sort=("Segments", "Segment"))
     panel_title(p, "rule", RIGHT_X, 492, RIGHT_W, "How the call list works")
-    p.label("rule_text", RIGHT_X + 10, 528, RIGHT_W - 20, 166, [
+    p.label("rule_text", RIGHT_X + 10, 520, RIGHT_W - 20, 178, [
         ("A borrower can be called from 60 days to 7 days before renewal. Each week the team first calls the people for whom "
          "this week is the last chance, then fills spare slots with the most certain cases.\n\n"
          "Ranking by segment alone did worse than calling by date, because certain cases renewing in two months took the slots.\n\n"

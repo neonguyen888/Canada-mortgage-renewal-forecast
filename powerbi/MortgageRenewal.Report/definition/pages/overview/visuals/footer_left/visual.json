@@ -3,9 +3,9 @@
   "name": "footer_left",
   "position": {
     "x": 20,
-    "y": 700,
+    "y": 684,
     "z": 3800,
-    "height": 20,
+    "height": 36,
     "width": 640,
     "tabOrder": 3800
   },

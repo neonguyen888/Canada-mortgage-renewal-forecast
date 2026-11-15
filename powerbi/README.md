@@ -11,7 +11,23 @@ A four-page Power BI report built on the CSVs the pipeline exports to `data/powe
 
 ## Screenshots
 
-Screenshots of the four pages will go here once the report has been opened in Power BI Desktop on Windows. They will be saved as `powerbi/screenshots/01_overview.png` to `04_triage.png`.
+Taken in Power BI Desktop on Windows with the default slicer choices, so the numbers match the table under "Check the numbers".
+
+**Overview**
+
+![Overview page](screenshots/01_overview.png)
+
+**Rates & accuracy**
+
+![Rates and accuracy page](screenshots/02_accuracy.png)
+
+**Payment impact**
+
+![Payment impact page](screenshots/03_payment.png)
+
+**Renewal triage**
+
+![Renewal triage page](screenshots/04_triage.png)
 
 ## Open it (Windows)
 
