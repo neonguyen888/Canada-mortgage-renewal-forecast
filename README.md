@@ -45,6 +45,17 @@ ETS met the selection rule written before the backtest (beat the naive model at 
 
 The bond-yield regression, added afterwards, beats both models at every horizon and in every rate period. It stays a challenger until it is tested on months published after this run (report section 7).
 
+## Charts
+
+| | |
+|---|---|
+| ![Payment change curve](reports/figures/07_payment_curve_threshold.png) | ![Model comparison](reports/figures/15_model_comparison_mae.png) |
+| How the monthly payment moves with the renewal rate, and where it crosses +$100, +$250 and +$500 | Average forecast miss by model, 1 to 6 months ahead |
+| ![Mortgage rate vs bond yield](reports/figures/13_rate_vs_bond_yield.png) | ![Triage capacity](reports/figures/17_triage_capacity.png) |
+| The 5-year fixed rate follows the 5-year Government of Canada bond yield | Borrowers facing +$250 a month who are never called, by weekly call capacity |
+
+All 17 charts are in the [full report](reports/report.md).
+
 ## Power BI report
 
 A four-page report in a dark navy theme: an overview of the renewal book, forecast accuracy, payment impact for one borrower, and the triage call list. Slicers change the rate scenario, the forecast horizon, the loan and the weekly call capacity. It is saved as a Power BI Project (PBIP), so the model, the DAX and every visual are plain text in this repository. [How to open it and check the numbers](powerbi/README.md).

@@ -9,6 +9,10 @@ A four-page Power BI report built on the CSVs the pipeline exports to `data/powe
 | Payment impact | What does renewal cost one borrower? | Balance, years left, old rate, renewal rate, threshold |
 | Renewal triage | Who should the team call first with limited capacity? | Calls per week (100 to 400) |
 
+## Screenshots
+
+Screenshots of the four pages will go here once the report has been opened in Power BI Desktop on Windows. They will be saved as `powerbi/screenshots/01_overview.png` to `04_triage.png`.
+
 ## Open it (Windows)
 
 1. Install a recent Power BI Desktop. On a version from before 2025, turn on the PBIP and PBIR options under File > Options and settings > Options > Preview features, then restart.
