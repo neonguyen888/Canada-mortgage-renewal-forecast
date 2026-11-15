@@ -39,13 +39,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Missed by Capacity, Date Order"
                 }
               },
-              "queryRef": "_Measures.Missed by Capacity, Date Order",
+              "queryRef": "measures_calc.Missed by Capacity, Date Order",
               "nativeQueryRef": "Missed by Capacity, Date Order",
               "displayName": "Calling by renewal date"
             },
@@ -54,13 +54,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Missed by Capacity, Triage"
                 }
               },
-              "queryRef": "_Measures.Missed by Capacity, Triage",
+              "queryRef": "measures_calc.Missed by Capacity, Triage",
               "nativeQueryRef": "Missed by Capacity, Triage",
               "displayName": "Triage rule"
             }
@@ -103,7 +103,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Missed by Capacity, Date Order"
+            "metadata": "measures_calc.Missed by Capacity, Date Order"
           }
         },
         {
@@ -121,7 +121,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Missed by Capacity, Triage"
+            "metadata": "measures_calc.Missed by Capacity, Triage"
           }
         }
       ],

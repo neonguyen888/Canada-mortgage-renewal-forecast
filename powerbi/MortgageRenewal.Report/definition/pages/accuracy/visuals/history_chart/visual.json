@@ -39,13 +39,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Observed Rate"
                 }
               },
-              "queryRef": "_Measures.Observed Rate",
+              "queryRef": "measures_calc.Observed Rate",
               "nativeQueryRef": "Observed Rate",
               "displayName": "Observed"
             },
@@ -54,13 +54,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "ETS Forecast"
                 }
               },
-              "queryRef": "_Measures.ETS Forecast",
+              "queryRef": "measures_calc.ETS Forecast",
               "nativeQueryRef": "ETS Forecast",
               "displayName": "ETS forecast"
             },
@@ -69,13 +69,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Bond-yield Forecast"
                 }
               },
-              "queryRef": "_Measures.Bond-yield Forecast",
+              "queryRef": "measures_calc.Bond-yield Forecast",
               "nativeQueryRef": "Bond-yield Forecast",
               "displayName": "Bond-yield forecast"
             },
@@ -84,13 +84,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Band Low"
                 }
               },
-              "queryRef": "_Measures.Band Low",
+              "queryRef": "measures_calc.Band Low",
               "nativeQueryRef": "Band Low",
               "displayName": "80% band"
             },
@@ -99,13 +99,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Band High"
                 }
               },
-              "queryRef": "_Measures.Band High",
+              "queryRef": "measures_calc.Band High",
               "nativeQueryRef": "Band High",
               "displayName": "80% band (upper)"
             }
@@ -148,7 +148,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Observed Rate"
+            "metadata": "measures_calc.Observed Rate"
           }
         },
         {
@@ -166,7 +166,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.ETS Forecast"
+            "metadata": "measures_calc.ETS Forecast"
           }
         },
         {
@@ -184,7 +184,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Bond-yield Forecast"
+            "metadata": "measures_calc.Bond-yield Forecast"
           }
         },
         {
@@ -202,7 +202,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Band Low"
+            "metadata": "measures_calc.Band Low"
           }
         },
         {
@@ -220,7 +220,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Band High"
+            "metadata": "measures_calc.Band High"
           }
         }
       ],
@@ -250,7 +250,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Observed Rate"
+            "metadata": "measures_calc.Observed Rate"
           }
         },
         {
@@ -278,7 +278,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.ETS Forecast"
+            "metadata": "measures_calc.ETS Forecast"
           }
         },
         {
@@ -306,7 +306,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Bond-yield Forecast"
+            "metadata": "measures_calc.Bond-yield Forecast"
           }
         },
         {
@@ -334,7 +334,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Band Low"
+            "metadata": "measures_calc.Band Low"
           }
         },
         {
@@ -362,7 +362,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Band High"
+            "metadata": "measures_calc.Band High"
           }
         }
       ],

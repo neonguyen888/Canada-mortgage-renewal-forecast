@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Bond-yield MAE Caption"
                 }
               },
-              "queryRef": "_Measures.Bond-yield MAE Caption",
+              "queryRef": "measures_calc.Bond-yield MAE Caption",
               "nativeQueryRef": "Bond-yield MAE Caption"
             }
           ]

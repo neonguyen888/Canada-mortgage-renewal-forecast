@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Renewal Window Label"
                 }
               },
-              "queryRef": "_Measures.Renewal Window Label",
+              "queryRef": "measures_calc.Renewal Window Label",
               "nativeQueryRef": "Renewal Window Label"
             }
           ]

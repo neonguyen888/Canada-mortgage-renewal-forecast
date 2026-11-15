@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "ETS 3-Month Forecast"
                 }
               },
-              "queryRef": "_Measures.ETS 3-Month Forecast",
+              "queryRef": "measures_calc.ETS 3-Month Forecast",
               "nativeQueryRef": "ETS 3-Month Forecast"
             }
           ]

@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Extra Reached Caption"
                 }
               },
-              "queryRef": "_Measures.Extra Reached Caption",
+              "queryRef": "measures_calc.Extra Reached Caption",
               "nativeQueryRef": "Extra Reached Caption"
             }
           ]

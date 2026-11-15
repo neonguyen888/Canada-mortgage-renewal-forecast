@@ -39,13 +39,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Share Above, Each Scenario"
                 }
               },
-              "queryRef": "_Measures.Share Above, Each Scenario",
+              "queryRef": "measures_calc.Share Above, Each Scenario",
               "nativeQueryRef": "Share Above, Each Scenario",
               "displayName": "Share above +$250"
             }
@@ -82,7 +82,7 @@
                     "Measure": {
                       "Expression": {
                         "SourceRef": {
-                          "Entity": "_Measures"
+                          "Entity": "measures_calc"
                         }
                       },
                       "Property": "Scenario Bar Colour"

@@ -39,13 +39,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "MAE at Horizon"
                 }
               },
-              "queryRef": "_Measures.MAE at Horizon",
+              "queryRef": "measures_calc.MAE at Horizon",
               "nativeQueryRef": "MAE at Horizon",
               "displayName": "Average miss (bps)"
             }
@@ -82,7 +82,7 @@
                     "Measure": {
                       "Expression": {
                         "SourceRef": {
-                          "Entity": "_Measures"
+                          "Entity": "measures_calc"
                         }
                       },
                       "Property": "Model Bar Colour"

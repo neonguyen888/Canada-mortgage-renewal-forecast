@@ -1,12 +1,12 @@
 /// All report measures live here.
-table _Measures
-	lineageTag: a2db4adb-b5b1-5868-ac1b-b9064454abd6
+table measures_calc
+	lineageTag: 4e5009d1-fb00-52f4-8fa5-12ca2b798983
 
 	/// Latest month the Bank of Canada has published.
 	measure 'Last Actual Month' = CALCULATE(MAX('Rate Outlook'[Month]), 'Rate Outlook'[Series] = "Actual", REMOVEFILTERS())
 		formatString: mmm yyyy
 		displayFolder: Rates
-		lineageTag: 28125e48-06cb-5c49-8ffe-04594dc9643d
+		lineageTag: 3b4a6d75-e94a-5c0c-9421-e54bcf704fcc
 
 	/// Market reference rate in the latest published month.
 	measure 'Latest Rate' =
@@ -14,37 +14,37 @@ table _Measures
 			RETURN CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = "Actual", 'Rate Outlook'[Month] = _m, REMOVEFILTERS())
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: a56e25e4-a643-5997-81c7-b7839001b0df
+		lineageTag: 308fb414-78b6-5cf7-86e9-2ad593f99503
 
 	measure 'Latest Rate Caption' = FORMAT([Last Actual Month], "mmm yyyy") & ", observed"
 		displayFolder: Rates
-		lineageTag: b62744f1-19e1-56dc-bda5-296c7fa058ff
+		lineageTag: 5afc633e-9def-5ce8-89e5-69a15138bfaa
 
 	measure 'Data Through Label' = "BANK OF CANADA DATA THROUGH " & UPPER(FORMAT([Last Actual Month], "mmm yyyy"))
 		displayFolder: Rates
-		lineageTag: e00c67b0-acba-5877-ad75-e2435874798c
+		lineageTag: bdf230a0-03fb-5cac-b38a-9c8dae18d4f3
 
 	measure 'ETS 3-Month Forecast' = CALCULATE(MAX('Forecast Comparison'[ETS rate]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: b1915880-2f93-582d-9041-84f4c6533ceb
+		lineageTag: fe7a4234-2f76-5ee3-ba5a-386d3758880c
 
 	measure 'ETS 3-Month Caption' =
 			VAR _m = CALCULATE(MAX('Forecast Comparison'[Target month]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())
 			RETURN FORMAT(_m, "mmm yyyy") & ", ETS forecast"
 		displayFolder: Rates
-		lineageTag: 006e81ce-9a92-52db-bfa2-eeb8025fb8f1
+		lineageTag: 2cfeb4fc-d113-5353-9cfe-53c654caee2b
 
 	measure 'Observed Rate' = CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = "Actual")
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: 5ff7dcb2-4de7-5633-93cc-1aed8dcc8be6
+		lineageTag: 7d09bbd7-9f00-5488-8938-04d6759ebe0b
 
 	/// ETS forecast. The last observed month is included so the line starts where the actuals end.
 	measure 'ETS Forecast' = CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = "Forecast")
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: cb14dbd0-f07d-5149-97dd-db9e529a1ca2
+		lineageTag: ed45c1ca-7096-5ddc-8df1-6c2205de5360
 
 	/// Edge of the 80% band built from past ETS errors.
 	measure 'Band Low' =
@@ -52,7 +52,7 @@ table _Measures
 			RETURN IF(ISBLANK(_v), IF(MAX('Calendar'[Month]) = [Last Actual Month], [Observed Rate]), _v)
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: b4f83e25-c7b3-5b1e-baaf-d9079e5cb1b8
+		lineageTag: 486aa36d-e310-53c1-8351-6e13c8c0b004
 
 	/// Edge of the 80% band built from past ETS errors.
 	measure 'Band High' =
@@ -60,7 +60,7 @@ table _Measures
 			RETURN IF(ISBLANK(_v), IF(MAX('Calendar'[Month]) = [Last Actual Month], [Observed Rate]), _v)
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: ddd54957-b37c-59c6-9001-af129445e584
+		lineageTag: b488e1f5-bf12-542c-be38-d3b29345cf43
 
 	/// Forecast from the regression on the 5-year bond yield.
 	measure 'Bond-yield Forecast' =
@@ -68,47 +68,47 @@ table _Measures
 			RETURN IF(ISBLANK(_v), IF(MAX('Calendar'[Month]) = [Last Actual Month], [Observed Rate]), _v)
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: 01eaef81-ee37-51ee-9988-4eed0c87d8e3
+		lineageTag: bf658728-25db-5af8-9db6-d3df1cb53f8d
 
 	measure 'Mortgage Rate Line' = MAX('Rate vs Yield'[Mortgage rate])
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: 753195cd-671f-5c5d-b146-bde7f638fd62
+		lineageTag: 7b97e8f5-3d97-5e58-9e3c-8e55f2d215bc
 
 	measure 'Bond Yield Line' = MAX('Rate vs Yield'[Bond yield])
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: 39493bd1-a434-54ea-9aea-f168e779270a
+		lineageTag: 1017e17a-2658-5257-b47a-e927116f39d3
 
 	/// Share of a 1-point bond-yield move that reaches the mortgage rate within four months.
 	measure 'Pass-through Share' = CALCULATE(MAX('Pass-through'[Cumulative]), REMOVEFILTERS())
 		formatString: 0.00
 		displayFolder: Rates
-		lineageTag: 66a55575-8735-5ba2-833d-b6fb2ee234c9
+		lineageTag: f2abd705-0377-5d7a-8128-8a1fc5ed3c0f
 
 	measure 'Latest Bond Yield' =
 			VAR _m = CALCULATE(MAX('Rate vs Yield'[Month]), REMOVEFILTERS())
 			RETURN CALCULATE(MAX('Rate vs Yield'[Bond yield]), 'Rate vs Yield'[Month] = _m, REMOVEFILTERS())
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: 84c04d4d-5bbb-5d21-8e92-acb3455580f7
+		lineageTag: 4943880a-15b9-5f79-b73f-daedb5ef6f3d
 
 	/// Rate scenario picked on the overview page, in bps.
 	measure 'Scenario Shift' = SELECTEDVALUE('Scenario'[Shift bps], 0)
 		formatString: 0
 		displayFolder: Renewal book
-		lineageTag: 986e8f29-fa4e-5465-b289-f3def242aaeb
+		lineageTag: bc74d7a0-476f-5698-a98a-30bed439f156
 
 	/// Payment increase being watched, $250 unless changed.
 	measure 'Threshold Value' = SELECTEDVALUE('Threshold'[Threshold], 250)
 		formatString: \$#,0
 		displayFolder: Renewal book
-		lineageTag: 9a750bb9-7cbf-5c0c-b95d-a72454114531
+		lineageTag: 1610b04e-0e34-5431-b1a9-5c567c9e5025
 
 	measure 'Loan Count' = COUNTROWS('Loans')
 		formatString: #,0
 		displayFolder: Renewal book
-		lineageTag: 94f82fda-9bf1-5f17-9734-485048fc138c
+		lineageTag: e263962e-5e52-598e-a4d6-331cd01b5fb9
 
 	/// Loans whose monthly payment rises by more than the threshold in the chosen scenario.
 	measure 'Loans Above Threshold' =
@@ -117,12 +117,12 @@ table _Measures
 			RETURN COUNTROWS(FILTER('Loans', SWITCH(_s, -50, 'Loans'[Rise if rates fall], 50, 'Loans'[Rise if rates rise], 'Loans'[Rise at forecast]) > _t)) + 0
 		formatString: #,0
 		displayFolder: Renewal book
-		lineageTag: 283a8ebd-737b-5c5d-bb75-f8f3aba5a7b3
+		lineageTag: c0ea7b94-c41e-50b4-a307-5c3fbe138687
 
 	measure 'Share Above Threshold' = DIVIDE([Loans Above Threshold], [Loan Count])
 		formatString: 0.0%
 		displayFolder: Renewal book
-		lineageTag: 301651ea-9f3f-577c-92cc-c3de73e48f48
+		lineageTag: d2e0615d-acd7-5e31-ac5e-b76af3f879ae
 
 	/// Extra paid each month by the whole book in the chosen scenario.
 	measure 'Total Payment Increase' =
@@ -130,22 +130,22 @@ table _Measures
 			RETURN SUMX('Loans', SWITCH(_s, -50, 'Loans'[Rise if rates fall], 50, 'Loans'[Rise if rates rise], 'Loans'[Rise at forecast]))
 		formatString: \$#,0.00,,"M"
 		displayFolder: Renewal book
-		lineageTag: 0b6c37ff-b490-52b1-a4b4-2ee51304d5a3
+		lineageTag: 9ccde1ed-8c2f-5f8f-8e87-e4d4ac85bcd2
 
 	measure 'Loans Above Caption' = FORMAT([Share Above Threshold], "0.0%") & " of " & FORMAT([Loan Count], "#,0") & " simulated loans"
 		displayFolder: Renewal book
-		lineageTag: b7cb59b5-c109-5606-870e-ea5947516684
+		lineageTag: 2044a9e6-7b89-5bc0-9f5b-841f87332e9a
 
 	measure 'Payment Increase Caption' = "CAD a month across the book"
 		displayFolder: Renewal book
-		lineageTag: 926ef9a1-5105-5cd4-a3dd-5583758cb33e
+		lineageTag: 3e2c9e02-4e6e-5e02-94e1-e258f123cb55
 
 	measure 'Renewal Window Label' =
 			VAR _a = CALCULATE(MIN('Loans'[Renewal date]), REMOVEFILTERS())
 			VAR _b = CALCULATE(MAX('Loans'[Renewal date]), REMOVEFILTERS())
 			RETURN "90-day renewal window, " & FORMAT(_a, "d mmm yyyy") & " to " & FORMAT(_b, "d mmm yyyy")
 		displayFolder: Renewal book
-		lineageTag: e3cde4e8-8fea-50cb-abb2-087562e8e548
+		lineageTag: 4dbf4a64-af94-59a9-acee-5023f590a9e9
 
 	/// Share over the threshold for the scenario on the chart axis, whatever the slicer says.
 	measure 'Share Above, Each Scenario' =
@@ -154,17 +154,17 @@ table _Measures
 			RETURN DIVIDE(COUNTROWS(FILTER('Loans', SWITCH(_s, -50, 'Loans'[Rise if rates fall], 50, 'Loans'[Rise if rates rise], 'Loans'[Rise at forecast]) > _t)), COUNTROWS('Loans'))
 		formatString: 0.0%
 		displayFolder: Renewal book
-		lineageTag: aacd179c-4b47-5e0d-8f6f-aebd37509a1d
+		lineageTag: 044799b7-5ff1-5a40-890b-ba0edaa04858
 
 	/// Amber for the scenario picked in the slicer.
 	measure 'Scenario Bar Colour' = IF(SELECTEDVALUE('Scenario Axis'[Shift bps]) = [Scenario Shift], "#F2B05E", "#3B4B63")
 		displayFolder: Renewal book
-		lineageTag: 3bad4e4c-a066-512a-9046-d1e37a246860
+		lineageTag: 20971863-1885-59b7-b257-08e4a2abbfc2
 
 	measure 'Selected Horizon' = SELECTEDVALUE('Horizon Choice'[Months], 3)
 		formatString: 0
 		displayFolder: Accuracy
-		lineageTag: 24d615d9-6153-5876-a90c-6f63ed3df9a4
+		lineageTag: e69c8de6-80c1-5a58-bc4e-b03dc514c91b
 
 	/// Average size of a forecast miss, in basis points, at the chosen horizon.
 	measure 'MAE at Horizon' =
@@ -172,71 +172,71 @@ table _Measures
 			RETURN CALCULATE(MAX('Model Accuracy'[MAE bps]), 'Model Accuracy'[Horizon] = _h)
 		formatString: 0.0" bps"
 		displayFolder: Accuracy
-		lineageTag: f3f34dd8-3458-5362-bd58-4e8a6060116d
+		lineageTag: 24420e25-d8d7-5b75-bf5a-3a535240020f
 
 	measure 'ETS MAE' =
 			VAR _h = [Selected Horizon]
 			RETURN CALCULATE(MAX('Model Accuracy'[MAE bps]), 'Model Accuracy'[Model] = "ETS damped trend", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
 		formatString: 0.0" bps"
 		displayFolder: Accuracy
-		lineageTag: fbabb45b-e2e9-55ac-9776-811985541f68
+		lineageTag: b1e4f367-88c9-5ef9-99e0-4412df39ba7c
 
 	measure 'ETS MAE CAD' =
 			VAR _h = [Selected Horizon]
 			RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), 'Model Accuracy'[Model] = "ETS damped trend", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
 		formatString: \$#,0.00
 		displayFolder: Accuracy
-		lineageTag: 11eb77df-9829-5db9-9af8-59d5488d3ce3
+		lineageTag: 64fb1ef2-5cfb-5b7a-9f40-d5cbb64392fc
 
 	measure 'Naive MAE' =
 			VAR _h = [Selected Horizon]
 			RETURN CALCULATE(MAX('Model Accuracy'[MAE bps]), 'Model Accuracy'[Model] = "Naive (last observed)", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
 		formatString: 0.0" bps"
 		displayFolder: Accuracy
-		lineageTag: 5c0f98b8-e8c4-5126-8ac4-612b10a6ed3d
+		lineageTag: a280e130-071d-59ec-9469-6aa6d7752daa
 
 	measure 'Naive MAE CAD' =
 			VAR _h = [Selected Horizon]
 			RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), 'Model Accuracy'[Model] = "Naive (last observed)", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
 		formatString: \$#,0.00
 		displayFolder: Accuracy
-		lineageTag: 8c134772-2a43-5dc8-9326-fbf8d7cff12e
+		lineageTag: 6a02184a-df70-5b7d-a765-7537e77c92fb
 
 	measure 'Bond-yield MAE' =
 			VAR _h = [Selected Horizon]
 			RETURN CALCULATE(MAX('Model Accuracy'[MAE bps]), 'Model Accuracy'[Model] = "Bond-yield regression", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
 		formatString: 0.0" bps"
 		displayFolder: Accuracy
-		lineageTag: 54c2886c-a364-5910-bf63-d10d182204fc
+		lineageTag: 8f0351ca-fff0-51fb-b531-cb8adae19faa
 
 	measure 'Bond-yield MAE CAD' =
 			VAR _h = [Selected Horizon]
 			RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), 'Model Accuracy'[Model] = "Bond-yield regression", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
 		formatString: \$#,0.00
 		displayFolder: Accuracy
-		lineageTag: b34b4b6e-b1d5-557a-b534-59bffc963a2a
+		lineageTag: ac1ef253-efe4-5051-ad42-ed2a51dcf38f
 
 	measure 'ETS MAE Caption' =
 			VAR _h = [Selected Horizon]
 			VAR _p = CALCULATE(MAX('ETS Test'[p-value]), 'ETS Test'[Horizon] = _h)
 			RETURN FORMAT(1 - DIVIDE([ETS MAE], [Naive MAE]), "0%") & " smaller than naive, p = " & FORMAT(_p, "0.00")
 		displayFolder: Accuracy
-		lineageTag: 52b0bb00-f3b1-5d9d-80bb-eb735dd43490
+		lineageTag: 9fd77f3c-4935-5ab3-aa06-94474b6ea896
 
 	measure 'Bond-yield MAE Caption' =
 			VAR _h = [Selected Horizon]
 			VAR _p = CALCULATE(MAX('Bond-yield Test'[p-value]), 'Bond-yield Test'[Comparison] = "Bond-yield regression vs ETS damped trend", 'Bond-yield Test'[Horizon] = _h)
 			RETURN FORMAT(1 - DIVIDE([Bond-yield MAE], [ETS MAE]), "0%") & " smaller than ETS, " & IF(_p < 0.001, "p < 0.001", "p = " & FORMAT(_p, "0.000"))
 		displayFolder: Accuracy
-		lineageTag: 5311b6d2-b50e-5239-9f09-1eb06a7299e3
+		lineageTag: 8ed40a9f-973a-5b29-a6fb-d98b14a69b93
 
 	measure 'Naive MAE Caption' = FORMAT([Naive MAE CAD], "$#,0.00") & " a month on a $400k loan"
 		displayFolder: Accuracy
-		lineageTag: 4e996d9a-3209-5ed1-8758-358cc025336a
+		lineageTag: 1959ee7c-eaaa-5b57-8cee-59dc58e3e3e5
 
 	measure 'Pass-through Caption' = "of a 1-point yield move, within 4 months"
 		displayFolder: Accuracy
-		lineageTag: dd7a04d0-6451-52f6-bffe-e687a0afe710
+		lineageTag: 3d8f1d2c-d992-5e13-b3a9-d3edd670e5e5
 
 	measure 'Model Bar Colour' =
 			SWITCH(
@@ -248,46 +248,46 @@ table _Measures
 			    "#3B4B63"
 			)
 		displayFolder: Accuracy
-		lineageTag: 8ec47c2f-8df3-5737-bd24-cc1f931abc60
+		lineageTag: 5a2054a3-9ea2-54a9-b7d1-1ec6f904f826
 
 	measure 'ETS MAE by Period' =
 			VAR _h = [Selected Horizon]
 			RETURN CALCULATE(MAX('Accuracy By Period'[MAE bps]), 'Accuracy By Period'[Model] = "ETS damped trend", 'Accuracy By Period'[Horizon] = _h)
 		formatString: 0.0
 		displayFolder: Accuracy
-		lineageTag: a30d9631-e25a-50fa-a770-1895d8eb2a5a
+		lineageTag: fb189094-df25-58c1-8d46-5003ad4b794f
 
 	measure 'Naive MAE by Period' =
 			VAR _h = [Selected Horizon]
 			RETURN CALCULATE(MAX('Accuracy By Period'[MAE bps]), 'Accuracy By Period'[Model] = "Naive (last observed)", 'Accuracy By Period'[Horizon] = _h)
 		formatString: 0.0
 		displayFolder: Accuracy
-		lineageTag: 97d05114-5613-5d58-8e0e-914f8356e6ef
+		lineageTag: 6ef57edc-f2ce-5f77-9ea0-e5d772939a28
 
 	measure 'Chosen Balance' = SELECTEDVALUE('Balance Choice'[Balance], 400000)
 		formatString: \$#,0
 		displayFolder: Payment impact
-		lineageTag: 9759bafb-f757-5175-8fbe-d97ac84d00f0
+		lineageTag: 6c9afca0-3412-50cc-8aff-e2d232804016
 
 	measure 'Chosen Years Left' = SELECTEDVALUE('Years Choice'[Years], 20)
 		formatString: 0
 		displayFolder: Payment impact
-		lineageTag: 49402b3b-3423-5dc3-a693-4b207a5528f6
+		lineageTag: 72d1abce-f30c-50a7-8388-fc568b0a67b9
 
 	measure 'Chosen Rate Before' = SELECTEDVALUE('Rate Before Choice'[Rate], 2.2)
 		formatString: 0.00\%
 		displayFolder: Payment impact
-		lineageTag: 596ef6ab-a4a8-53df-9ef5-ab3b2f42136e
+		lineageTag: 17f3716a-5eef-532f-bcb9-9967381c5721
 
 	measure 'ETS 6-Month Forecast' = CALCULATE(MAX('Forecast Comparison'[ETS rate]), 'Forecast Comparison'[Horizon] = 6, REMOVEFILTERS())
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: 2c251d33-de55-551f-bb1d-8cb54c7d6811
+		lineageTag: 9d708c93-0ac2-5c2b-ad5f-2d81574e17b6
 
 	measure 'Bond-yield 6-Month Forecast' = CALCULATE(MAX('Forecast Comparison'[Bond-yield rate]), 'Forecast Comparison'[Horizon] = 6, REMOVEFILTERS())
 		formatString: 0.00\%
 		displayFolder: Rates
-		lineageTag: 26118cce-1cea-5a31-9ef1-70df1542e379
+		lineageTag: 96acb85f-fb7c-506f-846a-2b67882e43e2
 
 	/// Renewal rate picked in the slicer: today's rate or one of the forecasts.
 	measure 'Chosen Renewal Rate' =
@@ -300,7 +300,7 @@ table _Measures
 			)
 		formatString: 0.00\%
 		displayFolder: Payment impact
-		lineageTag: 5946f027-07aa-5baf-b649-6029b4126189
+		lineageTag: 27649a7c-4f51-5948-8903-ae5ca9139681
 
 	/// Monthly payment before renewal. Canadian semi-annual compounding, same formula as the Python and SQL code.
 	measure 'Payment Before' =
@@ -312,7 +312,7 @@ table _Measures
 			RETURN _pay
 		formatString: \$#,0.00
 		displayFolder: Payment impact
-		lineageTag: d64c0a29-6fb8-50c9-a1e9-75d3c4730540
+		lineageTag: 31d4d6a9-e56e-5f5d-8114-e808f15aba43
 
 	/// Monthly payment at the chosen renewal rate.
 	measure 'Payment After' =
@@ -324,24 +324,24 @@ table _Measures
 			RETURN _pay
 		formatString: \$#,0.00
 		displayFolder: Payment impact
-		lineageTag: d5908c66-2ad0-52bd-817b-97f8975fe26a
+		lineageTag: 6aeb2426-5451-580f-ad0e-e07ff8ceee79
 
 	measure 'Monthly Change' = [Payment After] - [Payment Before]
 		formatString: +\$#,0.00;-\$#,0.00;\$0.00
 		displayFolder: Payment impact
-		lineageTag: 636323c0-aa8a-5382-8b32-7c98e2095170
+		lineageTag: 98aad65c-3e3a-5227-9810-0b89c225435b
 
 	measure 'Payment Before Caption' = "at " & FORMAT([Chosen Rate Before], "0.00") & "%"
 		displayFolder: Payment impact
-		lineageTag: 60ec2d09-cce3-511b-aee7-495ca3f770a7
+		lineageTag: 54028cf9-60fe-5146-8697-25898a651a32
 
 	measure 'Payment After Caption' = "at " & FORMAT([Chosen Renewal Rate], "0.00") & "%"
 		displayFolder: Payment impact
-		lineageTag: 0c85c49c-a059-5f9e-85fa-1bb772df93dd
+		lineageTag: 03829df0-f08a-5cdd-8f53-e93bff5b04ef
 
 	measure 'Monthly Change Caption' = FORMAT([Monthly Change] * 12, "$#,0") & " a year, threshold " & FORMAT([Threshold Value], "$#,0")
 		displayFolder: Payment impact
-		lineageTag: 5034515c-1e61-5d50-955d-ca0d45291241
+		lineageTag: 5b0f7c0f-4d6a-5468-8832-87d2853d8c73
 
 	/// Lowest rate on the 1 bp grid where the payment rise reaches the threshold. Within 1 bp of the exact answer.
 	measure 'Threshold Rate' =
@@ -362,7 +362,7 @@ table _Measures
 			    )
 		formatString: 0.00\%
 		displayFolder: Payment impact
-		lineageTag: 49e1a333-5053-577d-8ad4-88ddc7bfc71c
+		lineageTag: 95c20da9-64cb-504a-b759-527f0346b4dc
 
 	measure 'Threshold Rate Caption' =
 			VAR _tr = [Threshold Rate]
@@ -370,7 +370,7 @@ table _Measures
 			RETURN IF(ISBLANK(_tr), "Not reached between 0% and 10%",
 			          "Renewal rate is " & FORMAT(ABS(_d), "0") & " bps " & IF(_d >= 0, "above", "below") & " it")
 		displayFolder: Payment impact
-		lineageTag: 6964dda7-9bb2-5f06-bfc3-fc5b051cf08e
+		lineageTag: 3080c8ef-b274-5152-aa5a-d64fba0ad906
 
 	/// Payment change at each rate on the curve, 0.5% to 8%.
 	measure 'Change on Curve' =
@@ -383,14 +383,14 @@ table _Measures
 			RETURN IF(NOT ISBLANK(_rate) && _rate >= 0.5 && _rate <= 8, _pay - [Payment Before])
 		formatString: \$#,0
 		displayFolder: Payment impact
-		lineageTag: e6eb36fd-3084-5dbd-8ec7-e7a286b44337
+		lineageTag: 2efca906-e9a6-53da-94b7-d00ee272b6f1
 
 	measure 'Threshold Line' =
 			VAR _rate = SELECTEDVALUE('Rate Grid'[Rate])
 			RETURN IF(NOT ISBLANK(_rate) && _rate >= 0.5 && _rate <= 8, [Threshold Value])
 		formatString: \$#,0
 		displayFolder: Payment impact
-		lineageTag: 7bbb97da-c8e5-5fc2-9cdb-5d56ff507386
+		lineageTag: 6e6e7968-25e3-5d3c-9aaf-e70e5d505d56
 
 	/// One point on the curve at the chosen renewal rate.
 	measure 'Selected Rate Point' =
@@ -398,7 +398,7 @@ table _Measures
 			RETURN IF(NOT ISBLANK(_rate) && ABS(_rate - ROUND([Chosen Renewal Rate], 2)) < 0.00001, [Monthly Change])
 		formatString: \$#,0
 		displayFolder: Payment impact
-		lineageTag: 7faed23e-64c8-5d66-88d2-32f02cee5828
+		lineageTag: 73e59395-63e4-5b2f-88cf-a396256aeab2
 
 	/// Payment change at the renewal rate, 50 bps lower and 50 bps higher.
 	measure 'Change at Scenario' =
@@ -411,16 +411,16 @@ table _Measures
 			RETURN _pay - [Payment Before]
 		formatString: +\$#,0;-\$#,0
 		displayFolder: Payment impact
-		lineageTag: 0a9bea77-ebbc-592e-adb2-c1d77c465544
+		lineageTag: a6bb637c-6d89-50e8-b45a-3de6da22a633
 
 	measure 'Scenario Change Colour' = IF([Change at Scenario] > [Threshold Value], "#F2B05E", "#3B4B63")
 		displayFolder: Payment impact
-		lineageTag: 7c132497-264b-5153-96de-25edc4c90fe9
+		lineageTag: d6888b57-8b71-514c-92c6-5435404d600a
 
 	measure 'Chosen Calls per Week' = SELECTEDVALUE('Capacity Choice'[Calls per week], 300)
 		formatString: #,0
 		displayFolder: Triage
-		lineageTag: 2379dfdc-606c-5d28-bed0-3818d73c7156
+		lineageTag: 54bb604e-c744-532f-a1ad-5e39bbff9c32
 
 	/// Borrowers over the $250 threshold who never get a call, using the triage rule.
 	measure 'Missed with Triage' =
@@ -428,7 +428,7 @@ table _Measures
 			RETURN CALCULATE(SUM('Call Capacity'[Over missed]), 'Call Capacity'[Calls per week] = _c)
 		formatString: #,0
 		displayFolder: Triage
-		lineageTag: 3f64667c-9179-587c-8549-a2f095841eb1
+		lineageTag: 5fb3bbb3-2494-525c-8fb5-498fa399e34a
 
 	/// Same, when the team simply calls in renewal-date order.
 	measure 'Missed in Date Order' =
@@ -436,77 +436,77 @@ table _Measures
 			RETURN CALCULATE(SUM('Call Capacity'[Over missed, date order]), 'Call Capacity'[Calls per week] = _c)
 		formatString: #,0
 		displayFolder: Triage
-		lineageTag: c7b946f5-8423-5561-a2ab-1635d7a62529
+		lineageTag: cdc75295-28d0-5ec6-9cd3-cf5466e71bea
 
 	measure 'Near-certain Missed' =
 			VAR _c = [Chosen Calls per Week]
 			RETURN CALCULATE(SUM('Call Capacity'[Segment 1 missed]), 'Call Capacity'[Calls per week] = _c)
 		formatString: #,0
 		displayFolder: Triage
-		lineageTag: c33cdba0-1da4-5746-b441-c0fcaa7759b4
+		lineageTag: 4e0f805a-b44f-5915-92d5-8724f46dfe6d
 
 	measure 'Near-certain Missed, Date Order' =
 			VAR _c = [Chosen Calls per Week]
 			RETURN CALCULATE(SUM('Call Capacity'[Segment 1 missed, date order]), 'Call Capacity'[Calls per week] = _c)
 		formatString: #,0
 		displayFolder: Triage
-		lineageTag: e77cb653-2b0d-5f59-a3c2-a0685be45428
+		lineageTag: c6ae96e7-c96b-5a18-b365-6ee29c850035
 
 	measure 'Missed Rise with Triage' =
 			VAR _c = [Chosen Calls per Week]
 			RETURN CALCULATE(SUM('Call Capacity'[Missed rise per month]), 'Call Capacity'[Calls per week] = _c)
 		formatString: \$#,0
 		displayFolder: Triage
-		lineageTag: 20766f81-c380-5ff4-bc8a-ea89c0e0834b
+		lineageTag: ef45dd2d-192e-5e7f-9f4d-f4841cbc8b59
 
 	measure 'Missed Rise in Date Order' =
 			VAR _c = [Chosen Calls per Week]
 			RETURN CALCULATE(SUM('Call Capacity'[Missed rise per month, date order]), 'Call Capacity'[Calls per week] = _c)
 		formatString: \$#,0
 		displayFolder: Triage
-		lineageTag: 3ee44736-4486-539a-a9c9-1a02a3317ad0
+		lineageTag: 5727beb3-efc8-5d56-aac7-270ade21ad97
 
 	measure 'Extra Borrowers Reached' = [Missed in Date Order] - [Missed with Triage]
 		formatString: +#,0;-#,0;0
 		displayFolder: Triage
-		lineageTag: 1346eca7-e8ff-58bc-b68c-cca1b83b55f5
+		lineageTag: 2a545e5b-2af9-5ba8-b384-789a7ca8ddbc
 
 	measure 'Missed with Triage Caption' = "borrowers over +$250 never called"
 		displayFolder: Triage
-		lineageTag: ab44bd48-d82c-55b0-aa2e-102ac91d1530
+		lineageTag: 25b631b9-bbeb-5661-afaa-ec0402a6e608
 
 	measure 'Missed in Date Order Caption' = "same capacity, calling by renewal date"
 		displayFolder: Triage
-		lineageTag: aee3c77d-f911-5d96-a914-4340019ab8ea
+		lineageTag: 97576806-9af3-5f7c-a066-1c796e3f4da2
 
 	measure 'Extra Reached Caption' = FORMAT([Missed Rise in Date Order] - [Missed Rise with Triage], "$#,0") & " a month of rises caught in time"
 		displayFolder: Triage
-		lineageTag: 1c21fd3c-52f3-5cd3-99d7-91166b2d567a
+		lineageTag: 50075f30-dd0c-58e4-a499-d90f8cec2e2e
 
 	measure 'Near-certain Caption' = "against " & FORMAT([Near-certain Missed, Date Order], "#,0") & " in date order"
 		displayFolder: Triage
-		lineageTag: da770261-3677-52a8-b862-1dac61184a24
+		lineageTag: d5c16ded-ceea-5c8f-8d73-f742d87df4cd
 
 	measure 'Missed by Capacity, Date Order' = SUM('Call Capacity'[Over missed, date order])
 		formatString: #,0
 		displayFolder: Triage
-		lineageTag: deaac4e2-75af-5937-a2e2-a88e9f862ac4
+		lineageTag: d3805d8d-36be-513b-8fe6-dc7820653174
 
 	measure 'Missed by Capacity, Triage' = SUM('Call Capacity'[Over missed])
 		formatString: #,0
 		displayFolder: Triage
-		lineageTag: 739c2880-3976-5327-ace7-49a09f23a417
+		lineageTag: c3503133-820f-5b5d-8f80-079fdcba4e93
 
 	column Placeholder
 		dataType: string
 		isHidden
-		lineageTag: 0671c123-505e-5058-b10f-6e11f17468d5
+		lineageTag: 5c43057a-ea6b-54e2-a883-775cb2808fbb
 		summarizeBy: none
 		sourceColumn: Placeholder
 
 		annotation SummarizationSetBy = User
 
-	partition _Measures = m
+	partition measures_calc = m
 		mode: import
 		source =
 				let

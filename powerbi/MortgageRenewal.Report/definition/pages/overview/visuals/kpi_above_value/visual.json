@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Loans Above Threshold"
                 }
               },
-              "queryRef": "_Measures.Loans Above Threshold",
+              "queryRef": "measures_calc.Loans Above Threshold",
               "nativeQueryRef": "Loans Above Threshold",
               "displayName": "Above +$250"
             }

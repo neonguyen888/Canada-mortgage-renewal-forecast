@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Missed in Date Order"
                 }
               },
-              "queryRef": "_Measures.Missed in Date Order",
+              "queryRef": "measures_calc.Missed in Date Order",
               "nativeQueryRef": "Missed in Date Order"
             }
           ]

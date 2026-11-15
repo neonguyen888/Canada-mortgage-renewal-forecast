@@ -9,7 +9,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 0
 
-annotation PBI_QueryOrder = ["DataFolder", "Rate Outlook", "Calendar", "Forecast Comparison", "Loans", "Model Accuracy", "Accuracy By Period", "ETS Test", "Bond-yield Test", "Rate vs Yield", "Pass-through", "Rate Grid", "Call Capacity", "Segments", "Scenario", "Scenario Axis", "Threshold", "Balance Choice", "Years Choice", "Rate Before Choice", "Horizon Choice", "Capacity Choice", "Renewal Rate Choice", "_Measures"]
+annotation PBI_QueryOrder = ["DataFolder", "Rate Outlook", "Calendar", "Forecast Comparison", "Loans", "Model Accuracy", "Accuracy By Period", "ETS Test", "Bond-yield Test", "Rate vs Yield", "Pass-through", "Rate Grid", "Call Capacity", "Segments", "Scenario", "Scenario Axis", "Threshold", "Balance Choice", "Years Choice", "Rate Before Choice", "Horizon Choice", "Capacity Choice", "Renewal Rate Choice", "measures_calc"]
 
 ref table 'Rate Outlook'
 ref table Calendar
@@ -33,5 +33,5 @@ ref table 'Rate Before Choice'
 ref table 'Horizon Choice'
 ref table 'Capacity Choice'
 ref table 'Renewal Rate Choice'
-ref table _Measures
+ref table measures_calc
 

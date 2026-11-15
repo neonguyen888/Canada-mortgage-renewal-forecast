@@ -35,13 +35,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Loan Count"
                 }
               },
-              "queryRef": "_Measures.Loan Count",
+              "queryRef": "measures_calc.Loan Count",
               "nativeQueryRef": "Loan Count",
               "displayName": "Loans"
             },
@@ -50,13 +50,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Loans Above Threshold"
                 }
               },
-              "queryRef": "_Measures.Loans Above Threshold",
+              "queryRef": "measures_calc.Loans Above Threshold",
               "nativeQueryRef": "Loans Above Threshold",
               "displayName": "Above +$250"
             },
@@ -65,13 +65,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Share Above Threshold"
                 }
               },
-              "queryRef": "_Measures.Share Above Threshold",
+              "queryRef": "measures_calc.Share Above Threshold",
               "nativeQueryRef": "Share Above Threshold",
               "displayName": "Share above"
             }

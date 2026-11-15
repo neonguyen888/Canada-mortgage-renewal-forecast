@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Extra Borrowers Reached"
                 }
               },
-              "queryRef": "_Measures.Extra Borrowers Reached",
+              "queryRef": "measures_calc.Extra Borrowers Reached",
               "nativeQueryRef": "Extra Borrowers Reached"
             }
           ]

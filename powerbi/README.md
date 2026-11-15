@@ -50,7 +50,7 @@ The pipeline runs it as its last step. Rebuilding overwrites changes made in Pow
 
 **Data model.** Each CSV becomes one table through Power Query. The queries read the files with an `en-US` culture, so `4.58` stays 4.58 on a machine set to a comma-decimal locale. `Calendar` links the rate tables by month. The slicer tables (scenario, threshold, balance and so on) are small lookup tables with no relationships; measures read the choice with `SELECTEDVALUE`. That keeps every bar visible when a slicer moves, and the chosen bar turns amber through a colour measure.
 
-**Measures.** All 74 measures live in the `_Measures` table (Power BI reserves the name `Measures`), grouped in folders: Rates, Renewal book, Accuracy, Payment impact and Triage. The payment formula in DAX is the same Canadian semi-annual one used in `src/mortgage.py` and the SQL function, and the threshold rate is the lowest rate on the 1 bp grid where the rise reaches the threshold.
+**Measures.** All 74 measures live in the `measures_calc` table (Power BI reserves the name `Measures`), grouped in folders: Rates, Renewal book, Accuracy, Payment impact and Triage. The payment formula in DAX is the same Canadian semi-annual one used in `src/mortgage.py` and the SQL function, and the threshold rate is the lowest rate on the 1 bp grid where the rise reaches the threshold.
 
 **Look.** Navy canvas, amber for whatever needs attention, teal for the ETS forecast, light blue for observed data and lavender for the bond-yield model. The panels are drawn into a background image at twice the page size, and the visuals sit on top with transparent backgrounds. Text uses Segoe UI, with DIN for the large numbers. Both fonts ship with Power BI.
 

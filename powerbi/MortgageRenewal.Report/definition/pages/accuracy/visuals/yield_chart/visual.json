@@ -39,13 +39,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Mortgage Rate Line"
                 }
               },
-              "queryRef": "_Measures.Mortgage Rate Line",
+              "queryRef": "measures_calc.Mortgage Rate Line",
               "nativeQueryRef": "Mortgage Rate Line",
               "displayName": "Mortgage rate"
             },
@@ -54,13 +54,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "measures_calc"
                     }
                   },
                   "Property": "Bond Yield Line"
                 }
               },
-              "queryRef": "_Measures.Bond Yield Line",
+              "queryRef": "measures_calc.Bond Yield Line",
               "nativeQueryRef": "Bond Yield Line",
               "displayName": "5-year bond yield"
             }
@@ -103,7 +103,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Mortgage Rate Line"
+            "metadata": "measures_calc.Mortgage Rate Line"
           }
         },
         {
@@ -121,7 +121,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Bond Yield Line"
+            "metadata": "measures_calc.Bond Yield Line"
           }
         }
       ],
@@ -151,7 +151,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Mortgage Rate Line"
+            "metadata": "measures_calc.Mortgage Rate Line"
           }
         },
         {
@@ -179,7 +179,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Bond Yield Line"
+            "metadata": "measures_calc.Bond Yield Line"
           }
         }
       ],
