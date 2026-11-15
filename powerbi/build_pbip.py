@@ -816,7 +816,7 @@ RIGHT_W = PAGE_W - M - RIGHT_X
 def header(p: Page, section: str, title: str, subtitle_measure: str | None = None, subtitle_text: str | None = None):
     p.label("hdr_brand", M, 10, 420, 28, [("●  ", 9, C["teal"], FONT), (section, 9, C["teal"], FONT_SEMI)])
     # cards centre their text, so these boxes are sized to the text to keep it near the margins
-    p.card("hdr_data_through", PAGE_W - M - 330, 8, 330, 30, "Data Through Label", 9, C["ink3"], FONT)
+    p.card("hdr_data_through", PAGE_W - M - 340, 8, 330, 30, "Data Through Label", 9, C["ink3"], FONT)
     p.label("hdr_title", M - 4, 52, 900, 46, [(title, 24, C["ink"], FONT_BOLD)])
     if subtitle_measure:
         p.card("hdr_subtitle", M - 6, 96, 340, 26, subtitle_measure, 10, C["ink2"], FONT)
@@ -910,7 +910,7 @@ def build_pages() -> list[Page]:
            subtitle_text="Fixed-rate renewal, Canadian semi-annual compounding, principal and interest only")
     # Power BI won't shrink a tile below about 66 px, so five tile slicers would need ~1,280 px in a
     # 1,188 px strip. The two four-option number pickers are dropdowns so the other three fit.
-    x = M + 12
+    x = M + 22
     for vname, w, table, col, default, head, dropdown in [
         ("s_balance", 202, "Balance Choice", "Balance label", "$400k", "Balance at renewal", True),
         ("s_years", 202, "Years Choice", "Years label", "20 yrs", "Years left to pay", False),

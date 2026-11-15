@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "kpi_total_value",
   "position": {
-    "x": 340,
+    "x": 340.0,
     "y": 162,
     "z": 1900,
     "height": 44,
-    "width": 292,
+    "width": 292.0,
     "tabOrder": 1900
   },
   "visual": {
@@ -149,4 +149,4 @@
     },
     "drillFilterOtherVisuals": true
   }
-}
+}
