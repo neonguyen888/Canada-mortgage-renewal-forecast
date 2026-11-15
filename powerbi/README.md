@@ -2,6 +2,8 @@
 
 A four-page Power BI report built on the CSVs the pipeline exports to `data/powerbi/`. It is saved as a Power BI Project (PBIP): plain-text files that Power BI Desktop opens like a `.pbix`, and that Git can diff.
 
+## Pages
+
 | Page | Question it answers | What you can change |
 |---|---|---|
 | Overview | How many renewing borrowers face a big jump, and where is the rate going? | Rate scenario (-50 bps, base, +50 bps) |
@@ -9,9 +11,7 @@ A four-page Power BI report built on the CSVs the pipeline exports to `data/powe
 | Payment impact | What does renewal cost one borrower? | Balance, years left, old rate, renewal rate, threshold |
 | Renewal triage | Who should the team call first with limited capacity? | Calls per week (100 to 400) |
 
-## Screenshots
-
-Taken in Power BI Desktop on Windows with the default slicer choices, so the numbers match the table under "Check the numbers".
+Screenshots from Power BI Desktop with the default slicer choices, so the numbers match the reference values below.
 
 **Overview**
 
@@ -29,18 +29,33 @@ Taken in Power BI Desktop on Windows with the default slicer choices, so the num
 
 ![Renewal triage page](screenshots/04_triage.png)
 
-## Open it (Windows)
+## Getting started
 
-1. Install a recent Power BI Desktop. On a version from before 2025, turn on the PBIP and PBIR options under File > Options and settings > Options > Preview features, then restart.
-2. Clone the repository: `git clone https://github.com/neonguyen888/Canada-mortgage-renewal-forecast.git`
-3. Double-click `powerbi/MortgageRenewal.pbip`, then Home > Refresh. The model reads the CSVs straight from this repository on GitHub. If Power BI asks how to connect to `raw.githubusercontent.com`, choose Anonymous.
-4. To read your own local copy instead, go to Home > Transform data > Edit parameters and set `DataFolder` to the full path of `data\powerbi`, for example `C:\Users\you\Canada-mortgage-renewal-forecast\data\powerbi`, then refresh.
+Requires a recent Power BI Desktop (2025 or later).
 
-Save with File > Save. Power BI Desktop rewrites some files in its own format when it saves, which is expected.
+1. Clone the repository: `git clone https://github.com/neonguyen888/Canada-mortgage-renewal-forecast.git`
+2. Open `powerbi/MortgageRenewal.pbip` and select Home > Refresh.
+3. If Power BI asks how to connect to `raw.githubusercontent.com`, choose Anonymous.
 
-## Check the numbers
+The model reads the CSVs straight from this repository on GitHub, so the report works without running the pipeline. To read a local copy instead, go to Home > Transform data > Edit parameters and set `DataFolder` to the full path of `data\powerbi`.
 
-With the default slicer choices, these should match the written report:
+## Data model
+
+Each CSV becomes one table through Power Query. The queries read the files with an `en-US` culture, so `4.58` stays 4.58 on a machine set to a comma-decimal locale. `Calendar` links the rate tables by month.
+
+The slicer tables (scenario, threshold, balance and so on) are small lookup tables with no relationships, and measures read the choice with `SELECTEDVALUE`. That keeps every bar visible when a slicer moves, and the chosen bar turns amber through a colour measure.
+
+## Measures
+
+All 74 measures live in the `measures_calc` table, grouped in five folders: Rates, Renewal book, Accuracy, Payment impact and Triage. The payment formula in DAX is the same Canadian semi-annual one used in `src/mortgage.py` and in the SQL function. The threshold rate is the lowest rate on a 1 bp grid where the payment rise reaches the threshold.
+
+## Design
+
+Navy canvas, amber for whatever needs attention, teal for the ETS forecast, light blue for observed data and lavender for the bond-yield model. The panels are drawn into a background image at twice the page size, and the visuals sit on top with transparent backgrounds. Text uses Segoe UI, with DIN for the large numbers. Both fonts ship with Power BI.
+
+## Reference values
+
+With the default slicer choices, the cards should match the written report:
 
 | Page | Card | Value |
 |---|---|---|
@@ -54,7 +69,7 @@ With the default slicer choices, these should match the written report:
 
 `data/powerbi/threshold_reference.csv` lists more threshold rates the Payment impact page should reproduce.
 
-## How it is built
+## Rebuilding the project
 
 `build_pbip.py` writes every file in this folder: the data model, all 109 visuals, the theme and the four background images. To change the layout, colours or a measure, edit the script and run:
 
@@ -62,16 +77,10 @@ With the default slicer choices, these should match the written report:
 .venv/bin/python powerbi/build_pbip.py
 ```
 
-The pipeline runs it as its last step. Rebuilding overwrites changes made in Power BI Desktop, so pick one place to edit.
+The pipeline runs it as its last step before the tests. Rebuilding overwrites changes made in Power BI Desktop, so pick one place to edit.
 
-**Data model.** Each CSV becomes one table through Power Query. The queries read the files with an `en-US` culture, so `4.58` stays 4.58 on a machine set to a comma-decimal locale. `Calendar` links the rate tables by month. The slicer tables (scenario, threshold, balance and so on) are small lookup tables with no relationships; measures read the choice with `SELECTEDVALUE`. That keeps every bar visible when a slicer moves, and the chosen bar turns amber through a colour measure.
-
-**Measures.** All 74 measures live in the `measures_calc` table (Power BI reserves the name `Measures`), grouped in folders: Rates, Renewal book, Accuracy, Payment impact and Triage. The payment formula in DAX is the same Canadian semi-annual one used in `src/mortgage.py` and the SQL function, and the threshold rate is the lowest rate on the 1 bp grid where the rise reaches the threshold.
-
-**Look.** Navy canvas, amber for whatever needs attention, teal for the ETS forecast, light blue for observed data and lavender for the bond-yield model. The panels are drawn into a background image at twice the page size, and the visuals sit on top with transparent backgrounds. Text uses Segoe UI, with DIN for the large numbers. Both fonts ship with Power BI.
-
-## If something goes wrong
+## Troubleshooting
 
 - A visual shows an error after refresh: open Transform data and check that `DataFolder` points at the GitHub address or at a folder holding `vw_rate_outlook_band.csv` and the other exports.
-- The project won't open: Power BI Desktop names the file and line it couldn't read. The files were checked against Microsoft's published schemas for PBIR, so the message usually points at a version setting in an older Desktop.
-- Slicers show as a vertical list instead of buttons: select the slicer and set Slicer settings > Style to Tile.
+- The project won't open: update Power BI Desktop. The files follow Microsoft's published PBIR and TMDL schemas, which older versions can't read.
+- Slicers show as a vertical list: select the slicer and set Slicer settings > Style to Tile.

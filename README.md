@@ -32,7 +32,7 @@ This project forecasts where the 5-year fixed rate goes next, using Bank of Cana
 
 **Backtest** (122 rolling origins, January 2016 to February 2026, same origins for every model)
 
-| Model | Horizon | MAE (bps) | MAE (CAD/month) | Diebold–Mariano p |
+| Model | Horizon | MAE (bps) | MAE (CAD/month) | Diebold-Mariano p |
 |---|---|---|---|---|
 | ETS damped trend | 3 months | 18.9 | $38.92 | 0.051 |
 | Naive (last observed) | 3 months | 24.4 | $50.01 | |
@@ -93,7 +93,7 @@ src/
   fetch_data.py    download + validate the Bank of Canada series
   mortgage.py      payment formula and threshold-rate solver (exact and 1 bp grid)
   forecast.py      rolling-origin backtest and latest forecast
-  intervals.py     80% band from backtest errors, Diebold–Mariano test
+  intervals.py     80% band from backtest errors, Diebold-Mariano test
   regression.py    bond-yield regression: lag choice, backtest, latest forecast
   portfolio.py     synthetic 90-day renewal portfolio
   triage.py        call list: segments, priority rank, weekly call capacity

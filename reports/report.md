@@ -106,7 +106,7 @@ Two models were compared.
 
 ETS met the selection rule and is the model used for the outlook. The size of the win differs by horizon. At 3 months, ETS cuts the average error by about 23%, which is $11 a month on the illustrative loan. At 6 months the gain shrinks to about 8%, and both models miss by $80 to $90 a month, about a third of a $250 threshold.
 
-**Is the difference real?** A Diebold–Mariano test compares the two models' absolute errors origin by origin. Forecasts from consecutive months overlap, so the test uses a Newey–West variance and the Harvey–Leybourne–Newbold small-sample correction.
+**Is the difference real?** A Diebold-Mariano test compares the two models' absolute errors origin by origin. Forecasts from consecutive months overlap, so the test uses a Newey-West variance and the Harvey-Leybourne-Newbold small-sample correction.
 
 | Horizon | Mean difference in absolute error | DM statistic | p-value |
 |---|---|---|---|
@@ -190,7 +190,7 @@ It uses monthly changes because both rates drift up and down over years. Two dri
 
 *Reading the chart: each purple bar is how much of a yield move shows up in the mortgage rate that many months later. The black whiskers are the 95% range. The navy line adds the bars up, so its last point is the total pass-through.*
 
-Fitted on all 163 months (February 2013 to August 2026), the regression explains 63% of the monthly ups and downs (R² = 0.63). In total, 0.90 of a yield move reaches the mortgage rate within four months, with a standard error of 0.09. Very little arrives in the same month, which fits the rate-hold explanation. The errors of nearby months are related (Durbin–Watson 1.38), so the standard errors use the Newey–West correction, the same idea as in the Diebold–Mariano test.
+Fitted on all 163 months (February 2013 to August 2026), the regression explains 63% of the monthly ups and downs (R² = 0.63). In total, 0.90 of a yield move reaches the mortgage rate within four months, with a standard error of 0.09. Very little arrives in the same month, which fits the rate-hold explanation. The errors of nearby months are related (Durbin-Watson 1.38), so the standard errors use the Newey-West correction, the same idea as in the Diebold-Mariano test.
 
 **Backtest.** The regression went through the same 122 origins as the other two models. At each origin it was fitted on data up to that month only. It was then given the bond yields for the next two months, because in practice those are already published when the mortgage figure comes out. After that, the yield was assumed to stay flat.
 
@@ -380,7 +380,7 @@ The whole PostgreSQL rebuild runs in one transaction. Primary and foreign keys r
 - **Triage.** The four segments add up to 5,000 loans and match the scenario counts in section 10 (3,760 over at -50 bps, 4,614 over at the forecast). Priority ranks run from 1 to 5,000 with no gaps, no call is booked within 7 days of renewal, and more call capacity never means more borrowers missed.
 - **SQL vs Python.** MAE in bps and CAD matches to within 0.01 for all four model and horizon pairs in the main backtest and all 30 in the model comparison. The triage segments match between Python and SQL. Threshold rates match on 12 profiles. The portfolio's total payment change and count above $250 match exactly.
 
-In total there are 30 SQL checks and 44 unit tests. The tests cover the payment formula, the threshold solver (rate up, down, unchanged, 0% old rate, an exact hit on the threshold, and a solution outside the 0% to 10% search range), the balance calculation, the Diebold–Mariano helper, and the regression: it recovers known lag weights from fake data, uses known yields and then holds them flat, and picks its lag count without looking past 2015. The triage tests check the segment mapping, the rank order, the 7-day notice and 60-day lookahead, and that a last-chance borrower is called before a more certain one who can wait. The Power BI tests check that no measure shares a name with a table or column, that every visual points at a field that exists, that every visual fits on its page, and that each slicer's default is one of its options.
+In total there are 30 SQL checks and 44 unit tests. The tests cover the payment formula, the threshold solver (rate up, down, unchanged, 0% old rate, an exact hit on the threshold, and a solution outside the 0% to 10% search range), the balance calculation, the Diebold-Mariano helper, and the regression: it recovers known lag weights from fake data, uses known yields and then holds them flat, and picks its lag count without looking past 2015. The triage tests check the segment mapping, the rank order, the 7-day notice and 60-day lookahead, and that a last-chance borrower is called before a more certain one who can wait. The Power BI tests check that no measure shares a name with a table or column, that every visual points at a field that exists, that every visual fits on its page, and that each slicer's default is one of its options.
 
 ## 13. Limitations
 
