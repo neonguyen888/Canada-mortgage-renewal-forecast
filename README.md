@@ -41,9 +41,9 @@ This project forecasts where the 5-year fixed rate goes next, using Bank of Cana
 | Bond-yield regression | 3 months | 11.7 | $23.82 | < 0.001 vs ETS |
 | Bond-yield regression | 6 months | 25.0 | $51.39 | < 0.001 vs ETS |
 
-ETS met the selection rule written before the backtest (beat the naive model at both horizons) and is used for the outlook. The 3-month gain is borderline significant and the 6-month gain is not. During the 2024 to 2026 easing period, the naive model was slightly more accurate (report section 5).
+ETS met the selection rule I wrote before the backtest (beat the naive model at both horizons), so I use it for the outlook. The 3-month gain is borderline significant and the 6-month gain is not. During the 2024 to 2026 easing period, the naive model was slightly more accurate (report section 5).
 
-The bond-yield regression, added afterwards, beats both models at every horizon and in every rate period. It stays a challenger until it is tested on months published after this run (report section 7).
+The bond-yield regression, which I added afterwards, beats both models at every horizon and in every rate period. It stays a challenger until it is tested on months published after this run (report section 7).
 
 ## Charts
 

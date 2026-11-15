@@ -14,7 +14,7 @@ For an illustrative loan with $400,000 left and 20 years to go, renewing from 2.
 
 A damped-trend ETS model forecasts the rate at 4.77% for November 2026 and 4.86% for February 2027. Over 122 rolling backtests it beat a naive "no change" forecast at both horizons: 18.9 vs 24.4 bps at 3 months and 39.4 vs 42.8 bps at 6 months. In payment terms that is $38.92 vs $50.01 a month, and $81.24 vs $87.47. The 3-month gain is close to statistically significant (p = 0.051). The 6-month gain is not (p = 0.48), and during the 2024 to 2026 easing period the naive model did slightly better.
 
-A regression on the Government of Canada 5-year bond yield did better than both. About 0.90 of a move in the bond yield reaches the mortgage rate within four months, and because the yield is published two months before the mortgage figure, the regression already knows part of what is coming. Its backtest error was 11.7 bps at 3 months and 25.0 bps at 6 months, and the gain over ETS is statistically significant (p < 0.001). It expects a slightly steeper rise: 4.82% in November and 4.97% in February. ETS stays the headline forecast for now because the regression was added after the ETS results were known (section 7 explains).
+A regression on the Government of Canada 5-year bond yield did better than both. About 0.90 of a move in the bond yield reaches the mortgage rate within four months, and because the yield is published two months before the mortgage figure, the regression already knows part of what is coming. Its backtest error was 11.7 bps at 3 months and 25.0 bps at 6 months, and the gain over ETS is statistically significant (p < 0.001). It expects a slightly steeper rise: 4.82% in November and 4.97% in February. ETS stays the headline forecast for now because I added the regression after the ETS results were known (section 7 explains).
 
 On a synthetic book of 5,000 loans renewing in the next 90 days, 92% would see their payment rise by more than $250 a month at the forecast rate. A 50 bp lower rate still leaves 75% above the threshold. If the renewal team can call 300 borrowers a week, calling last-chance borrowers first and then the most certain cases reaches 250 more of those facing a $250 rise than working through renewal dates (section 11).
 
@@ -76,16 +76,16 @@ The largest monthly moves all came in mid-2022: +29 bps in June, +35 in July, +3
 
 ## 3. Forecasting approach
 
-Two models were compared.
+I compared two models.
 
 - **Naive baseline.** Next month's rate equals the last observed rate. Rates move slowly, so this is hard to beat, and any model that can't beat it shouldn't be used.
 - **ETS with a damped additive trend** (statsmodels). It follows the recent direction but lets the trend fade, so a rise isn't projected upward indefinitely.
 
-**Rolling-origin backtest.** Starting in January 2016, each month was treated as "today". Both models were fitted on data up to that month only and asked to forecast 3 and 6 months ahead. That repeats for 122 origins, up to February 2026 (the last month with six months of actuals after it). Both models use exactly the same origins, and the training window expands, with at least 36 months of history at the first origin.
+**Rolling-origin backtest.** Starting in January 2016, I treated each month as "today", fitted both models on data up to that month only, and had them forecast 3 and 6 months ahead. That repeats for 122 origins, up to February 2026 (the last month with six months of actuals after it). Both models use exactly the same origins, and the training window expands, with at least 36 months of history at the first origin.
 
-**Selection rule, set before running the backtest.** ETS would be adopted only if its MAE in bps beat the naive model at both horizons. Otherwise the naive model would ship.
+**Selection rule, set before running the backtest.** I would adopt ETS only if its MAE in bps beat the naive model at both horizons. Otherwise the naive model would ship.
 
-**Turning rate error into dollars.** For every backtest forecast, the same loan ($400,000 balance, 20 years remaining) is priced twice: once at the forecast rate and once at the rate actually observed for that target month. The CAD error is the difference between the two monthly payments.
+**Turning rate error into dollars.** For every backtest forecast, I price the same loan ($400,000 balance, 20 years remaining) twice: once at the forecast rate and once at the rate actually observed for that target month. The CAD error is the difference between the two monthly payments.
 
 ## 4. Backtest results
 
@@ -138,7 +138,7 @@ At 3 months the evidence for ETS is borderline. At 6 months the two models can't
 
 Errors more than doubled during the 2022 to 2023 tightening cycle. The naive model fell furthest behind there because it kept assuming no change while the rate rose by 30 to 40 bps a month. Its bias over that period was -44 bps at 3 months, meaning it consistently forecast too low. ETS picked up the trend and cut that bias to -15 bps.
 
-The same trend-following works against ETS after a turning point. The backtest chart shows ETS overshooting the peak in late 2023 and briefly projecting a rebound in early 2024. Through the 2024 to 2026 easing period, when the rate moved sideways, the naive model was slightly more accurate at both horizons. The practical reading is that ETS helps most when the rate is clearly trending, and adds little when it isn't.
+The same trend-following works against ETS after a turning point. The backtest chart shows ETS overshooting the peak in late 2023 and briefly projecting a rebound in early 2024. Through the 2024 to 2026 easing period, when the rate moved sideways, the naive model was slightly more accurate at both horizons. In practice ETS helps most when the rate is clearly trending and adds little when it isn't.
 
 ## 6. The current outlook
 
@@ -176,7 +176,7 @@ change in mortgage rate = a + b0 × yield change this month
 
 It uses monthly changes because both rates drift up and down over years. Two drifting series can look closely related even when neither drives the other, and working with changes avoids that trap.
 
-**How many months back?** The number of lags was chosen with BIC, a score that rewards a good fit but penalizes extra terms. Only 2013 to 2015 data was used for this, the period before the first backtest origin. BIC picked 4 months.
+**How many months back?** I chose the number of lags with BIC, a score that rewards a good fit but penalizes extra terms, using only 2013 to 2015 data, the period before the first backtest origin. BIC picked 4 months.
 
 | Yield change from | Share passed through (b) | 95% range | Running total |
 |---|---|---|---|
@@ -192,9 +192,9 @@ It uses monthly changes because both rates drift up and down over years. Two dri
 
 Fitted on all 163 months (February 2013 to August 2026), the regression explains 63% of the monthly ups and downs (R² = 0.63). In total, 0.90 of a yield move reaches the mortgage rate within four months, with a standard error of 0.09. Very little arrives in the same month, which fits the rate-hold explanation. The errors of nearby months are related (Durbin-Watson 1.38), so the standard errors use the Newey-West correction, the same idea as in the Diebold-Mariano test.
 
-**Backtest.** The regression went through the same 122 origins as the other two models. At each origin it was fitted on data up to that month only. It was then given the bond yields for the next two months, because in practice those are already published when the mortgage figure comes out. After that, the yield was assumed to stay flat.
+**Backtest.** I ran the regression through the same 122 origins as the other two models, fitting it at each origin on data up to that month only. It then gets the bond yields for the next two months, because in practice those are already published when the mortgage figure comes out. After that I hold the yield flat.
 
-Two more versions get only 1 month of yields past the origin, or none. The Bank's historical release dates aren't available, so it isn't certain that two full months were always out in time. These versions show how much the result depends on that.
+The Bank's historical release dates aren't available, so I can't be sure two full months were always out in time. Two more versions, with only 1 month of yields past the origin or none, show how much the result depends on that.
 
 ![Model comparison](figures/15_model_comparison_mae.png)
 
@@ -238,7 +238,7 @@ Unlike ETS against naive in section 4, these differences are far too large to be
 
 The bond yield jumped from 3.28% in August to 3.57% in September. Only part of that rise has reached the mortgage rate so far, and the regression expects the rest over the next few months. On the example loan, the November rate of 4.82% means a payment of $2,589.77 ($530 more than at 2.2%), compared with $2,579.06 at the ETS rate. At the regression's rates, 4,711 loans in the 90-day book (94%) would rise by more than $250, against 4,614 (92%) at the ETS rates.
 
-**Why ETS is still the headline forecast.** The selection rule in section 3 was written for ETS against the naive model before any results were in. The regression was added afterwards, once those results were known, so it hasn't passed the same clean test. The next few months of published data are that test. If it keeps beating ETS on September to November 2026, it should become the main forecast. Swapping it in now, after seeing that it wins, would be choosing the model by its result.
+**Why ETS is still the headline forecast.** The selection rule in section 3 was written for ETS against the naive model before any results were in. I added the regression afterwards, once those results were known, so it hasn't passed the same clean test. The next few months of published data are that test. If it keeps beating ETS on September to November 2026, it should become the main forecast. Swapping it in now, after seeing that it wins, would be choosing the model by its result.
 
 ## 8. Payment impact for one borrower
 
@@ -290,7 +290,7 @@ The dollar increase grows with the balance. At a 4.5% renewal rate, a $200,000 b
 
 ## 10. A 90-day renewal book
 
-To move from one borrower to a lender's view, a synthetic portfolio of 5,000 loans was generated (fixed random seed). No real borrower data is used.
+To move from one borrower to a lender's view, I generated a synthetic portfolio of 5,000 loans (fixed random seed). No real borrower data is used.
 
 - Renewal dates are spread evenly over the 90 days after 14 November 2026, which runs to 12 February 2027. November and February are partial months.
 - Each loan was signed 60 months before renewal at that month's market reference rate, plus a borrower spread drawn from a normal distribution with a 15 bp standard deviation.
@@ -345,7 +345,7 @@ Section 10 shows how many borrowers face a big rise. A renewal team also has to 
 
 **Call rule.** A borrower can be called from 60 days before renewal until 7 days before, which leaves time to act on the call. Each week the team first calls the borrowers for whom this week is the last chance, then fills spare slots in order of segment, renewal date and size of the rise.
 
-The last-chance step came out of testing. Ranking by segment alone did worse than calling in renewal-date order: at 400 calls a week it missed 833 borrowers over the threshold, against 361. Near-certain borrowers renewing in two months took the slots, and likely borrowers renewing next week ran out of time.
+The last-chance step came out of testing. My first version ranked by segment alone, and it did worse than calling in renewal-date order: at 400 calls a week it missed 833 borrowers over the threshold, against 361. Near-certain borrowers renewing in two months took the slots, and likely borrowers renewing next week ran out of time.
 
 ![Triage capacity](figures/17_triage_capacity.png)
 
@@ -364,7 +364,7 @@ At 300 calls a week the triage rule reaches 250 more borrowers facing a rise ove
 
 **Why segments instead of one scenario.** A list built from the forecast scenario alone changes when the rate does. At 300 calls a week, 456 borrowers would drop off that list if rates fell 50 bps, and 190 if they rose 50 bps. The segments already account for all three scenarios, so the triage list stays the same.
 
-The $250 figure measures how much the payment rises. Whether a borrower can afford it depends on income and other debts, which this synthetic book doesn't have. The list says who to call first. It does not say who is at risk of default.
+The $250 figure measures how much the payment rises. Whether a borrower can afford it depends on income and other debts, which this synthetic book doesn't have. The list ranks borrowers by payment rise, so it can't say who is at risk of default.
 
 ## 12. Data checks and reconciliation
 
@@ -387,7 +387,7 @@ In total there are 30 SQL checks and 44 unit tests. The tests cover the payment 
 - The backtest uses today's version of the data. If the Bank revised past months, a forecaster at the time would have seen slightly different numbers, and real-time accuracy could be somewhat worse.
 - The market reference rate mixes new loans, renewals and refinancing. A lender's own renewal offers can sit above or below that mix, and the series does not split them out.
 - Payments are principal and interest only, with no property tax or insurance. The amortization is assumed to continue unchanged at renewal; in practice some borrowers extend it to soften the increase.
-- The portfolio is simulated. Its shape (balances, amortization mix, renewal timing) is a reasonable assumption, not an estimate of any lender's book.
+- The portfolio is simulated. Its shape (balances, amortization mix, renewal timing) is an assumption and doesn't describe any lender's book.
 - The call list ranks by payment rise only. A real triage would add affordability (income, other debts) and each borrower's contact history.
 - The regression assumes the bond yield stays flat after the last published month. A sharp move in yields after October 2026 would make its 4- to 6-month forecasts too low or too high.
 - The link between yields and mortgage rates was steady over 2013 to 2026, but lenders can change their spread, as they did in 2020. The regression has no way to see that coming.
