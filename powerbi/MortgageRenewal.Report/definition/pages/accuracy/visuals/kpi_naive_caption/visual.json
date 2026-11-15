@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Naive MAE Caption"
                 }
               },
-              "queryRef": "Measures.Naive MAE Caption",
+              "queryRef": "_Measures.Naive MAE Caption",
               "nativeQueryRef": "Naive MAE Caption"
             }
           ]

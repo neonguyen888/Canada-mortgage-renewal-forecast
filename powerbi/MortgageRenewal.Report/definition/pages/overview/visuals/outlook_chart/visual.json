@@ -39,13 +39,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Observed Rate"
                 }
               },
-              "queryRef": "Measures.Observed Rate",
+              "queryRef": "_Measures.Observed Rate",
               "nativeQueryRef": "Observed Rate",
               "displayName": "Observed"
             },
@@ -54,13 +54,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "ETS Forecast"
                 }
               },
-              "queryRef": "Measures.ETS Forecast",
+              "queryRef": "_Measures.ETS Forecast",
               "nativeQueryRef": "ETS Forecast",
               "displayName": "ETS forecast"
             },
@@ -69,13 +69,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Band Low"
                 }
               },
-              "queryRef": "Measures.Band Low",
+              "queryRef": "_Measures.Band Low",
               "nativeQueryRef": "Band Low",
               "displayName": "80% band"
             },
@@ -84,13 +84,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Band High"
                 }
               },
-              "queryRef": "Measures.Band High",
+              "queryRef": "_Measures.Band High",
               "nativeQueryRef": "Band High",
               "displayName": "80% band (upper)"
             }
@@ -133,7 +133,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Observed Rate"
+            "metadata": "_Measures.Observed Rate"
           }
         },
         {
@@ -151,7 +151,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.ETS Forecast"
+            "metadata": "_Measures.ETS Forecast"
           }
         },
         {
@@ -169,7 +169,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Band Low"
+            "metadata": "_Measures.Band Low"
           }
         },
         {
@@ -187,7 +187,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Band High"
+            "metadata": "_Measures.Band High"
           }
         }
       ],
@@ -217,7 +217,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Observed Rate"
+            "metadata": "_Measures.Observed Rate"
           }
         },
         {
@@ -245,7 +245,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.ETS Forecast"
+            "metadata": "_Measures.ETS Forecast"
           }
         },
         {
@@ -273,7 +273,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Band Low"
+            "metadata": "_Measures.Band Low"
           }
         },
         {
@@ -301,7 +301,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Band High"
+            "metadata": "_Measures.Band High"
           }
         }
       ],

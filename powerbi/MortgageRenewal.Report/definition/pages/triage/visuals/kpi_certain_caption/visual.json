@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Near-certain Caption"
                 }
               },
-              "queryRef": "Measures.Near-certain Caption",
+              "queryRef": "_Measures.Near-certain Caption",
               "nativeQueryRef": "Near-certain Caption"
             }
           ]

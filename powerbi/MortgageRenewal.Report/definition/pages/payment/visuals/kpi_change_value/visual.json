@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Monthly Change"
                 }
               },
-              "queryRef": "Measures.Monthly Change",
+              "queryRef": "_Measures.Monthly Change",
               "nativeQueryRef": "Monthly Change"
             }
           ]

@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Loans Above Caption"
                 }
               },
-              "queryRef": "Measures.Loans Above Caption",
+              "queryRef": "_Measures.Loans Above Caption",
               "nativeQueryRef": "Loans Above Caption"
             }
           ]

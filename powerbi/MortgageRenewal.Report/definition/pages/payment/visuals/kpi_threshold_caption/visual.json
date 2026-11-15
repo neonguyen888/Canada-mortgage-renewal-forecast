@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Threshold Rate Caption"
                 }
               },
-              "queryRef": "Measures.Threshold Rate Caption",
+              "queryRef": "_Measures.Threshold Rate Caption",
               "nativeQueryRef": "Threshold Rate Caption"
             }
           ]

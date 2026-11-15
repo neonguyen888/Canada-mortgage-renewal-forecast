@@ -39,13 +39,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "ETS MAE by Period"
                 }
               },
-              "queryRef": "Measures.ETS MAE by Period",
+              "queryRef": "_Measures.ETS MAE by Period",
               "nativeQueryRef": "ETS MAE by Period",
               "displayName": "ETS"
             },
@@ -54,13 +54,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Naive MAE by Period"
                 }
               },
-              "queryRef": "Measures.Naive MAE by Period",
+              "queryRef": "_Measures.Naive MAE by Period",
               "nativeQueryRef": "Naive MAE by Period",
               "displayName": "Naive"
             }
@@ -103,7 +103,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.ETS MAE by Period"
+            "metadata": "_Measures.ETS MAE by Period"
           }
         },
         {
@@ -121,7 +121,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Naive MAE by Period"
+            "metadata": "_Measures.Naive MAE by Period"
           }
         }
       ],

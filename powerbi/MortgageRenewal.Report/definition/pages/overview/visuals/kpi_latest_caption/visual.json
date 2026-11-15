@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Latest Rate Caption"
                 }
               },
-              "queryRef": "Measures.Latest Rate Caption",
+              "queryRef": "_Measures.Latest Rate Caption",
               "nativeQueryRef": "Latest Rate Caption"
             }
           ]

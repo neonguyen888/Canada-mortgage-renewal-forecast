@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Missed with Triage"
                 }
               },
-              "queryRef": "Measures.Missed with Triage",
+              "queryRef": "_Measures.Missed with Triage",
               "nativeQueryRef": "Missed with Triage"
             }
           ]

@@ -310,7 +310,7 @@ WithOrder = Table.AddColumn(WithLabel, "Model order", each Record.FieldOrDefault
                          [["Latest", 1], ["ETS 3 mo", 2], ["ETS 6 mo", 3], ["Bond yield 6 mo", 4]],
                          "Renewal rates to try: today's market rate and the forecasts."))
 
-    measures = Table("Measures", [Col("Placeholder", hidden=True)],
+    measures = Table("_Measures", [Col("Placeholder", hidden=True)],
                      m_source="let\n    Source = #table(type table [Placeholder = text], {})\nin\n    Source",
                      desc="All report measures live here.")
     add_measures(measures)
@@ -579,11 +579,11 @@ def colour(hex_: str) -> dict:
 
 
 def measure_colour(name: str) -> dict:
-    return {"solid": {"color": {"expr": {"Measure": {"Expression": {"SourceRef": {"Entity": "Measures"}}, "Property": name}}}}}
+    return {"solid": {"color": {"expr": {"Measure": {"Expression": {"SourceRef": {"Entity": "_Measures"}}, "Property": name}}}}}
 
 
 def mref(name):
-    return {"Measure": {"Expression": {"SourceRef": {"Entity": "Measures"}}, "Property": name}}
+    return {"Measure": {"Expression": {"SourceRef": {"Entity": "_Measures"}}, "Property": name}}
 
 
 def cref(table, col):
@@ -602,7 +602,7 @@ DISPLAY = {
 
 
 def proj_m(name):
-    p = {"field": mref(name), "queryRef": f"Measures.{name}", "nativeQueryRef": name}
+    p = {"field": mref(name), "queryRef": f"_Measures.{name}", "nativeQueryRef": name}
     if name in DISPLAY:
         p["displayName"] = DISPLAY[name]
     return p
@@ -682,13 +682,13 @@ class Page:
         data_points, line_styles = [], []
         for m in measures:
             st = styles[m]
-            data_points.append(series(f"Measures.{m}", fill=colour(st["colour"])))
+            data_points.append(series(f"_Measures.{m}", fill=colour(st["colour"])))
             ls = {"strokeWidth": num(st.get("width", 2)), "lineStyle": text(st.get("dash", "solid")),
                   "showMarker": boolean(st.get("marker", False))}
             if st.get("marker"):
                 ls["markerSize"] = num(7)
                 ls["markerShape"] = text("circle")
-            line_styles.append(series(f"Measures.{m}", **ls))
+            line_styles.append(series(f"_Measures.{m}", **ls))
         objects = {
             "dataPoint": data_points, "lineStyles": line_styles,
             "legend": props(show=boolean(legend), position=text("Top"), labelColor=colour(C["ink2"]), fontSize=num(9), showTitle=boolean(False)),
@@ -731,7 +731,7 @@ class Page:
             "query": {"queryState": {"Category": {"projections": [proj_c(*category)]}, "Y": {"projections": [proj_m(m) for m in measures]}},
                       "sortDefinition": {"sort": [{"field": cref(*category), "direction": "Ascending"}], "isDefaultSort": True}},
             "objects": {
-                "dataPoint": [series(f"Measures.{m}", fill=colour(c)) for m, c in zip(measures, colours)],
+                "dataPoint": [series(f"_Measures.{m}", fill=colour(c)) for m, c in zip(measures, colours)],
                 "labels": props(show=boolean(True), color=colour(C["ink"]), fontSize=num(9)),
                 "legend": props(show=boolean(True), position=text("Top"), labelColor=colour(C["ink2"]), fontSize=num(9), showTitle=boolean(False)),
                 "valueAxis": props(labelColor=colour(C["ink3"]), fontSize=num(9), showAxisTitle=boolean(False),

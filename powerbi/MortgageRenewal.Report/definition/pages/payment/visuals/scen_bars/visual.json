@@ -39,13 +39,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Change at Scenario"
                 }
               },
-              "queryRef": "Measures.Change at Scenario",
+              "queryRef": "_Measures.Change at Scenario",
               "nativeQueryRef": "Change at Scenario",
               "displayName": "Payment change"
             }
@@ -82,7 +82,7 @@
                     "Measure": {
                       "Expression": {
                         "SourceRef": {
-                          "Entity": "Measures"
+                          "Entity": "_Measures"
                         }
                       },
                       "Property": "Scenario Change Colour"

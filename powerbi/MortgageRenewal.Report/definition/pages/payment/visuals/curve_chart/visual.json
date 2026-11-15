@@ -39,13 +39,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Change on Curve"
                 }
               },
-              "queryRef": "Measures.Change on Curve",
+              "queryRef": "_Measures.Change on Curve",
               "nativeQueryRef": "Change on Curve",
               "displayName": "Payment change"
             },
@@ -54,13 +54,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Threshold Line"
                 }
               },
-              "queryRef": "Measures.Threshold Line",
+              "queryRef": "_Measures.Threshold Line",
               "nativeQueryRef": "Threshold Line",
               "displayName": "Threshold"
             },
@@ -69,13 +69,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Selected Rate Point"
                 }
               },
-              "queryRef": "Measures.Selected Rate Point",
+              "queryRef": "_Measures.Selected Rate Point",
               "nativeQueryRef": "Selected Rate Point",
               "displayName": "Chosen rate"
             }
@@ -118,7 +118,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Change on Curve"
+            "metadata": "_Measures.Change on Curve"
           }
         },
         {
@@ -136,7 +136,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Threshold Line"
+            "metadata": "_Measures.Threshold Line"
           }
         },
         {
@@ -154,7 +154,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Selected Rate Point"
+            "metadata": "_Measures.Selected Rate Point"
           }
         }
       ],
@@ -184,7 +184,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Change on Curve"
+            "metadata": "_Measures.Change on Curve"
           }
         },
         {
@@ -212,7 +212,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Threshold Line"
+            "metadata": "_Measures.Threshold Line"
           }
         },
         {
@@ -254,7 +254,7 @@
             }
           },
           "selector": {
-            "metadata": "Measures.Selected Rate Point"
+            "metadata": "_Measures.Selected Rate Point"
           }
         }
       ],

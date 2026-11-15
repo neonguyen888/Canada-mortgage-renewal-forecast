@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Missed in Date Order Caption"
                 }
               },
-              "queryRef": "Measures.Missed in Date Order Caption",
+              "queryRef": "_Measures.Missed in Date Order Caption",
               "nativeQueryRef": "Missed in Date Order Caption"
             }
           ]

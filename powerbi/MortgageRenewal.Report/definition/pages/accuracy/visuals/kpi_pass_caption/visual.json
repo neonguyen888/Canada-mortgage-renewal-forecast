@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "Pass-through Caption"
                 }
               },
-              "queryRef": "Measures.Pass-through Caption",
+              "queryRef": "_Measures.Pass-through Caption",
               "nativeQueryRef": "Pass-through Caption"
             }
           ]

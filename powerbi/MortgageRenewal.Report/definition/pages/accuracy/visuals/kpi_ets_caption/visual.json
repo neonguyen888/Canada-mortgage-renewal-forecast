@@ -20,13 +20,13 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures"
+                      "Entity": "_Measures"
                     }
                   },
                   "Property": "ETS MAE Caption"
                 }
               },
-              "queryRef": "Measures.ETS MAE Caption",
+              "queryRef": "_Measures.ETS MAE Caption",
               "nativeQueryRef": "ETS MAE Caption"
             }
           ]
