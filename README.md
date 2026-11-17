@@ -83,7 +83,7 @@ You only need this to rebuild the numbers; opening the Power BI report doesn't. 
 ./run_pipeline.sh
 ```
 
-The script creates `.venv` on first run. Then it downloads and validates the data, runs the backtest and forecast, builds the uncertainty band and significance test, fits and backtests the bond-yield regression, simulates the portfolio, builds the triage call list, rebuilds the PostgreSQL schema and its 30 checks in one transaction, exports the CSVs the Power BI report reads, reconciles SQL against Python, redraws the charts, rebuilds the Power BI project and runs 44 tests.
+The script creates `.venv` on first run. Then it downloads and validates the data, runs the backtest and forecast, builds the uncertainty band and significance test, fits and backtests the bond-yield regression, simulates the portfolio, builds the triage call list, rebuilds the PostgreSQL schema and its 30 checks in one transaction, exports the CSVs the Power BI report reads, reconciles SQL against Python, redraws the charts, rebuilds the Power BI project and runs 45 tests.
 
 ## Project layout
 

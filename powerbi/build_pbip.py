@@ -843,7 +843,7 @@ def rate_legend(p, vname, x, y, keys):
     runs = []
     for name, col, mark in keys:
         runs += [(mark + " ", 9, col, FONT), (name + "     ", 9, C["ink2"], FONT)]
-    p.label(vname, x, y, 600, 26, runs)
+    p.label(vname, x, y, 600, label_height(9), runs)
 
 
 def build_pages() -> list[Page]:
@@ -866,15 +866,15 @@ def build_pages() -> list[Page]:
     p.kpi("kpi_latest", M + 2 * tw, TILE_Y, tw, "Market benchmark", "Latest Rate", "Latest Rate Caption")
     p.kpi("kpi_ets3", M + 3 * tw, TILE_Y, tw, "3-month forecast", "ETS 3-Month Forecast", "ETS 3-Month Caption", C["teal"])
     panel_title(p, "outlook", M, 244, LEFT_W, "Mortgage rate outlook", "5-year+ fixed, uninsured")
-    rate_legend(p, "outlook_legend", M + 12, 280, [("Observed", C["blue"], "●"), ("ETS forecast", C["teal"], "●"),
-                                                   ("80% band", C["teal_dim"], "┈")])
-    p.line_chart("outlook_chart", M + 8, 302, LEFT_W - 16, 230, ("Calendar", "Month"),
+    rate_legend(p, "outlook_legend", M + 12, 280, [("Observed", C["blue"], "—"), ("ETS forecast", C["teal"], "- -"),
+                                                   ("80% band", C["teal_dim"], "···")])
+    p.line_chart("outlook_chart", M + 8, 308, LEFT_W - 16, 224, ("Calendar", "Month"),
                  ["Observed Rate", "ETS Forecast", "Band Low", "Band High"], line_styles, filters=date_from("2021-01-01"), legend=False)
     panel_title(p, "stress", RIGHT_X, 244, RIGHT_W, "Rate stress test", "Portfolio scenario")
     p.slicer("stress_slicer", RIGHT_X + 12, 284, RIGHT_W - 24, 44, "Scenario", "Scenario", "Base")
     p.bar_chart("stress_bars", RIGHT_X + 8, 334, RIGHT_W - 16, 166, ("Scenario Axis", "Scenario"), "Share Above, Each Scenario",
                 colour_measure="Scenario Bar Colour")
-    p.label("stress_note", RIGHT_X + 12, 502, RIGHT_W - 24, 30, [("Share of renewing loans with a payment rise above $250 a month", 9, C["ink3"], FONT)])
+    p.label("stress_caption", RIGHT_X + 12, 502, RIGHT_W - 24, 30, [("Share of renewing loans with a payment rise above $250 a month", 9, C["ink3"], FONT)])
     panel_title(p, "months", M, 552, PAGE_W - 2 * M, "Renewals by month", "Chosen scenario. November and February are part months.")
     # Compact rows so all four renewal months fit above the footer without a scrollbar.
     p.table("months_table", M + 10, 581, PAGE_W - 2 * M - 20, 113,
@@ -896,9 +896,9 @@ def build_pages() -> list[Page]:
     p.kpi("kpi_naive", M + 2 * tw, TILE_Y, tw, "Naive, average miss", "Naive MAE", "Naive MAE Caption")
     p.kpi("kpi_pass", M + 3 * tw, TILE_Y, tw, "Bond-yield pass-through", "Pass-through Share", "Pass-through Caption")
     panel_title(p, "history", M, 244, LEFT_W, "Rate history and the two forecasts", "5-year+ fixed, uninsured")
-    rate_legend(p, "history_legend", M + 12, 278, [("Observed", C["blue"], "●"), ("ETS forecast", C["teal"], "●"),
-                                                   ("Bond-yield forecast", C["purple"], "●"), ("ETS 80% band", C["teal_dim"], "┈")])
-    p.line_chart("history_chart", M + 8, 298, LEFT_W - 16, 168, ("Calendar", "Month"),
+    rate_legend(p, "history_legend", M + 12, 278, [("Observed", C["blue"], "—"), ("ETS forecast", C["teal"], "- -"),
+                                                   ("Bond-yield forecast", C["purple"], "- -"), ("ETS 80% band", C["teal_dim"], "···")])
+    p.line_chart("history_chart", M + 8, 304, LEFT_W - 16, 162, ("Calendar", "Month"),
                  ["Observed Rate", "ETS Forecast", "Bond-yield Forecast", "Band Low", "Band High"], line_styles,
                  filters=date_from("2016-01-01"), legend=False, y_start=1)
     panel_title(p, "models", RIGHT_X, 244, RIGHT_W, "Average miss by model")

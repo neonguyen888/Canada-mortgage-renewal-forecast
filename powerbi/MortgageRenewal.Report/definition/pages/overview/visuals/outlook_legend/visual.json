@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "● ",
+                    "value": "— ",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
@@ -35,7 +35,7 @@
                     }
                   },
                   {
-                    "value": "● ",
+                    "value": "- - ",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
@@ -51,7 +51,7 @@
                     }
                   },
                   {
-                    "value": "┈ ",
+                    "value": "··· ",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",

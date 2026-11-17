@@ -3,9 +3,9 @@
   "name": "outlook_chart",
   "position": {
     "x": 32,
-    "y": 302,
+    "y": 308,
     "z": 3000,
-    "height": 230,
+    "height": 224,
     "width": 744,
     "tabOrder": 3000
   },

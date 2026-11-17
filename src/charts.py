@@ -17,33 +17,45 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.ticker import FuncFormatter
+from matplotlib.ticker import FuncFormatter, MultipleLocator
 
 from config import PROFILE_BALANCE, PROFILE_OLD_RATE, PROFILE_YEARS_REMAINING, ROOT
 from db import connect, query
 from mortgage import monthly_payment, payment_change, threshold_rate
 
 FIG_DIR = ROOT / "reports" / "figures"
-NAVY, TEAL, AMBER, GREY, INK, MUTED = "#1F3A5F", "#1A9E8F", "#E08A1E", "#9AA5B1", "#1B1F24", "#5B6670"
-PURPLE = "#6A4C93"
+# Series colours passed the dataviz palette check (lightness, chroma, colour-blind separation,
+# 3:1 contrast on white). Grey is only for the comparison series, so it stays muted on purpose.
+NAVY, TEAL, AMBER, PURPLE = "#2F5F96", "#16917F", "#C26B12", "#6E52A3"
+GREY, INK, MUTED, RULE = "#A7B0BA", "#1B1F24", "#5B6670", "#D5DAE0"
 MODEL_COLOURS = {"ETS damped trend": TEAL, "Naive (last observed)": GREY}
 YIELD_SOURCE = ("Source: Bank of Canada, V122667786 (mortgage rate) and BD.CDN.5YR.DQ.YLD (GoC 5-year yield, "
                 "monthly average). Chart: Neo Nguyen.")
 SOURCE = "Source: Bank of Canada, series V122667786 (uninsured 5y+ fixed, funds advanced). Chart: Neo Nguyen."
 
+# House style: a headline that states the finding, a grey subtitle with the units, horizontal
+# gridlines only, no y-axis line, and a source note at the bottom.
 plt.rcParams.update({
-    "figure.dpi": 150, "savefig.dpi": 150, "font.size": 10, "axes.titlesize": 12, "axes.titleweight": "bold",
-    "axes.titlelocation": "left", "axes.edgecolor": "#C8CED4", "axes.labelcolor": MUTED, "xtick.color": MUTED,
-    "ytick.color": MUTED, "axes.spines.top": False, "axes.spines.right": False, "axes.grid": True,
-    "grid.color": "#E6E9EC", "axes.axisbelow": True, "grid.linewidth": 0.8, "legend.frameon": False, "text.parse_math": False, "text.color": INK,
+    "figure.dpi": 150, "savefig.dpi": 150, "font.family": ["Arial", "Helvetica", "DejaVu Sans"], "font.size": 10,
+    "axes.titlesize": 10.5, "axes.titleweight": "bold", "axes.titlelocation": "left", "axes.titlepad": 8,
+    "axes.edgecolor": RULE, "axes.labelcolor": MUTED, "axes.labelsize": 9.5, "xtick.color": MUTED, "ytick.color": MUTED,
+    "xtick.major.size": 3, "xtick.major.width": 0.8, "xtick.major.pad": 4, "ytick.major.size": 0, "ytick.major.pad": 6,
+    "axes.spines.top": False, "axes.spines.right": False, "axes.spines.left": False,
+    "axes.grid": True, "axes.grid.axis": "y", "grid.color": "#ECEEF1", "grid.linewidth": 0.8, "axes.axisbelow": True,
+    "legend.frameon": False, "legend.fontsize": 9, "text.parse_math": False, "text.color": INK,
 })
+BAR = dict(edgecolor="white", linewidth=1.2)    # thin white gap between neighbouring bars
 pct = FuncFormatter(lambda v, _: f"{v:.1f}%")
 cad = FuncFormatter(lambda v, _: f"-${-v:,.0f}" if v < 0 else f"${v:,.0f}")
 
 
-def save(fig, name: str, note: str = SOURCE):
-    fig.text(0.01, 0.01, note, fontsize=7.5, color=MUTED)
-    fig.tight_layout(rect=(0, 0.03, 1, 1))
+def save(fig, name: str, title: str, subtitle: str, note: str = SOURCE):
+    h = fig.get_figheight()
+    fig.add_artist(plt.Rectangle((0.012, 1 - 0.09 / h), 0.045, 0.045 / h, transform=fig.transFigure, color=NAVY, lw=0))
+    fig.text(0.012, 1 - 0.17 / h, title, fontsize=13.5, fontweight="bold", color=INK, va="top")
+    fig.text(0.012, 1 - 0.47 / h, subtitle, fontsize=9.5, color=MUTED, va="top")
+    fig.text(0.012, 0.012, note, fontsize=7.5, color=MUTED)
+    fig.tight_layout(rect=(0, 0.035, 1, 1 - 0.78 / h))
     fig.savefig(FIG_DIR / name, facecolor="white")
     plt.close(fig)
     print("  wrote", name)
@@ -67,10 +79,10 @@ def chart_rate_outlook(con):
     ax.annotate(f"{end.rate_pct:.2f}%\n{end.month:%b %Y}", (end.month, end.rate_pct), xytext=(8, -4),
                 textcoords="offset points", fontsize=9, color=TEAL)
     ax.yaxis.set_major_formatter(pct)
-    ax.set_title("Market reference rate: history and 6-month outlook")
     ax.set_xlim(a.month.min(), end.month + pd.DateOffset(months=8))
     ax.legend(loc="upper left")
-    save(fig, "01_rate_history_forecast.png")
+    save(fig, "01_rate_history_forecast.png", "Mortgage rates have turned up again after two years of easing",
+         "Market reference rate, uninsured 5-year+ fixed, % a year, with the ETS forecast and its 80% band")
 
 
 def chart_monthly_change(con):
@@ -79,13 +91,12 @@ def chart_monthly_change(con):
     colours = np.where(d.change_bps >= 0, NAVY, GREY)
     ax.bar(d.month, d.change_bps, width=22, color=colours)
     ax.axhline(0, color=INK, lw=0.8)
-    big = d.loc[d.change_bps.abs().nlargest(3).index]
+    big = d.loc[[d.change_bps.idxmax(), d.change_bps.idxmin()]]
     for _, r in big.iterrows():
         ax.annotate(f"{r.change_bps:+.0f}", (r.month, r.change_bps), xytext=(0, 4 if r.change_bps > 0 else -12),
                     textcoords="offset points", ha="center", fontsize=8, color=INK)
-    ax.set_ylabel("Change vs prior month (bps)")
-    ax.set_title("Month-over-month change in the market reference rate (navy = up, grey = down)")
-    save(fig, "02_monthly_change_bps.png")
+    save(fig, "02_monthly_change_bps.png", "The biggest monthly jumps came during the 2022 rate hikes",
+         "Change in the market reference rate from the month before, bps. Blue: up. Grey: down")
 
 
 # ---------------------------------------------------------------------------------------------
@@ -102,9 +113,10 @@ def chart_backtest_paths(con):
             y = x[x.model == m]
             ax.plot(y.target_month, y.forecast_rate_pct, color=c, lw=1.4, ls="--", label=f"{m} forecast")
         ax.yaxis.set_major_formatter(pct)
-        ax.set_title(f"{h}-month-ahead forecasts vs what actually happened")
+        ax.set_title(f"Forecast made {h} months earlier")
     axes[0].legend(loc="upper left")
-    save(fig, "03_backtest_forecast_vs_actual.png")
+    save(fig, "03_backtest_forecast_vs_actual.png", "Both models were late to catch the 2022 rise",
+         "Backtest forecasts against the actual market reference rate, % a year")
 
 
 def shade_periods(ax, con):
@@ -124,28 +136,27 @@ def chart_error_over_time(con):
         y = d[d.model == m].set_index("target_month").abs_err
         ax.plot(y.index, y.values, color=c, lw=0.8, alpha=0.45)
         ax.plot(y.index, y.rolling(6, min_periods=3).mean(), color=c, lw=2, label=f"{m} (6-month rolling mean)")
-    ax.set_ylabel("Absolute error (bps)")
-    ax.set_title("6-month-ahead absolute error by target month")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.08), ncol=2)
-    save(fig, "04_error_over_time.png")
+    save(fig, "04_error_over_time.png", "Forecast errors peaked during the 2022 to 2023 tightening",
+         "Size of each 6-month-ahead miss by target month, bps. Thick lines: 6-month rolling mean")
 
 
 def chart_mae_summary(con):
     d = query(con, "SELECT model, horizon_months, mae_bps, mae_cad_per_month FROM vw_backtest_summary")
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-    for ax, col, title, fmt in [(axes[0], "mae_bps", "MAE in basis points", "{:.1f} bps"),
-                                (axes[1], "mae_cad_per_month", "MAE in CAD per month ($400k, 20 yrs)", "${:.0f}")]:
+    for ax, col, title, fmt in [(axes[0], "mae_bps", "Basis points", "{:.1f}"),
+                                (axes[1], "mae_cad_per_month", "CAD a month on a $400k, 20-year loan", "${:.0f}")]:
         for i, (m, c) in enumerate(MODEL_COLOURS.items()):
             y = d[d.model == m].sort_values("horizon_months")
-            xs = np.arange(len(y)) + (i - 0.5) * 0.36
-            bars = ax.bar(xs, y[col], width=0.34, color=c, label=m)
+            xs = np.arange(len(y)) + (i - 0.5) * 0.32
+            bars = ax.bar(xs, y[col], width=0.32, color=c, label=m, **BAR)
             for b, v in zip(bars, y[col]):
                 ax.text(b.get_x() + b.get_width() / 2, v, fmt.format(v), ha="center", va="bottom", fontsize=8.5)
         ax.set_xticks([0, 1], ["3 months ahead", "6 months ahead"])
         ax.set_title(title)
-        ax.grid(axis="x", visible=False)
     axes[0].legend(loc="upper left")
-    save(fig, "05_mae_by_model.png")
+    save(fig, "05_mae_by_model.png", "ETS misses by less than the naive forecast at both horizons",
+         "Average size of a forecast miss (mean absolute error) over 122 rolling backtests")
 
 
 def chart_mae_by_period(con):
@@ -154,16 +165,14 @@ def chart_mae_by_period(con):
     fig, ax = plt.subplots(figsize=(10, 4))
     for i, (m, c) in enumerate(MODEL_COLOURS.items()):
         y = d[d.model == m].set_index("period_name").loc[periods, "mae_bps"]
-        xs = np.arange(len(periods)) + (i - 0.5) * 0.36
-        bars = ax.bar(xs, y.values, width=0.34, color=c, label=m)
+        xs = np.arange(len(periods)) + (i - 0.5) * 0.32
+        bars = ax.bar(xs, y.values, width=0.32, color=c, label=m, **BAR)
         for b, v in zip(bars, y.values):
             ax.text(b.get_x() + b.get_width() / 2, v, f"{v:.0f}", ha="center", va="bottom", fontsize=8.5)
     ax.set_xticks(range(len(periods)), periods)
-    ax.set_ylabel("MAE (bps), 6 months ahead")
-    ax.set_title("Both models struggled most during the 2022–2023 tightening cycle")
-    ax.grid(axis="x", visible=False)
     ax.legend(loc="upper left")
-    save(fig, "06_mae_by_period.png")
+    save(fig, "06_mae_by_period.png", "Both models struggled most while rates were climbing",
+         "Mean absolute error 6 months ahead, bps, by rate period")
 
 
 # ---------------------------------------------------------------------------------------------
@@ -181,6 +190,7 @@ def chart_payment_curve(con):
         ax.plot([r], [t], "o", ms=8, color=c, mec="white", mew=2)
         ax.annotate(f"+${t}/mo at {r:.2f}%", (r, t), xytext=(-110, 8), textcoords="offset points", fontsize=9, color=INK)
     lc = payment_change(PROFILE_BALANCE, PROFILE_YEARS_REMAINING, PROFILE_OLD_RATE, latest)
+    r250 = threshold_rate(PROFILE_BALANCE, PROFILE_YEARS_REMAINING, PROFILE_OLD_RATE, 250)
     ax.axvline(latest, color=TEAL, lw=1.2, ls="--")
     ax.annotate(f"Latest market rate {latest:.2f}%\n→ +${lc:,.0f}/mo", (latest, lc), xytext=(10, -40),
                 textcoords="offset points", fontsize=9, color=TEAL)
@@ -188,9 +198,11 @@ def chart_payment_curve(con):
     ax.xaxis.set_major_formatter(pct)
     ax.yaxis.set_major_formatter(cad)
     ax.set_xlabel("Renewal rate")
-    ax.set_ylabel("Change in monthly payment")
-    ax.set_title(f"Payment change at renewal: ${PROFILE_BALANCE:,.0f}, {PROFILE_YEARS_REMAINING} years left, old rate {PROFILE_OLD_RATE}%")
-    save(fig, "07_payment_curve_threshold.png", "Illustrative loan. Semi-annual compounding, monthly P&I. Chart: Neo Nguyen.")
+    save(fig, "07_payment_curve_threshold.png",
+         f"The payment rises $250 a month at {r250:.2f}%, and today's rate is {latest:.2f}%",
+         f"Change in monthly payment at renewal, CAD: ${PROFILE_BALANCE:,.0f} left, {PROFILE_YEARS_REMAINING} years to go, "
+         f"old rate {PROFILE_OLD_RATE}%",
+         "Illustrative loan. Semi-annual compounding, monthly principal and interest. Chart: Neo Nguyen.")
 
 
 def chart_sensitivity_heatmap():
@@ -212,9 +224,11 @@ def chart_sensitivity_heatmap():
     ax.set_xlabel("Renewal rate")
     ax.set_ylabel("Balance at renewal")
     ax.grid(False)
-    ax.set_title(f"Monthly payment increase vs old rate {PROFILE_OLD_RATE}% ({PROFILE_YEARS_REMAINING} yrs left). Amber box = above $250")
-    fig.colorbar(im, ax=ax, format=cad, shrink=0.85)
-    save(fig, "08_sensitivity_heatmap.png", "Illustrative loans only. Chart: Neo Nguyen.")
+    cb = fig.colorbar(im, ax=ax, format=cad, shrink=0.85)
+    cb.outline.set_visible(False)
+    save(fig, "08_sensitivity_heatmap.png", "The larger the balance, the lower the rate that triggers a $250 rise",
+         f"Rise in monthly payment against an old rate of {PROFILE_OLD_RATE}%, {PROFILE_YEARS_REMAINING} years left, CAD. "
+         "Amber outline: above $250", "Illustrative loans only. Chart: Neo Nguyen.")
 
 
 def chart_scenarios(con):
@@ -227,15 +241,15 @@ def chart_scenarios(con):
         vals.append(monthly_payment(PROFILE_BALANCE, PROFILE_YEARS_REMAINING, r))
     colours = [GREY] + [AMBER if v - before > 250 else TEAL for v in vals[1:]]
     fig, ax = plt.subplots(figsize=(10, 4.2))
-    bars = ax.bar(labels, vals, color=colours, width=0.55)
+    bars = ax.bar(labels, vals, color=colours, width=0.5, **BAR)
     for b, v in zip(bars, vals):
         tag = "" if v == before else f"\n(+${v - before:,.0f})"
         ax.text(b.get_x() + b.get_width() / 2, v, f"${v:,.0f}{tag}", ha="center", va="bottom", fontsize=9)
     ax.yaxis.set_major_formatter(cad)
     ax.set_ylim(0, max(vals) * 1.2)
-    ax.grid(axis="x", visible=False)
-    ax.set_title("Monthly payment before and after renewal, with ±50 bps rate scenarios (amber = above +$250)")
-    save(fig, "09_rate_scenarios.png", "Illustrative $400k loan, 20 years left. ±50 bps are rate-change scenarios, not forecast intervals. Chart: Neo Nguyen.")
+    save(fig, "09_rate_scenarios.png", f"Even a rate 50 bps lower leaves the payment ${vals[1] - before:,.0f} a month higher",
+         f"Monthly payment, CAD: ${PROFILE_BALANCE:,.0f} left, {PROFILE_YEARS_REMAINING} years to go. Amber: rise above $250",
+         "Illustrative loan. The ±50 bps bars are what-if rate moves; forecast uncertainty is the 80% band. Chart: Neo Nguyen.")
 
 
 # ---------------------------------------------------------------------------------------------
@@ -246,16 +260,15 @@ def chart_portfolio_cohorts(con):
                   FROM vw_renewal_cohort WHERE threshold_cad=250 AND shift_bps=0 ORDER BY renewal_month""")
     fig, ax = plt.subplots(figsize=(10, 4.5))
     x = d.renewal_month.dt.strftime("%b %Y")
-    ax.bar(x, d.n_above_threshold, color=AMBER, width=0.55, label="Payment up more than $250")
-    ax.bar(x, d.n_loans - d.n_above_threshold, bottom=d.n_above_threshold, color=GREY, width=0.55, label="$250 or less")
+    ax.bar(x, d.n_above_threshold, color=AMBER, width=0.5, label="Payment up more than $250", **BAR)
+    ax.bar(x, d.n_loans - d.n_above_threshold, bottom=d.n_above_threshold, color=GREY, width=0.5, label="$250 or less", **BAR)
     for i, r in d.iterrows():
         ax.text(i, r.n_loans, f"{r.n_above_threshold:,} of {r.n_loans:,}\n({r.pct_above_threshold:.1f}%)", ha="center", va="bottom", fontsize=9)
     ax.set_ylim(0, d.n_loans.max() * 1.25)
-    ax.set_ylabel("Loans renewing")
-    ax.grid(axis="x", visible=False)
-    ax.set_title("Synthetic renewal book: loans above the $250 threshold by renewal month")
     ax.legend(loc="upper right")
-    save(fig, "10_portfolio_by_month.png", "Synthetic portfolio of 5,000 loans renewing 15 Nov 2026 to 12 Feb 2027 (Nov and Feb are partial months). Chart: Neo Nguyen.")
+    share = 100 * d.n_above_threshold.sum() / d.n_loans.sum()
+    save(fig, "10_portfolio_by_month.png", f"{share:.0f}% of renewing loans face a rise above $250 a month",
+         "Loans renewing in each month of the 90-day window, at the forecast rate", "Synthetic portfolio of 5,000 loans renewing 15 Nov 2026 to 12 Feb 2027 (Nov and Feb are partial months). Chart: Neo Nguyen.")
 
 
 def chart_portfolio_distribution(con):
@@ -264,34 +277,36 @@ def chart_portfolio_distribution(con):
     bins = np.arange(0, 1801, 50)
     for ax, (shift, name) in zip(axes, [(-50, "Rate -50 bps"), (0, "Forecast rate"), (50, "Rate +50 bps")]):
         v = d[d.shift_bps == shift].payment_change
-        ax.hist(v[v <= 250], bins=bins, color=GREY)
-        ax.hist(v[v > 250], bins=bins, color=AMBER)
+        ax.hist(v[v <= 250], bins=bins, color=GREY, **BAR)
+        ax.hist(v[v > 250], bins=bins, color=AMBER, **BAR)
         ax.axvline(250, color=INK, lw=0.8, ls=":")
-        ax.set_title(f"{name}: {100 * (v > 250).mean():.0f}% above $250", fontsize=10.5)
+        ax.set_title(f"{name}: {100 * (v > 250).mean():.0f}% above $250")
+        ax.xaxis.set_major_locator(MultipleLocator(500))
         ax.xaxis.set_major_formatter(cad)
         ax.set_xlabel("Monthly payment change")
-    axes[0].set_ylabel("Loans")
-    save(fig, "11_portfolio_distribution.png", "Synthetic portfolio, 5,000 loans. Amber = increase above $250/month. Chart: Neo Nguyen.")
+    save(fig, "11_portfolio_distribution.png", "A 50 bps move shifts the whole book, but most loans stay above $250",
+         "Number of loans by change in monthly payment, under three renewal-rate scenarios. Amber: above $250",
+         "Synthetic portfolio, 5,000 loans. Chart: Neo Nguyen.")
 
 
 def chart_balance_bands(con):
     d = query(con, "SELECT balance_band, shift_bps, scenario, pct_above_250 FROM vw_balance_band_cohort ORDER BY balance_band, shift_bps")
     bands = d.balance_band.unique().tolist()
     fig, ax = plt.subplots(figsize=(10, 4))
-    styles = {-50: ("#B9C3CC", "Rate -50 bps"), 0: (NAVY, "Forecast rate"), 50: (AMBER, "Rate +50 bps")}
+    styles = {-50: (GREY, "Rate -50 bps"), 0: (NAVY, "Forecast rate"), 50: (AMBER, "Rate +50 bps")}
     for i, (shift, (c, name)) in enumerate(styles.items()):
         y = d[d.shift_bps == shift].set_index("balance_band").loc[bands, "pct_above_250"]
         xs = np.arange(len(bands)) + (i - 1) * 0.26
-        bars = ax.bar(xs, y.values, width=0.24, color=c, label=name)
+        bars = ax.bar(xs, y.values, width=0.26, color=c, label=name, **BAR)
         for b, v in zip(bars, y.values):
             ax.text(b.get_x() + b.get_width() / 2, v, f"{v:.0f}%", ha="center", va="bottom", fontsize=8)
     ax.set_xticks(range(len(bands)), [b[3:] for b in bands])
     ax.set_ylim(0, 125)
-    ax.set_ylabel("Share of loans above +$250/month")
-    ax.grid(axis="x", visible=False)
-    ax.set_title("Larger balances cross the $250 threshold first")
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:.0f}%" if v <= 100 else ""))
     ax.legend(loc="upper left", ncol=3)
-    save(fig, "12_portfolio_balance_bands.png", "Synthetic portfolio, 5,000 loans. Chart: Neo Nguyen.")
+    save(fig, "12_portfolio_balance_bands.png", "Larger balances cross the $250 threshold first",
+         "Share of loans whose payment rises more than $250 a month, by balance at renewal",
+         "Synthetic portfolio, 5,000 loans. Chart: Neo Nguyen.")
 
 
 # ---------------------------------------------------------------------------------------------
@@ -309,13 +324,15 @@ def chart_rate_vs_yield(con):
                 textcoords="offset points", fontsize=9, color=MUTED)
     ax.yaxis.set_major_formatter(pct)
     ax.set_xlim(d.month.min(), d.month.max() + pd.DateOffset(months=20))
-    ax.set_title("The mortgage rate follows the 5-year bond yield, a few months behind")
     s = d.dropna(subset=["spread_bps"])
     ax2.fill_between(s.month, 0, s.spread_bps, color=GREY, alpha=0.5, lw=0)
     ax2.plot(s.month, s.spread_bps, color=MUTED, lw=1)
-    ax2.set_ylabel("Spread (bps)")
-    ax2.set_title("Spread: mortgage rate minus bond yield", fontsize=10)
-    save(fig, "13_rate_vs_bond_yield.png", YIELD_SOURCE)
+    ax2.set_title("Spread: mortgage rate minus bond yield, bps")
+    ax2.xaxis.set_major_locator(mdates.YearLocator(2))
+    ax2.set_xticks([t for t in ax2.get_xticks() if d.month.min().year <= mdates.num2date(t).year <= d.month.max().year])
+    ax2.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    save(fig, "13_rate_vs_bond_yield.png", "The mortgage rate follows the 5-year bond yield, a few months behind",
+         "Market reference rate and Government of Canada 5-year benchmark yield, % a year", YIELD_SOURCE)
 
 
 def chart_lag_coefficients(con):
@@ -324,7 +341,7 @@ def chart_lag_coefficients(con):
     fig, ax = plt.subplots(figsize=(10, 4.5))
     x = c.lag_months.astype(int)
     err = [c.coef - c.ci95_low, c.ci95_high - c.coef]
-    ax.bar(x, c.coef, width=0.55, color=PURPLE, label="Share passed through in that month")
+    ax.bar(x, c.coef, width=0.45, color=PURPLE, label="Share passed through in that month", **BAR)
     ax.errorbar(x, c.coef, yerr=err, fmt="none", ecolor=INK, elinewidth=1, capsize=4, label="95% confidence interval")
     ax.plot(x, c.cumulative_pass_through, color=NAVY, lw=2, marker="o", ms=7, label="Cumulative pass-through")
     for xi, v in zip(x, c.cumulative_pass_through):
@@ -332,11 +349,11 @@ def chart_lag_coefficients(con):
         ax.annotate(f"{v:.2f}", (xi, v), xytext=(-10, 8), textcoords="offset points", ha="right", fontsize=9, color=NAVY)
     ax.set_xticks(x, ["Same month" if k == 0 else f"{k} month{'s' if k > 1 else ''} later" for k in x])
     ax.set_ylim(0, 1.1)
-    ax.set_ylabel("Mortgage-rate change per 1-point yield change")
-    ax.set_title("About 0.9 of a bond-yield move reaches the mortgage rate within four months")
-    ax.grid(axis="x", visible=False)
     ax.legend(loc="upper left")
-    save(fig, "14_regression_lag_coefficients.png", YIELD_SOURCE)
+    total = c.cumulative_pass_through.iloc[-1]
+    save(fig, "14_regression_lag_coefficients.png",
+         f"{total:.2f} of a bond-yield move reaches the mortgage rate within {x.max()} months",
+         "Change in the mortgage rate per 1-point change in the 5-year yield, by months after the move", YIELD_SOURCE)
 
 
 def chart_model_comparison(con):
@@ -357,10 +374,9 @@ def chart_model_comparison(con):
     ax.set_xticks(range(1, 7), [f"{h} mo" for h in range(1, 7)])
     ax.set_xlim(0.7, 6.6)
     ax.set_xlabel("Months after the last published month")
-    ax.set_ylabel("MAE (bps)")
-    ax.set_title("Adding the bond yield cuts forecast error at every horizon")
     ax.legend(loc="upper left")
-    save(fig, "15_model_comparison_mae.png", YIELD_SOURCE)
+    save(fig, "15_model_comparison_mae.png", "Adding the bond yield cuts forecast error at every horizon",
+         "Mean absolute error over 122 rolling backtests, bps", YIELD_SOURCE)
 
 
 def chart_forecast_comparison(con):
@@ -387,9 +403,10 @@ def chart_forecast_comparison(con):
     ax.yaxis.set_major_formatter(pct)
     ax.set_xlim(a.month.min(), r.target_month.max() + pd.DateOffset(months=3))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
-    ax.set_title("The regression expects a steeper rise than ETS")
     ax.legend(loc="lower left")
-    save(fig, "16_forecast_comparison.png", YIELD_SOURCE)
+    save(fig, "16_forecast_comparison.png", "The bond-yield model expects a steeper rise than ETS",
+         "Market reference rate and the two forecasts, % a year. Filled dots: the bond yield for that month is already published",
+         YIELD_SOURCE)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -401,18 +418,18 @@ def chart_triage_capacity(con):
     x = np.arange(len(d))
     for off, col, colour, label in [(-0.19, "over_missed_if_by_date_only", GREY, "Call in renewal-date order"),
                                     (0.19, "over_missed", NAVY, "Triage: last-chance loans first, then by segment")]:
-        bars = ax.bar(x + off, d[col], width=0.36, color=colour, label=label)
+        bars = ax.bar(x + off, d[col], width=0.36, color=colour, label=label, **BAR)
         for b, v in zip(bars, d[col]):
             ax.text(b.get_x() + b.get_width() / 2, v, f"{v:,}", ha="center", va="bottom", fontsize=8.5)
     floor = int(d.over_too_soon_to_reach.iloc[0])
     ax.axhline(floor, color=AMBER, lw=1.4, ls=":", label=f"{floor} renew within 7 days, too soon for any rule")
     ax.set_xticks(x, [f"{c} calls a week" for c in d.capacity_per_week])
-    ax.set_ylabel("Borrowers over +$250 not reached")
     ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:,.0f}"))
-    ax.set_title("With the same call capacity, triage misses fewer borrowers facing a big rise")
-    ax.grid(axis="x", visible=False)
     ax.legend(loc="upper right")
-    save(fig, "17_triage_capacity.png", "Synthetic book of 5,000 loans renewing 15 Nov 2026 to 12 Feb 2027, "
+    r300 = d.set_index("capacity_per_week").loc[300]
+    save(fig, "17_triage_capacity.png",
+         f"At 300 calls a week, triage reaches {int(r300.over_missed_if_by_date_only - r300.over_missed):,} more borrowers facing a big rise",
+         "Borrowers whose payment rises more than $250 a month and who never got a call, by weekly call capacity", "Synthetic book of 5,000 loans renewing 15 Nov 2026 to 12 Feb 2027, "
                                          "ETS forecast rate. Chart: Neo Nguyen.")
 
 

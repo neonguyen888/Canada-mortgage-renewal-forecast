@@ -40,6 +40,14 @@ def test_every_visual_field_exists_in_the_model(model):
                         assert f["Column"]["Property"] in {c.name for c in tables[table].cols}, (page.name, v["name"])
 
 
+def test_visual_names_are_unique_on_each_page(model):
+    # Each visual is saved as visuals/<name>/visual.json, so a repeated name overwrites the first.
+    _, pages = model
+    for page in pages:
+        names = [v["name"] for v in page.visuals]
+        assert len(names) == len(set(names)), page.name
+
+
 def test_visuals_fit_on_the_page(model):
     _, pages = model
     for page in pages:

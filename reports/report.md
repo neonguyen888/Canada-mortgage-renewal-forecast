@@ -64,13 +64,13 @@ Every run saves the raw JSON response with the download date, plus a metadata fi
 
 ![Market reference rate history and forecast](figures/01_rate_history_forecast.png)
 
-*Reading the chart: the solid navy line is what actually happened. The dashed teal line is the forecast, and the shaded area is the 80% band. The band gets wider because a forecast six months out is less reliable than one a month out.*
+*Reading the chart: the solid blue line is what actually happened. The dashed teal line is the forecast, and the shaded area is the 80% band. The band gets wider because a forecast six months out is less reliable than one a month out.*
 
 The rate spent most of 2013 to 2019 between 2.6% and 3.8%. It fell to a low of 1.94% in February 2021, then climbed to 6.00% by November 2023 as the Bank of Canada raised its policy rate. Since then it has eased to the low 4% range and turned up again in mid-2026, reaching 4.58% in August.
 
 ![Month-over-month change](figures/02_monthly_change_bps.png)
 
-*Reading the chart: each bar is one month's change from the month before. Navy bars above zero are increases and grey bars below zero are decreases. 100 bps is one full percentage point.*
+*Reading the chart: each bar is one month's change from the month before. Blue bars above zero are increases and grey bars below zero are decreases. 100 bps is one full percentage point.*
 
 The largest monthly moves all came in mid-2022: +29 bps in June, +35 in July, +39 in August and +36 in September. Monthly changes are calculated in SQL with `LAG()`, and a change is only reported when the previous row is exactly the prior calendar month.
 
@@ -163,7 +163,7 @@ Banks fund 5-year fixed mortgages roughly at the Government of Canada 5-year bon
 
 ![Mortgage rate vs bond yield](figures/13_rate_vs_bond_yield.png)
 
-*Reading the chart: the navy line is the mortgage rate and the grey line is the 5-year bond yield. They move together, with the mortgage rate a few months behind. The bottom panel is the gap between them. The yield line runs two months further than the mortgage line because it is published sooner.*
+*Reading the chart: the blue line is the mortgage rate and the grey line is the 5-year bond yield. They move together, with the mortgage rate a few months behind. The bottom panel is the gap between them. The yield line runs two months further than the mortgage line because it is published sooner.*
 
 **The model.** The regression explains each month's change in the mortgage rate using the change in the bond yield that month and in each of the previous few months:
 
@@ -188,7 +188,7 @@ It uses monthly changes because both rates drift up and down over years. Two dri
 
 ![Lag coefficients](figures/14_regression_lag_coefficients.png)
 
-*Reading the chart: each purple bar is how much of a yield move shows up in the mortgage rate that many months later. The black whiskers are the 95% range. The navy line adds the bars up, so its last point is the total pass-through.*
+*Reading the chart: each purple bar is how much of a yield move shows up in the mortgage rate that many months later. The black whiskers are the 95% range. The blue line adds the bars up, so its last point is the total pass-through.*
 
 Fitted on all 163 months (February 2013 to August 2026), the regression explains 63% of the monthly ups and downs (R² = 0.63). In total, 0.90 of a yield move reaches the mortgage rate within four months, with a standard error of 0.09. Very little arrives in the same month, which fits the rate-hold explanation. The errors of nearby months are related (Durbin-Watson 1.38), so the standard errors use the Newey-West correction, the same idea as in the Diebold-Mariano test.
 
@@ -380,7 +380,7 @@ The whole PostgreSQL rebuild runs in one transaction. Primary and foreign keys r
 - **Triage.** The four segments add up to 5,000 loans and match the scenario counts in section 10 (3,760 over at -50 bps, 4,614 over at the forecast). Priority ranks run from 1 to 5,000 with no gaps, no call is booked within 7 days of renewal, and more call capacity never means more borrowers missed.
 - **SQL vs Python.** MAE in bps and CAD matches to within 0.01 for all four model and horizon pairs in the main backtest and all 30 in the model comparison. The triage segments match between Python and SQL. Threshold rates match on 12 profiles. The portfolio's total payment change and count above $250 match exactly.
 
-In total there are 30 SQL checks and 44 unit tests. The tests cover the payment formula, the threshold solver (rate up, down, unchanged, 0% old rate, an exact hit on the threshold, and a solution outside the 0% to 10% search range), the balance calculation, the Diebold-Mariano helper, and the regression: it recovers known lag weights from fake data, uses known yields and then holds them flat, and picks its lag count without looking past 2015. The triage tests check the segment mapping, the rank order, the 7-day notice and 60-day lookahead, and that a last-chance borrower is called before a more certain one who can wait. The Power BI tests check that no measure shares a name with a table or column, that every visual points at a field that exists, that every visual fits on its page, and that each slicer's default is one of its options.
+In total there are 30 SQL checks and 45 unit tests. The tests cover the payment formula, the threshold solver (rate up, down, unchanged, 0% old rate, an exact hit on the threshold, and a solution outside the 0% to 10% search range), the balance calculation, the Diebold-Mariano helper, and the regression: it recovers known lag weights from fake data, uses known yields and then holds them flat, and picks its lag count without looking past 2015. The triage tests check the segment mapping, the rank order, the 7-day notice and 60-day lookahead, and that a last-chance borrower is called before a more certain one who can wait. The Power BI tests check that no measure shares a name with a table or column, that no two visuals on a page share a name, that every visual points at a field that exists, that every visual fits on its page, and that each slicer's default is one of its options.
 
 ## 13. Limitations
 

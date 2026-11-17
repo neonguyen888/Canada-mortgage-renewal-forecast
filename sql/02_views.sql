@@ -26,7 +26,6 @@ CREATE VIEW dim_month AS
 SELECT
     m::date                          AS month,
     extract(year FROM m)::integer    AS year,
-    extract(month FROM m)::integer   AS month_num,
     to_char(m, 'Mon YYYY')           AS month_label
 FROM generate_series(
     (SELECT min(month) FROM fact_rate_actual)::timestamp,

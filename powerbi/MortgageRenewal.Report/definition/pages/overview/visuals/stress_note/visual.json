@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "stress_note",
   "position": {
-    "x": 812,
-    "y": 502,
-    "z": 3500,
+    "x": 1005.2,
+    "y": 254,
+    "z": 3200,
     "height": 38,
-    "width": 432,
-    "tabOrder": 3500
+    "width": 238.8,
+    "tabOrder": 3200
   },
   "visual": {
     "visualType": "textbox",
@@ -19,14 +19,15 @@
               {
                 "textRuns": [
                   {
-                    "value": "Share of renewing loans with a payment rise above $250 a month",
+                    "value": "Portfolio scenario",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
                       "color": "#6D7C91"
                     }
                   }
-                ]
+                ],
+                "horizontalTextAlignment": "right"
               }
             ]
           }
