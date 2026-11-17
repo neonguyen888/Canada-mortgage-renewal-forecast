@@ -1,5 +1,5 @@
 segment_order,segment,n_loans,median_rise_at_forecast,lowest_rise_if_rates_fall,n_contacted_at_300,pct_contacted_at_300
-1,Over in every scenario,3760,463.0,250.0,3354,89.2
-2,Over unless rates fall,854,293.0,188.0,246,28.8
-3,Over only if rates rise,287,232.0,150.0,0,0.0
-4,Under in every scenario,99,182.0,101.0,0,0.0
+1,Over in every scenario,3792,464.0,250.0,3372,88.9
+2,Over unless rates fall,834,293.0,188.0,228,27.3
+3,Over only if rates rise,278,232.0,151.0,0,0.0
+4,Under in every scenario,96,182.0,102.0,0,0.0

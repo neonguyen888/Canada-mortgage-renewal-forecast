@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Backtest: 122 rolling forecasts made each month from January 2016 to February 2026",
+                    "value": "Backtest: 123 rolling forecasts made each month from January 2016 to March 2026",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",

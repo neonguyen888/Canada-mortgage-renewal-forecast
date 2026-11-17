@@ -2,7 +2,7 @@
 
 **Author:** Neo Nguyen · **Stack:** Python (pandas, statsmodels, matplotlib) · PostgreSQL · Power BI
 
-A household that locked in a 5-year fixed rate of 2.2% in 2021 and renews today, with $400,000 left to pay, owes about $479 more every month.
+A household that locked in a 5-year fixed rate of 2.2% in 2021 and renews today, with $400,000 left to pay, owes about $496 more every month.
 
 This project forecasts where the 5-year fixed rate goes next, using Bank of Canada data, and works out what that means at renewal: for one borrower, and for a lender with 5,000 loans renewing in the next 90 days that has to decide whom to call first.
 
@@ -20,26 +20,26 @@ This project forecasts where the 5-year fixed rate goes next, using Bank of Cana
 
 | Finding | Value |
 |---|---|
-| Latest market reference rate | 4.58% (August 2026) |
-| ETS forecast, 3 and 6 months | 4.77% (Nov 2026) · 4.86% (Feb 2027) |
-| 80% band from backtest errors | 4.45% to 5.04% at 3 months · 4.21% to 5.58% at 6 months |
-| $400k, 20 years, 2.20% → 4.58% | $2,059.72 → $2,538.57 (+$478.85/month) |
-| Rate where payment rises $250 | 3.48% (110 bps below today's rate) |
+| Latest market reference rate | 4.66% (September 2026) |
+| ETS forecast, 3 and 6 months | 4.81% (Dec 2026) · 4.89% (Mar 2027) |
+| 80% band from backtest errors | 4.50% to 5.10% at 3 months · 4.25% to 5.61% at 6 months |
+| $400k, 20 years, 2.20% → 4.66% | $2,059.72 → $2,555.58 (+$495.86/month) |
+| Rate where payment rises $250 | 3.48% (118 bps below today's rate) |
 | Bond-yield pass-through | 0.90 of a 5-year yield move reaches the mortgage rate within 4 months (R² 0.63) |
-| Bond-yield regression forecast | 4.82% (Nov 2026) · 4.97% (Feb 2027) |
-| Synthetic 90-day book above +$250 | 4,614 of 5,000 loans (92%) at the forecast rate |
-| Triage at 300 calls a week | Misses 1,014 borrowers facing +$250, against 1,264 when calling in renewal-date order |
+| Bond-yield regression forecast | 4.92% (Dec 2026) · 4.98% (Mar 2027) |
+| Synthetic 90-day book above +$250 | 4,626 of 5,000 loans (93%) at the forecast rate |
+| Triage at 300 calls a week | Misses 1,026 borrowers facing +$250, against 1,268 when calling in renewal-date order |
 
-**Backtest** (122 rolling origins, January 2016 to February 2026, same origins for every model)
+**Backtest** (123 rolling origins, January 2016 to March 2026, same origins for every model)
 
 | Model | Horizon | MAE (bps) | MAE (CAD/month) | Diebold-Mariano p |
 |---|---|---|---|---|
-| ETS damped trend | 3 months | 18.9 | $38.92 | 0.051 |
-| Naive (last observed) | 3 months | 24.4 | $50.01 | |
-| ETS damped trend | 6 months | 39.4 | $81.24 | 0.48 |
-| Naive (last observed) | 6 months | 42.8 | $87.47 | |
-| Bond-yield regression | 3 months | 11.7 | $23.82 | < 0.001 vs ETS |
-| Bond-yield regression | 6 months | 25.0 | $51.39 | < 0.001 vs ETS |
+| ETS damped trend | 3 months | 19.0 | $39.10 | 0.058 |
+| Naive (last observed) | 3 months | 24.3 | $49.82 | |
+| ETS damped trend | 6 months | 39.7 | $81.75 | 0.51 |
+| Naive (last observed) | 6 months | 42.8 | $87.52 | |
+| Bond-yield regression | 3 months | 11.6 | $23.66 | < 0.001 vs ETS |
+| Bond-yield regression | 6 months | 25.0 | $51.25 | < 0.001 vs ETS |
 
 ETS met the selection rule I wrote before the backtest (beat the naive model at both horizons), so I use it for the outlook. The 3-month gain is borderline significant and the 6-month gain is not. During the 2024 to 2026 easing period, the naive model was slightly more accurate (report section 5).
 
@@ -69,7 +69,7 @@ A four-page report in a dark navy theme: an overview of the renewal book, foreca
 
 ## Data
 
-Bank of Canada series [`V122667786`](https://www.bankofcanada.ca/valet/observations/V122667786/json): *Mortgages, funds advanced, residential mortgages, uninsured, total; fixed rate, 5 years and over*. Monthly, January 2013 to August 2026, in percent.
+Bank of Canada series [`V122667786`](https://www.bankofcanada.ca/valet/observations/V122667786/json): *Mortgages, funds advanced, residential mortgages, uninsured, total; fixed rate, 5 years and over*. Monthly, January 2013 to September 2026, in percent.
 
 Bank of Canada series [`BD.CDN.5YR.DQ.YLD`](https://www.bankofcanada.ca/valet/observations/BD.CDN.5YR.DQ.YLD/json): Government of Canada 5-year benchmark bond yield, daily, averaged to complete months (through October 2026).
 
@@ -125,7 +125,7 @@ reports/           report.md and figures/
 
 ## Next
 
-- Check the regression against ETS on September to November 2026 once they are published, and switch the headline forecast if it keeps winning.
+- Keep scoring both models on each newly published month. September 2026 came in at 4.66%: ETS forecast 4.66% and the regression 4.65%. Switch the headline forecast if the regression keeps winning on October to December.
 - Rerun the triage at each backtest origin from 2018 to see whether a better rate forecast changes who gets called.
 
 ## Licence

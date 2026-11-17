@@ -1,13 +1,13 @@
 origin_month,target_month,model,horizon_months,forecast_rate_pct,is_selected_model
-2026-08-01,2026-09-01,Naive (last observed),1,4.58,False
-2026-08-01,2026-10-01,Naive (last observed),2,4.58,False
-2026-08-01,2026-11-01,Naive (last observed),3,4.58,False
-2026-08-01,2026-12-01,Naive (last observed),4,4.58,False
-2026-08-01,2027-01-01,Naive (last observed),5,4.58,False
-2026-08-01,2027-02-01,Naive (last observed),6,4.58,False
-2026-08-01,2026-09-01,ETS damped trend,1,4.6565,True
-2026-08-01,2026-10-01,ETS damped trend,2,4.7173,True
-2026-08-01,2026-11-01,ETS damped trend,3,4.766,True
-2026-08-01,2026-12-01,ETS damped trend,4,4.8049,True
-2026-08-01,2027-01-01,ETS damped trend,5,4.836,True
-2026-08-01,2027-02-01,ETS damped trend,6,4.8609,True
+2026-09-01,2026-10-01,Naive (last observed),1,4.66,False
+2026-09-01,2026-11-01,Naive (last observed),2,4.66,False
+2026-09-01,2026-12-01,Naive (last observed),3,4.66,False
+2026-09-01,2027-01-01,Naive (last observed),4,4.66,False
+2026-09-01,2027-02-01,Naive (last observed),5,4.66,False
+2026-09-01,2027-03-01,Naive (last observed),6,4.66,False
+2026-09-01,2026-10-01,ETS damped trend,1,4.7232,True
+2026-09-01,2026-11-01,ETS damped trend,2,4.7739,True
+2026-09-01,2026-12-01,ETS damped trend,3,4.8145,True
+2026-09-01,2027-01-01,ETS damped trend,4,4.8469,True
+2026-09-01,2027-02-01,ETS damped trend,5,4.8729,True
+2026-09-01,2027-03-01,ETS damped trend,6,4.8936,True

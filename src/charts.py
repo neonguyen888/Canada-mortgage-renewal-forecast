@@ -141,6 +141,10 @@ def chart_error_over_time(con):
          "Size of each 6-month-ahead miss by target month, bps. Thick lines: 6-month rolling mean")
 
 
+def n_origins(con) -> int:
+    return int(query(con, "SELECT count(DISTINCT origin_month) FROM fact_backtest").iloc[0, 0])
+
+
 def chart_mae_summary(con):
     d = query(con, "SELECT model, horizon_months, mae_bps, mae_cad_per_month FROM vw_backtest_summary")
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
@@ -156,7 +160,7 @@ def chart_mae_summary(con):
         ax.set_title(title)
     axes[0].legend(loc="upper left")
     save(fig, "05_mae_by_model.png", "ETS misses by less than the naive forecast at both horizons",
-         "Average size of a forecast miss (mean absolute error) over 122 rolling backtests")
+         f"Average size of a forecast miss (mean absolute error) over {n_origins(con)} rolling backtests")
 
 
 def chart_mae_by_period(con):
@@ -376,7 +380,7 @@ def chart_model_comparison(con):
     ax.set_xlabel("Months after the last published month")
     ax.legend(loc="upper left")
     save(fig, "15_model_comparison_mae.png", "Adding the bond yield cuts forecast error at every horizon",
-         "Mean absolute error over 122 rolling backtests, bps", YIELD_SOURCE)
+         f"Mean absolute error over {n_origins(con)} rolling backtests, bps", YIELD_SOURCE)
 
 
 def chart_forecast_comparison(con):

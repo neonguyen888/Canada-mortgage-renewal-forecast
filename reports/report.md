@@ -1,6 +1,6 @@
 # Canadian Mortgage Renewal: Rate Forecast and Payment Impact
 
-**Author:** Neo Nguyen · **Data as of:** August 2026 (downloaded 14 November 2026) · **Tools:** Python, PostgreSQL, matplotlib, Power BI
+**Author:** Neo Nguyen · **Data as of:** September 2026 (downloaded 17 November 2026) · **Tools:** Python, PostgreSQL, matplotlib, Power BI
 
 ## Summary
 
@@ -10,13 +10,13 @@ Many Canadian households that locked in a 5-year fixed rate during the pandemic 
 2. What renewal rate pushes the payment up by $250 a month (or $100, or $500)?
 3. If the rate forecast is wrong, how many dollars a month is the payment estimate off by?
 
-For an illustrative loan with $400,000 left and 20 years to go, renewing from 2.20% at the latest market reference rate of 4.58% raises the payment from $2,059.72 to $2,538.57, which is $478.85 more each month. The payment crosses the $250 threshold at a renewal rate of about 3.48%, so today's market rate is already 110 bps past it.
+For an illustrative loan with $400,000 left and 20 years to go, renewing from 2.20% at the latest market reference rate of 4.66% raises the payment from $2,059.72 to $2,555.58, which is $495.86 more each month. The payment crosses the $250 threshold at a renewal rate of about 3.48%, so today's market rate is already 118 bps past it.
 
-A damped-trend ETS model forecasts the rate at 4.77% for November 2026 and 4.86% for February 2027. Over 122 rolling backtests it beat a naive "no change" forecast at both horizons: 18.9 vs 24.4 bps at 3 months and 39.4 vs 42.8 bps at 6 months. In payment terms that is $38.92 vs $50.01 a month, and $81.24 vs $87.47. The 3-month gain is close to statistically significant (p = 0.051). The 6-month gain is not (p = 0.48), and during the 2024 to 2026 easing period the naive model did slightly better.
+A damped-trend ETS model forecasts the rate at 4.81% for December 2026 and 4.89% for March 2027. Over 123 rolling backtests it beat a naive "no change" forecast at both horizons: 19.0 vs 24.3 bps at 3 months and 39.7 vs 42.8 bps at 6 months. In payment terms that is $39.10 vs $49.82 a month, and $81.75 vs $87.52. The 3-month gain is close to statistically significant (p = 0.058). The 6-month gain is not (p = 0.51), and during the 2024 to 2026 easing period the naive model did slightly better.
 
-A regression on the Government of Canada 5-year bond yield did better than both. About 0.90 of a move in the bond yield reaches the mortgage rate within four months, and because the yield is published two months before the mortgage figure, the regression already knows part of what is coming. Its backtest error was 11.7 bps at 3 months and 25.0 bps at 6 months, and the gain over ETS is statistically significant (p < 0.001). It expects a slightly steeper rise: 4.82% in November and 4.97% in February. ETS stays the headline forecast for now because I added the regression after the ETS results were known (section 7 explains).
+A regression on the Government of Canada 5-year bond yield did better than both. About 0.90 of a move in the bond yield reaches the mortgage rate within four months, and because the yield is published two months before the mortgage figure, the regression already knows part of what is coming. Its backtest error was 11.6 bps at 3 months and 25.0 bps at 6 months, and the gain over ETS is statistically significant (p < 0.001). It expects a slightly steeper rise: 4.92% in December and 4.98% in March. ETS stays the headline forecast for now because I added the regression after the ETS results were known (section 7 explains).
 
-On a synthetic book of 5,000 loans renewing in the next 90 days, 92% would see their payment rise by more than $250 a month at the forecast rate. A 50 bp lower rate still leaves 75% above the threshold. If the renewal team can call 300 borrowers a week, calling last-chance borrowers first and then the most certain cases reaches 250 more of those facing a $250 rise than working through renewal dates (section 11).
+On a synthetic book of 5,000 loans renewing in the next 90 days, 93% would see their payment rise by more than $250 a month at the forecast rate. A 50 bp lower rate still leaves 76% above the threshold. If the renewal team can call 300 borrowers a week, calling last-chance borrowers first and then the most certain cases reaches 242 more of those facing a $250 rise than working through renewal dates (section 11).
 
 ## Key terms
 
@@ -53,7 +53,7 @@ The rate used throughout is Bank of Canada series **V122667786**: the average in
 | Item | Value |
 |---|---|
 | Source | Bank of Canada Valet API, [V122667786](https://www.bankofcanada.ca/valet/observations/V122667786/json) |
-| Coverage | January 2013 to August 2026, 164 months |
+| Coverage | January 2013 to September 2026, 165 months |
 | Unit | Annual rate in percent; 1 bp = 0.01 percentage point |
 | Checks on download | No missing months, no duplicate months, no blank values |
 | Second series | GoC 5-year benchmark bond yield, [BD.CDN.5YR.DQ.YLD](https://www.bankofcanada.ca/valet/observations/BD.CDN.5YR.DQ.YLD/json), daily, averaged to months. Complete months only, through October 2026 |
@@ -66,7 +66,7 @@ Every run saves the raw JSON response with the download date, plus a metadata fi
 
 *Reading the chart: the solid blue line is what actually happened. The dashed teal line is the forecast, and the shaded area is the 80% band. The band gets wider because a forecast six months out is less reliable than one a month out.*
 
-The rate spent most of 2013 to 2019 between 2.6% and 3.8%. It fell to a low of 1.94% in February 2021, then climbed to 6.00% by November 2023 as the Bank of Canada raised its policy rate. Since then it has eased to the low 4% range and turned up again in mid-2026, reaching 4.58% in August.
+The rate spent most of 2013 to 2019 between 2.6% and 3.8%. It fell to a low of 1.94% in February 2021, then climbed to 6.00% by November 2023 as the Bank of Canada raised its policy rate. Since then it has eased to the low 4% range and turned up again in mid-2026, reaching 4.66% in September.
 
 ![Month-over-month change](figures/02_monthly_change_bps.png)
 
@@ -81,7 +81,7 @@ I compared two models.
 - **Naive baseline.** Next month's rate equals the last observed rate. Rates move slowly, so this is hard to beat, and any model that can't beat it shouldn't be used.
 - **ETS with a damped additive trend** (statsmodels). It follows the recent direction but lets the trend fade, so a rise isn't projected upward indefinitely.
 
-**Rolling-origin backtest.** Starting in January 2016, I treated each month as "today", fitted both models on data up to that month only, and had them forecast 3 and 6 months ahead. That repeats for 122 origins, up to February 2026 (the last month with six months of actuals after it). Both models use exactly the same origins, and the training window expands, with at least 36 months of history at the first origin.
+**Rolling-origin backtest.** Starting in January 2016, I treated each month as "today", fitted both models on data up to that month only, and had them forecast 3 and 6 months ahead. That repeats for 123 origins, up to March 2026 (the last month with six months of actuals after it). Both models use exactly the same origins, and the training window expands, with at least 36 months of history at the first origin.
 
 **Selection rule, set before running the backtest.** I would adopt ETS only if its MAE in bps beat the naive model at both horizons. Otherwise the naive model would ship.
 
@@ -95,25 +95,25 @@ I compared two models.
 
 | Model | Horizon | MAE (bps) | MAE (CAD/month) | Bias (bps) | Origins |
 |---|---|---|---|---|---|
-| ETS damped trend | 3 months | 18.9 | $38.92 | -0.4 | 122 |
-| Naive (last observed) | 3 months | 24.4 | $50.01 | -3.3 | 122 |
-| ETS damped trend | 6 months | 39.4 | $81.24 | -2.9 | 122 |
-| Naive (last observed) | 6 months | 42.8 | $87.47 | -7.6 | 122 |
+| ETS damped trend | 3 months | 19.0 | $39.10 | -0.7 | 123 |
+| Naive (last observed) | 3 months | 24.3 | $49.82 | -3.4 | 123 |
+| ETS damped trend | 6 months | 39.7 | $81.75 | -3.4 | 123 |
+| Naive (last observed) | 6 months | 42.8 | $87.52 | -7.9 | 123 |
 
 ![MAE by model](figures/05_mae_by_model.png)
 
 *Reading the chart: lower bars are better. The left panel measures the average miss in rate terms, the right panel in dollars a month on the example loan.*
 
-ETS met the selection rule and is the model used for the outlook. The size of the win differs by horizon. At 3 months, ETS cuts the average error by about 23%, which is $11 a month on the illustrative loan. At 6 months the gain shrinks to about 8%, and both models miss by $80 to $90 a month, about a third of a $250 threshold.
+ETS met the selection rule and is the model used for the outlook. The size of the win differs by horizon. At 3 months, ETS cuts the average error by about 22%, which is $11 a month on the illustrative loan. At 6 months the gain shrinks to about 7%, and both models miss by $80 to $90 a month, about a third of a $250 threshold.
 
 **Is the difference real?** A Diebold-Mariano test compares the two models' absolute errors origin by origin. Forecasts from consecutive months overlap, so the test uses a Newey-West variance and the Harvey-Leybourne-Newbold small-sample correction.
 
 | Horizon | Mean difference in absolute error | DM statistic | p-value |
 |---|---|---|---|
-| 3 months | -5.5 bps (ETS better) | -1.97 | 0.051 |
-| 6 months | -3.4 bps (ETS better) | -0.71 | 0.48 |
+| 3 months | -5.3 bps (ETS better) | -1.91 | 0.058 |
+| 6 months | -3.1 bps (ETS better) | -0.66 | 0.51 |
 
-In plain terms, a p-value of 0.051 means that if ETS and the naive model were really equally good, a gap as large as the one in this backtest would still turn up about 5% of the time by chance. At 0.48 it would turn up about half the time.
+In plain terms, a p-value of 0.058 means that if ETS and the naive model were really equally good, a gap as large as the one in this backtest would still turn up about 6% of the time by chance. At 0.51 it would turn up about half the time.
 
 At 3 months the evidence for ETS is borderline. At 6 months the two models can't be told apart on this sample. ETS is a reasonable default, but the 6-month improvement is too small to rely on.
 
@@ -132,7 +132,7 @@ At 3 months the evidence for ETS is borderline. At 6 months the two models can't
 | 2016 to 2019, pre-pandemic | 13.5 | 18.0 | 28.5 | 31.3 |
 | 2020 to 2021, pandemic lows | 15.1 | 18.9 | 30.2 | 32.6 |
 | 2022 to 2023, tightening | 30.4 | 47.5 | 74.3 | 86.1 |
-| 2024 to 2026, easing | 21.1 | 20.0 | 34.5 | 32.9 |
+| 2024 to 2026, easing | 21.3 | 19.8 | 35.5 | 33.3 |
 
 *MAE in bps.*
 
@@ -146,16 +146,16 @@ The band around the forecast comes from the selected model's own backtest errors
 
 | Target month | Horizon | Forecast | 80% band | Band width |
 |---|---|---|---|---|
-| Sep 2026 | 1 | 4.66% | 4.56% to 4.77% | 21 bps |
-| Oct 2026 | 2 | 4.72% | 4.51% to 4.89% | 38 bps |
-| Nov 2026 | 3 | 4.77% | 4.45% to 5.04% | 59 bps |
-| Dec 2026 | 4 | 4.80% | 4.36% to 5.23% | 87 bps |
-| Jan 2027 | 5 | 4.84% | 4.29% to 5.47% | 118 bps |
-| Feb 2027 | 6 | 4.86% | 4.21% to 5.58% | 137 bps |
+| Oct 2026 | 1 | 4.72% | 4.63% to 4.83% | 21 bps |
+| Nov 2026 | 2 | 4.77% | 4.57% to 4.97% | 40 bps |
+| Dec 2026 | 3 | 4.81% | 4.50% to 5.10% | 60 bps |
+| Jan 2027 | 4 | 4.85% | 4.41% to 5.30% | 89 bps |
+| Feb 2027 | 5 | 4.87% | 4.33% to 5.50% | 118 bps |
+| Mar 2027 | 6 | 4.89% | 4.25% to 5.61% | 136 bps |
 
-On the illustrative loan, the 3-month band covers payments from $2,511 to $2,636, a range of $125 a month. The 6-month band covers $2,461 to $2,755, a range of $293. The 6-month uncertainty alone is larger than the $250 threshold.
+On the illustrative loan, the 3-month band covers payments from $2,522 to $2,650, a range of $128 a month. The 6-month band covers $2,468 to $2,762, a range of $294. The 6-month uncertainty alone is larger than the $250 threshold.
 
-**Publication lag.** The Bank of Canada releases this series about two to three months after the month it describes. As of mid-November 2026 the latest month is August. The "3-month" forecast is for November 2026, which is close to a nowcast in calendar terms. The backtest uses the same convention at every origin, so the accuracy figures describe exactly this kind of forecast.
+**Publication lag.** The Bank of Canada releases this series about two to three months after the month it describes. As of mid-November 2026 the latest month is September. The "3-month" forecast is for December 2026, only a few weeks away in calendar terms. The backtest uses the same convention at every origin, so the accuracy figures describe exactly this kind of forecast.
 
 ## 7. Adding the bond yield: a regression
 
@@ -163,7 +163,7 @@ Banks fund 5-year fixed mortgages roughly at the Government of Canada 5-year bon
 
 ![Mortgage rate vs bond yield](figures/13_rate_vs_bond_yield.png)
 
-*Reading the chart: the blue line is the mortgage rate and the grey line is the 5-year bond yield. They move together, with the mortgage rate a few months behind. The bottom panel is the gap between them. The yield line runs two months further than the mortgage line because it is published sooner.*
+*Reading the chart: the blue line is the mortgage rate and the grey line is the 5-year bond yield. They move together, with the mortgage rate a few months behind. The bottom panel is the gap between them. The yield line runs a month or two further than the mortgage line because it is published sooner.*
 
 **The model.** The regression explains each month's change in the mortgage rate using the change in the bond yield that month and in each of the previous few months:
 
@@ -180,7 +180,7 @@ It uses monthly changes because both rates drift up and down over years. Two dri
 
 | Yield change from | Share passed through (b) | 95% range | Running total |
 |---|---|---|---|
-| Same month | 0.07 | 0.00 to 0.15 | 0.07 |
+| Same month | 0.07 | 0.00 to 0.14 | 0.07 |
 | 1 month earlier | 0.22 | 0.15 to 0.29 | 0.29 |
 | 2 months earlier | 0.21 | 0.14 to 0.29 | 0.50 |
 | 3 months earlier | 0.17 | 0.09 to 0.25 | 0.67 |
@@ -190,9 +190,9 @@ It uses monthly changes because both rates drift up and down over years. Two dri
 
 *Reading the chart: each purple bar is how much of a yield move shows up in the mortgage rate that many months later. The black whiskers are the 95% range. The blue line adds the bars up, so its last point is the total pass-through.*
 
-Fitted on all 163 months (February 2013 to August 2026), the regression explains 63% of the monthly ups and downs (R² = 0.63). In total, 0.90 of a yield move reaches the mortgage rate within four months, with a standard error of 0.09. Very little arrives in the same month, which fits the rate-hold explanation. The errors of nearby months are related (Durbin-Watson 1.38), so the standard errors use the Newey-West correction, the same idea as in the Diebold-Mariano test.
+Fitted on all 164 months (February 2013 to September 2026), the regression explains 63% of the monthly ups and downs (R² = 0.63). In total, 0.90 of a yield move reaches the mortgage rate within four months, with a standard error of 0.09. Very little arrives in the same month, which fits the rate-hold explanation. The errors of nearby months are related (Durbin-Watson 1.38), so the standard errors use the Newey-West correction, the same idea as in the Diebold-Mariano test.
 
-**Backtest.** I ran the regression through the same 122 origins as the other two models, fitting it at each origin on data up to that month only. It then gets the bond yields for the next two months, because in practice those are already published when the mortgage figure comes out. After that I hold the yield flat.
+**Backtest.** I ran the regression through the same 123 origins as the other two models, fitting it at each origin on data up to that month only. It then gets the bond yields for the next two months, because in practice those are already published when the mortgage figure comes out. After that I hold the yield flat.
 
 The Bank's historical release dates aren't available, so I can't be sure two full months were always out in time. Two more versions, with only 1 month of yields past the origin or none, show how much the result depends on that.
 
@@ -202,43 +202,43 @@ The Bank's historical release dates aren't available, so I can't be sure two ful
 
 | Model | 1 month | 2 months | 3 months | 6 months | 3 months (CAD) | 6 months (CAD) |
 |---|---|---|---|---|---|---|
-| Bond-yield regression | 5.7 | 9.3 | 11.7 | 25.0 | $23.82 | $51.39 |
-| Regression, 1 month of extra yields | 5.7 | 9.2 | 13.1 | 29.7 | $26.64 | $60.95 |
-| Regression, yields to origin only | 5.9 | 10.6 | 16.1 | 34.6 | $32.81 | $70.98 |
-| ETS damped trend | 6.2 | 12.2 | 18.9 | 39.4 | $38.92 | $81.24 |
-| Naive (last observed) | 9.1 | 17.1 | 24.4 | 42.8 | $50.01 | $87.47 |
+| Bond-yield regression | 5.8 | 9.2 | 11.6 | 25.0 | $23.66 | $51.25 |
+| Regression, 1 month of extra yields | 5.8 | 9.1 | 13.0 | 29.6 | $26.44 | $60.88 |
+| Regression, yields to origin only | 5.9 | 10.6 | 16.0 | 34.5 | $32.61 | $70.93 |
+| ETS damped trend | 6.2 | 12.2 | 19.0 | 39.7 | $39.10 | $81.75 |
+| Naive (last observed) | 9.0 | 17.1 | 24.3 | 42.8 | $49.82 | $87.52 |
 
 *MAE in bps unless marked CAD.*
 
-The regression cuts the 3-month error by 38% compared with ETS, which is $15 a month on the example loan. At 6 months the cut is 36%, or $30 a month. With 1 month of head start the 3-month error is 13.1 bps, and with none it is 16.1 bps, against 18.9 for ETS. Every version beats ETS at both horizons, so the conclusion holds whatever the real release lag was. The yield itself carries information, and each month of head start adds more.
+The regression cuts the 3-month error by 39% compared with ETS, which is $15 a month on the example loan. At 6 months the cut is 37%, or $31 a month. With 1 month of head start the 3-month error is 13.0 bps, and with none it is 16.0 bps, against 19.0 for ETS. Every version beats ETS at both horizons, so the conclusion holds whatever the real release lag was. The yield itself carries information, and each month of head start adds more.
 
 | Comparison | Horizon | Mean difference | p-value |
 |---|---|---|---|
-| Regression vs ETS | 3 months | -7.2 bps | 0.0003 |
-| Regression vs ETS | 6 months | -14.4 bps | < 0.0001 |
+| Regression vs ETS | 3 months | -7.4 bps | 0.0002 |
+| Regression vs ETS | 6 months | -14.7 bps | < 0.0001 |
 | Regression vs naive | 3 months | -12.7 bps | < 0.0001 |
-| Regression vs naive | 6 months | -17.7 bps | 0.0004 |
+| Regression vs naive | 6 months | -17.8 bps | 0.0003 |
 
-Unlike ETS against naive in section 4, these differences are far too large to be chance. The regression also did best in every rate period. During the 2022 to 2023 tightening its 3-month error was 17.8 bps, against 30.4 for ETS. In the 2024 to 2026 easing period, where ETS lost to the naive model, the regression scored 9.9 bps against 21.1 for ETS and 20.0 for naive. It does well at turning points because the bond market turns first.
+Unlike ETS against naive in section 4, these differences are far too large to be chance. The regression also did best in every rate period. During the 2022 to 2023 tightening its 3-month error was 17.8 bps, against 30.4 for ETS. In the 2024 to 2026 easing period, where ETS lost to the naive model, the regression scored 9.7 bps against 21.3 for ETS and 19.8 for naive. It does well at turning points because the bond market turns first.
 
-**Latest forecast.** The September and October forecasts use yields already published. From November on, the yield is held at its October level.
+**Latest forecast.** The October forecast uses a yield already published. From November on, the yield is held at its October level.
 
 | Target month | Regression | ETS | Gap | Yield already known |
 |---|---|---|---|---|
-| Sep 2026 | 4.65% | 4.66% | -1 bp | yes |
-| Oct 2026 | 4.72% | 4.72% | 0 bps | yes |
-| Nov 2026 | 4.82% | 4.77% | +6 bps | no |
-| Dec 2026 | 4.90% | 4.80% | +10 bps | no |
-| Jan 2027 | 4.96% | 4.84% | +13 bps | no |
-| Feb 2027 | 4.97% | 4.86% | +11 bps | no |
+| Oct 2026 | 4.74% | 4.72% | +1 bp | yes |
+| Nov 2026 | 4.84% | 4.77% | +7 bps | no |
+| Dec 2026 | 4.92% | 4.81% | +10 bps | no |
+| Jan 2027 | 4.98% | 4.85% | +13 bps | no |
+| Feb 2027 | 4.98% | 4.87% | +11 bps | no |
+| Mar 2027 | 4.98% | 4.89% | +9 bps | no |
 
 ![Forecast comparison](figures/16_forecast_comparison.png)
 
 *Reading the chart: the two dashed lines are the two forecasts. The filled purple dots are months where the bond yield was already published. Both forecasts stay inside the ETS 80% band.*
 
-The bond yield jumped from 3.28% in August to 3.57% in September. Only part of that rise has reached the mortgage rate so far, and the regression expects the rest over the next few months. On the example loan, the November rate of 4.82% means a payment of $2,589.77 ($530 more than at 2.2%), compared with $2,579.06 at the ETS rate. At the regression's rates, 4,711 loans in the 90-day book (94%) would rise by more than $250, against 4,614 (92%) at the ETS rates.
+The bond yield jumped from 3.28% in August to 3.57% in September. Only part of that rise has reached the mortgage rate so far, and the regression expects the rest over the next few months. On the example loan, the regression's December rate of 4.92% means a payment of $2,610.17 ($550 more than at 2.2%), compared with $2,588.59 at the ETS rate. At the regression's rates, 4,718 loans in the 90-day book (94%) would rise by more than $250, against 4,626 (93%) at the ETS rates.
 
-**Why ETS is still the headline forecast.** The selection rule in section 3 was written for ETS against the naive model before any results were in. I added the regression afterwards, once those results were known, so it hasn't passed the same clean test. The next few months of published data are that test. If it keeps beating ETS on September to November 2026, it should become the main forecast. Swapping it in now, after seeing that it wins, would be choosing the model by its result.
+**Why ETS is still the headline forecast.** The selection rule in section 3 was written for ETS against the naive model before any results were in. I added the regression afterwards, once those results were known, so it hasn't passed the same clean test. The next few months of published data are that test. The first one is in: September 2026 came in at 4.66%, against an ETS forecast of 4.66% and a regression forecast of 4.65%, both made from August data. One month settles nothing. If the regression keeps beating ETS on October to December 2026, it should become the main forecast. Swapping it in now, after seeing that it wins, would be choosing the model by its result.
 
 ## 8. Payment impact for one borrower
 
@@ -259,11 +259,11 @@ The reference case of $400,000, 20 years remaining, and 2.2% to 4.2% gives $2,05
 
 **Rate at payment threshold.** A higher rate always means a higher payment, so there is exactly one renewal rate at which the increase equals a given threshold. Python finds it by bisection. Power BI can't solve equations, so the report searches a 1 bp grid from 0.00% to 10.00% and takes the lowest rate whose increase meets the threshold. That grid answer is always between 0 and 1 bp above the exact rate.
 
-| Threshold | Exact rate (Python) | Grid rate (SQL / Power BI) | Latest rate (4.58%) vs threshold rate |
+| Threshold | Exact rate (Python) | Grid rate (SQL / Power BI) | Latest rate (4.66%) vs threshold rate |
 |---|---|---|---|
-| +$100/month | 2.7200% | 2.72% | 186 bps above |
-| +$250/month | 3.4756% | 3.48% | 110 bps above |
-| +$500/month | 4.6794% | 4.68% | 10 bps below |
+| +$100/month | 2.7200% | 2.72% | 194 bps above |
+| +$250/month | 3.4756% | 3.48% | 118 bps above |
+| +$500/month | 4.6794% | 4.68% | 2 bps below |
 
 The SQL grid matched the Python grid exactly on 12 test profiles, including a 0% old rate. If a threshold can't be reached inside 0% to 10%, the function returns no value and the Power BI card says so.
 
@@ -274,9 +274,9 @@ The SQL grid matched the Python grid exactly on 12 test profiles, including a 0%
 | Scenario | Renewal rate | Payment | Change |
 |---|---|---|---|
 | Before renewal | 2.20% | $2,059.72 | |
-| Rate -50 bps | 4.08% | $2,433.57 | +$373.85 |
-| Latest market rate | 4.58% | $2,538.57 | +$478.85 |
-| Rate +50 bps | 5.08% | $2,645.81 | +$586.09 |
+| Rate -50 bps | 4.16% | $2,450.22 | +$390.50 |
+| Latest market rate | 4.66% | $2,555.58 | +$495.86 |
+| Rate +50 bps | 5.16% | $2,663.17 | +$603.45 |
 
 The ±50 bp scenarios are what-if rate moves. They are named by the rate change to keep them separate from the forecast band in section 6, which measures forecast uncertainty.
 
@@ -297,7 +297,7 @@ To move from one borrower to a lender's view, I generated a synthetic portfolio 
 - Original principal is log-normal with a median near $420,000, kept between $150,000 and $1.2 million. Three quarters of loans amortize over 25 years and a quarter over 30.
 - The balance at renewal is the principal after 60 payments. The renewal rate is the ETS forecast for the renewal month plus the same borrower spread.
 
-Because these loans were signed between November 2021 and February 2022, near the bottom of the rate cycle, their original rates average 2.56%. The forecast renewal rates average 4.82%.
+Because these loans were signed between November 2021 and February 2022, near the bottom of the rate cycle, their original rates average 2.56%. The forecast renewal rates average 4.83%.
 
 ![Portfolio by month](figures/10_portfolio_by_month.png)
 
@@ -305,12 +305,12 @@ Because these loans were signed between November 2021 and February 2022, near th
 
 | Renewal month | Loans | Above +$250 | Share | Rank by count | Rank by share |
 |---|---|---|---|---|---|
-| Nov 2026 (from the 15th) | 908 | 857 | 94.4% | 3 | 1 |
-| Dec 2026 | 1,742 | 1,612 | 92.5% | 1 | 2 |
-| Jan 2027 | 1,694 | 1,565 | 92.4% | 2 | 3 |
-| Feb 2027 (to the 12th) | 656 | 580 | 88.4% | 4 | 4 |
+| Nov 2026 (from the 15th) | 908 | 861 | 94.8% | 3 | 1 |
+| Dec 2026 | 1,742 | 1,615 | 92.7% | 1 | 2 |
+| Jan 2027 | 1,694 | 1,569 | 92.6% | 2 | 3 |
+| Feb 2027 (to the 12th) | 656 | 581 | 88.6% | 4 | 4 |
 
-December has the most loans over the threshold, so it carries the most work for a renewal or outreach team. November has the highest share because its loans were signed in November 2021 at 2.35%, the lowest starting rate in the window, so they face the biggest jump (about 2.4 points, against 2.0 for February). SQL ranks the cohorts both ways because November and February are only partly inside the window, so counts alone would undersell them.
+December has the most loans over the threshold, so it carries the most work for a renewal or outreach team. November has the highest share because its loans were signed in November 2021 at 2.35%, the lowest starting rate in the window, so they face the biggest jump (about 2.4 points, against 2.1 for February). SQL ranks the cohorts both ways because November and February are only partly inside the window, so counts alone would undersell them.
 
 ![Distribution of payment change](figures/11_portfolio_distribution.png)
 
@@ -318,17 +318,17 @@ December has the most loans over the threshold, so it carries the most work for 
 
 | Scenario | Above +$250 | Average change | Median change | Total extra per month |
 |---|---|---|---|---|
-| Rate -50 bps | 3,760 (75%) | $340 | $318 | $1.70M |
-| Forecast rate | 4,614 (92%) | $442 | $413 | $2.21M |
-| Rate +50 bps | 4,901 (98%) | $545 | $510 | $2.73M |
+| Rate -50 bps | 3,792 (76%) | $342 | $319 | $1.71M |
+| Forecast rate | 4,626 (93%) | $444 | $415 | $2.22M |
+| Rate +50 bps | 4,904 (98%) | $548 | $512 | $2.74M |
 
-At the forecast rate every loan in the book pays at least $100 more a month, and 1,478 loans (30%) pay more than $500 more.
+At the forecast rate every loan in the book pays at least $100 more a month, and 1,500 loans (30%) pay more than $500 more.
 
 ![Balance bands](figures/12_portfolio_balance_bands.png)
 
 *Reading the chart: each group of three bars is one balance range. Bar height is the share of loans in that range whose payment rises more than $250, under each of the three rate scenarios.*
 
-Balance explains most of the variation. At the forecast rate, every loan with more than $250,000 left crosses the $250 threshold, while about half of the loans under $250,000 do. A 50 bp drop in rates would bring the under-$250,000 group fully below the threshold, and the $250,000 to $400,000 group down to 81% above it. It would not change the picture for larger balances.
+Balance explains most of the variation. At the forecast rate, every loan with more than $250,000 left crosses the $250 threshold, while about half of the loans under $250,000 do. A 50 bp drop in rates would bring all but one loan in the under-$250,000 group below the threshold, and the $250,000 to $400,000 group down to 83% above it. It would not change the picture for larger balances.
 
 ## 11. Extension: who should the team call first?
 
@@ -338,31 +338,31 @@ Section 10 shows how many borrowers face a big rise. A renewal team also has to 
 
 | Segment | Loans | Median rise at forecast | What it means for the team |
 |---|---|---|---|
-| Over in every scenario | 3,760 | $463 | Over $250 even if rates fall 50 bps. Call these. |
-| Over unless rates fall | 854 | $293 | Close to the line. Watch the next rate quote. |
-| Over only if rates rise | 287 | $232 | Have a call ready in case rates move up. |
-| Under in every scenario | 99 | $182 | Normal renewal process. |
+| Over in every scenario | 3,792 | $464 | Over $250 even if rates fall 50 bps. Call these. |
+| Over unless rates fall | 834 | $293 | Close to the line. Watch the next rate quote. |
+| Over only if rates rise | 278 | $232 | Have a call ready in case rates move up. |
+| Under in every scenario | 96 | $182 | Normal renewal process. |
 
 **Call rule.** A borrower can be called from 60 days before renewal until 7 days before, which leaves time to act on the call. Each week the team first calls the borrowers for whom this week is the last chance, then fills spare slots in order of segment, renewal date and size of the rise.
 
-The last-chance step came out of testing. My first version ranked by segment alone, and it did worse than calling in renewal-date order: at 400 calls a week it missed 833 borrowers over the threshold, against 361. Near-certain borrowers renewing in two months took the slots, and likely borrowers renewing next week ran out of time.
+The last-chance step came out of testing. My first version ranked by segment alone, and it did worse than calling in renewal-date order: at 400 calls a week it missed 826 borrowers over the threshold, against 363. Near-certain borrowers renewing in two months took the slots, and likely borrowers renewing next week ran out of time.
 
 ![Triage capacity](figures/17_triage_capacity.png)
 
-*Reading the chart: each pair of bars is one weekly call capacity. Lower is better: these are borrowers facing a rise over $250 who never got a call. The dotted line marks the 339 borrowers who renew in the first week, before any rule can reach them.*
+*Reading the chart: each pair of bars is one weekly call capacity. Lower is better: these are borrowers facing a rise over $250 who never got a call. The dotted line marks the 340 borrowers who renew in the first week, before any rule can reach them.*
 
 | Calls a week | Missed, date order | Missed, triage | Near-certain missed, date order | Near-certain missed, triage |
 |---|---|---|---|---|
-| 100 | 3,477 | 3,414 | 2,787 | 2,560 |
-| 200 | 2,371 | 2,214 | 1,902 | 1,360 |
-| 300 | 1,264 | 1,014 | 1,009 | 406 |
-| 400 | 361 | 345 | 304 | 290 |
+| 100 | 3,485 | 3,426 | 2,810 | 2,592 |
+| 200 | 2,377 | 2,226 | 1,919 | 1,392 |
+| 300 | 1,268 | 1,026 | 1,014 | 420 |
+| 400 | 363 | 349 | 304 | 290 |
 
 *Borrowers over +$250 at the forecast rate who were not called at least 7 days before renewal. Near-certain means the first segment.*
 
-At 300 calls a week the triage rule reaches 250 more borrowers facing a rise over $250 than date order does, and it misses 406 near-certain borrowers instead of 1,009. The payment rises of the borrowers it misses add up to $372,000 a month, against $554,000 with date order. At 400 calls a week both rules reach nearly everyone. The 290 near-certain borrowers still missed all renew in the first week.
+At 300 calls a week the triage rule reaches 242 more borrowers facing a rise over $250 than date order does, and it misses 420 near-certain borrowers instead of 1,014. The payment rises of the borrowers it misses add up to $378,000 a month, against $558,000 with date order. At 400 calls a week both rules reach nearly everyone. The 290 near-certain borrowers still missed all renew in the first week.
 
-**Why segments instead of one scenario.** A list built from the forecast scenario alone changes when the rate does. At 300 calls a week, 456 borrowers would drop off that list if rates fell 50 bps, and 190 if they rose 50 bps. The segments already account for all three scenarios, so the triage list stays the same.
+**Why segments instead of one scenario.** A list built from the forecast scenario alone changes when the rate does. At 300 calls a week, 447 borrowers would drop off that list if rates fell 50 bps, and 185 if they rose 50 bps. The segments already account for all three scenarios, so the triage list stays the same.
 
 The $250 figure measures how much the payment rises. Whether a borrower can afford it depends on income and other debts, which this synthetic book doesn't have. The list ranks borrowers by payment rise, so it can't say who is at risk of default.
 
@@ -371,13 +371,13 @@ The $250 figure measures how much the payment rises. Whether a borrower can affo
 The whole PostgreSQL rebuild runs in one transaction. Primary and foreign keys reject duplicate rows and backtest months that don't exist while the data loads, and the pipeline rolls everything back if any of these checks fail:
 
 - **Keys.** Months are unique in the actuals. Forecasts and backtest rows are unique on origin month, target month and model, because the same target month is forecast from several origins.
-- **Joins.** Joining backtest forecasts to actuals keeps all 488 rows. Each of the 5,000 loans appears once per scenario (15,000 rows), and the monthly cohorts add back to 5,000.
+- **Joins.** Joining backtest forecasts to actuals keeps all 492 rows. Each of the 5,000 loans appears once per scenario (15,000 rows), and the monthly cohorts add back to 5,000.
 - **Time series.** There are no gaps between the first and last month, and `LAG()` returns no value only for the first month.
 - **Same test for both models.** Every origin and horizon has a forecast from both models.
 - **Formulas.** The SQL payment function reproduces $2,059.72 and $2,458.57 to the cent.
 - **Bond yield.** One row per month, no gaps, and a yield for every month that has a mortgage rate. Every month must have at least 15 trading days, so a cut-off download is caught.
-- **Same test for all five models.** The model comparison has 30 rows (5 models × 6 horizons) for each of the same 122 origins, and its naive and ETS forecasts match the main backtest exactly.
-- **Triage.** The four segments add up to 5,000 loans and match the scenario counts in section 10 (3,760 over at -50 bps, 4,614 over at the forecast). Priority ranks run from 1 to 5,000 with no gaps, no call is booked within 7 days of renewal, and more call capacity never means more borrowers missed.
+- **Same test for all five models.** The model comparison has 30 rows (5 models × 6 horizons) for each of the same 123 origins, and its naive and ETS forecasts match the main backtest exactly.
+- **Triage.** The four segments add up to 5,000 loans and match the scenario counts in section 10 (3,792 over at -50 bps, 4,626 over at the forecast). Priority ranks run from 1 to 5,000 with no gaps, no call is booked within 7 days of renewal, and more call capacity never means more borrowers missed.
 - **SQL vs Python.** MAE in bps and CAD matches to within 0.01 for all four model and horizon pairs in the main backtest and all 30 in the model comparison. The triage segments match between Python and SQL. Threshold rates match on 12 profiles. The portfolio's total payment change and count above $250 match exactly.
 
 In total there are 30 SQL checks and 45 unit tests. The tests cover the payment formula, the threshold solver (rate up, down, unchanged, 0% old rate, an exact hit on the threshold, and a solution outside the 0% to 10% search range), the balance calculation, the Diebold-Mariano helper, and the regression: it recovers known lag weights from fake data, uses known yields and then holds them flat, and picks its lag count without looking past 2015. The triage tests check the segment mapping, the rank order, the 7-day notice and 60-day lookahead, and that a last-chance borrower is called before a more certain one who can wait. The Power BI tests check that no measure shares a name with a table or column, that no two visuals on a page share a name, that every visual points at a field that exists, that every visual fits on its page, and that each slicer's default is one of its options.

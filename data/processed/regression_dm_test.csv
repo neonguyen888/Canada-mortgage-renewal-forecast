@@ -1,5 +1,5 @@
 comparison,horizon_months,n_origins,mean_abs_error_diff_bps,dm_stat_hln,p_value,significant_at_5pct
-Bond-yield regression vs ETS damped trend,3,122,-7.22,-3.748,0.0003,True
-Bond-yield regression vs Naive (last observed),3,122,-12.72,-4.38,0.0,True
-Bond-yield regression vs ETS damped trend,6,122,-14.36,-6.729,0.0,True
-Bond-yield regression vs Naive (last observed),6,122,-17.71,-3.676,0.0004,True
+Bond-yield regression vs ETS damped trend,3,123,-7.38,-3.898,0.0002,True
+Bond-yield regression vs Naive (last observed),3,123,-12.7,-4.407,0.0,True
+Bond-yield regression vs ETS damped trend,6,123,-14.68,-6.833,0.0,True
+Bond-yield regression vs Naive (last observed),6,123,-17.8,-3.732,0.0003,True

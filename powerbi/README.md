@@ -41,7 +41,7 @@ The model reads the CSVs straight from this repository on GitHub, so the report 
 
 ## Data model
 
-Each CSV becomes one table through Power Query. The queries read the files with an `en-US` culture, so `4.58` stays 4.58 on a machine set to a comma-decimal locale. `Calendar` links the rate tables by month.
+Each CSV becomes one table through Power Query. The queries read the files with an `en-US` culture, so `4.66` stays 4.66 on a machine set to a comma-decimal locale. `Calendar` links the rate tables by month.
 
 The slicer tables (scenario, threshold, balance and so on) are small lookup tables with no relationships, and measures read the choice with `SELECTEDVALUE`. That keeps every bar visible when a slicer moves, and the chosen bar turns amber through a colour measure.
 
@@ -59,13 +59,13 @@ With the default slicer choices, the cards should match the written report:
 
 | Page | Card | Value |
 |---|---|---|
-| Overview | Loans above +$250 a month | 4,614 (92.3% of 5,000) |
-| Overview | Total payment increase | $2.21M |
-| Overview | Market benchmark / 3-month forecast | 4.58% / 4.77% |
-| Rates & accuracy | ETS / bond-yield model / naive, average miss | 18.9 / 11.7 / 24.4 bps |
-| Payment impact | Payment before / after / change | $2,059.72 / $2,538.57 / +$478.85 |
+| Overview | Loans above +$250 a month | 4,626 (92.5% of 5,000) |
+| Overview | Total payment increase | $2.22M |
+| Overview | Market benchmark / 3-month forecast | 4.66% / 4.81% |
+| Rates & accuracy | ETS / bond-yield model / naive, average miss | 19.0 / 11.6 / 24.3 bps |
+| Payment impact | Payment before / after / change | $2,059.72 / $2,555.58 / +$495.86 |
 | Payment impact | Rate where the rise hits $250 | 3.48% |
-| Renewal triage | Missed with triage / in date order (300 a week) | 1,014 / 1,264 |
+| Renewal triage | Missed with triage / in date order (300 a week) | 1,026 / 1,268 |
 
 `data/powerbi/threshold_reference.csv` lists more threshold rates the Payment impact page should reproduce.
 

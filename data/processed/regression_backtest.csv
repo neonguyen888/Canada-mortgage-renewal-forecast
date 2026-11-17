@@ -3659,3 +3659,33 @@ origin_month,target_month,model,horizon_months,forecast_rate_pct
 2026-02-01,2026-06-01,"Regression, yields to origin only",4,4.2912
 2026-02-01,2026-07-01,"Regression, yields to origin only",5,4.29
 2026-02-01,2026-08-01,"Regression, yields to origin only",6,4.2887
+2026-03-01,2026-04-01,Naive (last observed),1,4.22
+2026-03-01,2026-05-01,Naive (last observed),2,4.22
+2026-03-01,2026-06-01,Naive (last observed),3,4.22
+2026-03-01,2026-07-01,Naive (last observed),4,4.22
+2026-03-01,2026-08-01,Naive (last observed),5,4.22
+2026-03-01,2026-09-01,Naive (last observed),6,4.22
+2026-03-01,2026-04-01,ETS damped trend,1,4.1551
+2026-03-01,2026-05-01,ETS damped trend,2,4.1006
+2026-03-01,2026-06-01,ETS damped trend,3,4.0569
+2026-03-01,2026-07-01,ETS damped trend,4,4.022
+2026-03-01,2026-08-01,ETS damped trend,5,3.9941
+2026-03-01,2026-09-01,ETS damped trend,6,3.9717
+2026-03-01,2026-04-01,Bond-yield regression,1,4.2885
+2026-03-01,2026-05-01,Bond-yield regression,2,4.3292
+2026-03-01,2026-06-01,Bond-yield regression,3,4.3737
+2026-03-01,2026-07-01,Bond-yield regression,4,4.4505
+2026-03-01,2026-08-01,Bond-yield regression,5,4.4803
+2026-03-01,2026-09-01,Bond-yield regression,6,4.4994
+2026-03-01,2026-04-01,"Regression, 1 month of extra yields",1,4.2885
+2026-03-01,2026-05-01,"Regression, 1 month of extra yields",2,4.3227
+2026-03-01,2026-06-01,"Regression, 1 month of extra yields",3,4.3455
+2026-03-01,2026-07-01,"Regression, 1 month of extra yields",4,4.4031
+2026-03-01,2026-08-01,"Regression, 1 month of extra yields",5,4.4166
+2026-03-01,2026-09-01,"Regression, 1 month of extra yields",6,4.4147
+2026-03-01,2026-04-01,"Regression, yields to origin only",1,4.2837
+2026-03-01,2026-05-01,"Regression, yields to origin only",2,4.3021
+2026-03-01,2026-06-01,"Regression, yields to origin only",3,4.3108
+2026-03-01,2026-07-01,"Regression, yields to origin only",4,4.3565
+2026-03-01,2026-08-01,"Regression, yields to origin only",5,4.3546
+2026-03-01,2026-09-01,"Regression, yields to origin only",6,4.3527

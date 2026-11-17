@@ -487,3 +487,7 @@ origin_month,target_month,model,horizon_months,forecast_rate_pct
 2026-02-01,2026-08-01,Naive (last observed),6,4.31
 2026-02-01,2026-05-01,ETS damped trend,3,4.2798
 2026-02-01,2026-08-01,ETS damped trend,6,4.2634
+2026-03-01,2026-06-01,Naive (last observed),3,4.22
+2026-03-01,2026-09-01,Naive (last observed),6,4.22
+2026-03-01,2026-06-01,ETS damped trend,3,4.0569
+2026-03-01,2026-09-01,ETS damped trend,6,3.9717

@@ -11,7 +11,7 @@ period_order,period_name,model,horizon_months,mae_bps,mae_cad_per_month,bias_bps
 3,2022–2023 tightening,Naive (last observed),3,47.46,98.99,-44.46,24
 3,2022–2023 tightening,ETS damped trend,6,74.33,156.55,-43.1,24
 3,2022–2023 tightening,Naive (last observed),6,86.13,178.48,-84.21,24
-4,2024–2026 easing,ETS damped trend,3,21.06,45.33,8.38,29
-4,2024–2026 easing,Naive (last observed),3,20.0,43.14,17.45,29
-4,2024–2026 easing,ETS damped trend,6,34.47,74.66,18.88,32
-4,2024–2026 easing,Naive (last observed),6,32.94,71.08,25.31,32
+4,2024–2026 easing,ETS damped trend,3,21.34,45.85,7.12,30
+4,2024–2026 easing,Naive (last observed),3,19.77,42.61,16.43,30
+4,2024–2026 easing,ETS damped trend,6,35.52,76.77,16.22,33
+4,2024–2026 easing,Naive (last observed),6,33.27,71.74,23.21,33

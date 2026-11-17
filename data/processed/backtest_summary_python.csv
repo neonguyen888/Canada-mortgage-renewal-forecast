@@ -1,5 +1,5 @@
 model,horizon_months,mae_bps,mae_cad_per_month,bias_bps,n_origins,first_origin,last_origin
-ETS damped trend,3,18.9307,38.9212,-0.4402,122,2016-01,2026-02
-ETS damped trend,6,39.4125,81.2398,-2.8607,122,2016-01,2026-02
-Naive (last observed),3,24.4262,50.0092,-3.2787,122,2016-01,2026-02
-Naive (last observed),6,42.7623,87.4731,-7.6148,122,2016-01,2026-02
+ETS damped trend,3,19.015,39.1025,-0.6749,123,2016-01,2026-03
+ETS damped trend,6,39.6517,81.7537,-3.3971,123,2016-01,2026-03
+Naive (last observed),3,24.3333,49.8241,-3.3577,123,2016-01,2026-03
+Naive (last observed),6,42.7724,87.5167,-7.9106,123,2016-01,2026-03

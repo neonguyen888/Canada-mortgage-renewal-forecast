@@ -38,6 +38,17 @@ HERE = Path(__file__).resolve().parent
 NAME = "MortgageRenewal"
 SM = HERE / f"{NAME}.SemanticModel"
 RP = HERE / f"{NAME}.Report"
+
+
+def backtest_span() -> str:
+    """'123 rolling forecasts made each month from January 2016 to March 2026', read from the backtest summary."""
+    import csv
+    from datetime import date
+    with open(HERE.parent / "data" / "processed" / "backtest_summary_python.csv", newline="") as f:
+        row = next(csv.DictReader(f))
+    month = lambda ym: date(int(ym[:4]), int(ym[5:7]), 1).strftime("%B %Y")
+    return (f"{row['n_origins']} rolling forecasts made each month from "
+            f"{month(row['first_origin'])} to {month(row['last_origin'])}")
 PAGE_W, PAGE_H = 1280, 720
 # Public copy of data/powerbi on GitHub, so the report refreshes on any machine. A local folder
 # path such as C:\repo\data\powerbi works too.
@@ -890,7 +901,7 @@ def build_pages() -> list[Page]:
            ("panel", M, 484, LEFT_W, 216), ("panel", RIGHT_X, 484, RIGHT_W, 216)]
     p = Page("accuracy", "Rates & accuracy", bg)
     header(p, "RATE FORECAST", "Where rates are heading, and how far to trust it",
-           subtitle_text="Backtest: 122 rolling forecasts made each month from January 2016 to February 2026")
+           subtitle_text=f"Backtest: {backtest_span()}")
     p.kpi("kpi_ets", M, TILE_Y, tw, "ETS, average miss", "ETS MAE", "ETS MAE Caption", C["teal"])
     p.kpi("kpi_bond", M + tw, TILE_Y, tw, "Bond-yield model, average miss", "Bond-yield MAE", "Bond-yield MAE Caption", C["purple"])
     p.kpi("kpi_naive", M + 2 * tw, TILE_Y, tw, "Naive, average miss", "Naive MAE", "Naive MAE Caption")

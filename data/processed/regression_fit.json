@@ -50,16 +50,16 @@
       }
     ]
   },
-  "fit_sample": "2013-02 to 2026-08",
-  "n_months": 163,
-  "r_squared": 0.6338,
-  "adj_r_squared": 0.6222,
-  "durbin_watson": 1.381,
+  "fit_sample": "2013-02 to 2026-09",
+  "n_months": 164,
+  "r_squared": 0.6346,
+  "adj_r_squared": 0.6231,
+  "durbin_watson": 1.384,
   "standard_errors": "Newey-West HAC, 3 lags",
-  "pass_through": 0.8954,
-  "pass_through_se": 0.0924,
+  "pass_through": 0.8964,
+  "pass_through_se": 0.0921,
   "pass_through_p_value": 0.0,
   "yields_known_months_in_backtest": 2,
   "latest_yield_month": "2026-10",
-  "latest_mortgage_month": "2026-08"
+  "latest_mortgage_month": "2026-09"
 }
