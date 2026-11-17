@@ -2,8 +2,8 @@
 
 Author: Neo Nguyen
 
-Power BI Desktop runs on Windows only, so the report is written as a Power BI Project: plain
-text files (TMDL for the data model, PBIR JSON for the report) that Desktop opens directly.
+The report is written as a Power BI Project: plain text files (TMDL for the data model, PBIR
+JSON for the report) that Power BI Desktop opens directly.
 Everything comes from this script, so layout, colours and DAX live in one place and the whole
 report can be rebuilt with:
 
@@ -15,7 +15,7 @@ What it writes:
   MortgageRenewal.Report/                 4 pages, their visuals, the theme and background images
 
 The data itself is not copied. The model reads the CSVs in data/powerbi through a parameter
-called DataFolder, which you point at your own copy of that folder once.
+called DataFolder, which points at this repository on GitHub and can be changed to a local folder.
 
 File formats follow Microsoft's published schemas (developer.microsoft.com/json-schemas/fabric)
 and the PBIP sample projects Microsoft's team publishes on GitHub.
@@ -53,7 +53,7 @@ C = {
     "blue": "#7FB2F0", "teal": "#4FD1B5", "teal_dim": "#2F7F6E", "amber": "#F2B05E",
     "purple": "#B49CF5", "purple2": "#8E7CC3", "purple3": "#6B5E96", "slate": "#3B4B63", "coral": "#F27E6B",
 }
-FONT, FONT_SEMI, FONT_BOLD, FONT_NUM = "Segoe UI", "Segoe UI Semibold", "Segoe (Bold)", "DIN"
+FONT, FONT_SEMI, FONT_BOLD, FONT_NUM = "Segoe UI", "Segoe UI Semibold", "Segoe (Bold)", "Segoe UI Light"
 
 SCHEMA = "https://developer.microsoft.com/json-schemas/fabric"
 S_VISUAL = f"{SCHEMA}/item/report/definition/visualContainer/2.0.0/schema.json"
@@ -200,13 +200,13 @@ def build_tables() -> list[Table]:
     T.append(Table("Rate Outlook", [
         Col("Month", "month", "date", "mmm yyyy"), Col("Rate", "rate_pct", "double", hidden=True),
         Col("Series", "series", hidden=True), Col("Horizon", "horizon_months", "int64", hidden=True),
-        Col("Model", "model", hidden=True), Col("Lower 80", "lower_80_pct", "double", hidden=True),
+        Col("Lower 80", "lower_80_pct", "double", hidden=True),
         Col("Upper 80", "upper_80_pct", "double", hidden=True),
     ], csv="vw_rate_outlook_band.csv", hidden=True,
         desc="Market reference rate, actual and ETS forecast, with the 80% band on forecast months."))
     T.append(Table("Calendar", [
         Col("Month", "month", "date", "mmm yyyy"), Col("Year", "year", "int64"),
-        Col("Month number", "month_num", "int64", hidden=True), Col("Month label", "month_label", sort_by="Month"),
+        Col("Month label", "month_label", sort_by="Month"),
     ], csv="dim_month.csv", desc="One row per month, from the first observation to the last forecast month."))
     T.append(Table("Forecast Comparison", [
         Col("Target month", "target_month", "date", "mmm yyyy"), Col("Horizon", "horizon_months", "int64"),
@@ -264,7 +264,7 @@ WithOrder = Table.AddColumn(WithLabel, "Model order", each Record.FieldOrDefault
         Col("CI high", "ci95_high", "double", "0.00"), Col("Cumulative", "cumulative_pass_through", "double", "0.00"),
     ], csv="fact_regression_coef.csv", hidden=True, desc="Share of a bond-yield move that reaches the mortgage rate, by month."))
     T.append(Table("Rate Grid", [
-        Col("Rate", "rate_pct", "double", "0.00"), Col("Rate bps", "rate_bps", "int64", hidden=True),
+        Col("Rate", "rate_pct", "double", "0.00\\%"),
     ], csv="vw_rate_grid.csv", desc="Every rate from 0.00% to 10.00% in 0.01 steps, for the payment curve and threshold search."))
     T.append(Table("Call Capacity", [
         Col("Calls per week", "capacity_per_week", "int64"), Col("Contacted", "n_contacted", "int64"),
@@ -351,10 +351,6 @@ def add_measures(t: Table) -> None:
     t.measure("Bond Yield Line", "MAX('Rate vs Yield'[Bond yield])", pct, F)
     t.measure("Pass-through Share", "CALCULATE(MAX('Pass-through'[Cumulative]), REMOVEFILTERS())", "0.00", F,
               "Share of a 1-point bond-yield move that reaches the mortgage rate within four months.")
-    t.measure("Latest Bond Yield", """
-        VAR _m = CALCULATE(MAX('Rate vs Yield'[Month]), REMOVEFILTERS())
-        RETURN CALCULATE(MAX('Rate vs Yield'[Bond yield]), 'Rate vs Yield'[Month] = _m, REMOVEFILTERS())
-        """, pct, F)
 
     F = "Renewal book"
     rise = "SWITCH(_s, -50, 'Loans'[Rise if rates fall], 50, 'Loans'[Rise if rates rise], 'Loans'[Rise at forecast])"
@@ -397,10 +393,10 @@ def add_measures(t: Table) -> None:
             VAR _h = [Selected Horizon]
             RETURN CALCULATE(MAX('Model Accuracy'[MAE bps]), 'Model Accuracy'[Model] = "{model}", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
             """, '0.0" bps"', F)
-        t.measure(f"{short} MAE CAD", f"""
-            VAR _h = [Selected Horizon]
-            RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), 'Model Accuracy'[Model] = "{model}", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
-            """, cad2, F)
+    t.measure("Naive MAE CAD", """
+        VAR _h = [Selected Horizon]
+        RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), 'Model Accuracy'[Model] = "Naive (last observed)", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
+        """, cad2, F)
     t.measure("ETS MAE Caption", """
         VAR _h = [Selected Horizon]
         VAR _p = CALCULATE(MAX('ETS Test'[p-value]), 'ETS Test'[Horizon] = _h)
@@ -592,7 +588,7 @@ def cref(table, col):
 
 
 DISPLAY = {
-    "Observed Rate": "Observed", "ETS Forecast": "ETS forecast", "Band Low": "80% band", "Band High": "80% band (upper)",
+    "Observed Rate": "Observed", "ETS Forecast": "ETS forecast", "Band Low": "80% band, low", "Band High": "80% band, high",
     "Bond-yield Forecast": "Bond-yield forecast", "Mortgage Rate Line": "Mortgage rate", "Bond Yield Line": "5-year bond yield",
     "Missed by Capacity, Date Order": "Calling by renewal date", "Missed by Capacity, Triage": "Triage rule",
     "ETS MAE by Period": "ETS", "Naive MAE by Period": "Naive", "Loan Count": "Loans", "Loans Above Threshold": "Above +$250",
@@ -696,7 +692,8 @@ class Page:
                       "sortDefinition": {"sort": [{"field": cref(table, col), "direction": "Ascending"}], "isDefaultSort": True}},
             "objects": objects, "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
 
-    def line_chart(self, vname, x, y, w, h, category, measures, styles, filters=None, value_fmt=None, legend=True, x_scalar=True):
+    def line_chart(self, vname, x, y, w, h, category, measures, styles, filters=None, value_fmt=None, legend=True, x_scalar=True,
+                   y_start=None):
         """measures: list of names; styles: {name: dict(colour, width, dash, marker)}."""
         data_points, line_styles = [], []
         for m in measures:
@@ -718,6 +715,8 @@ class Page:
         }
         if value_fmt:
             objects["valueAxis"][0]["properties"]["labelDisplayUnits"] = num(1)
+        if y_start is not None:
+            objects["valueAxis"][0]["properties"]["start"] = num(y_start)
         self.add(vname, x, y, w, h, {
             "visualType": "lineChart",
             "query": {"queryState": {"Category": {"projections": [proj_c(*category)]},
@@ -839,6 +838,14 @@ def tiles(n, highlight_first=False, y=TILE_Y, h=TILE_H):
     return out, w
 
 
+def rate_legend(p, vname, x, y, keys):
+    """Legend drawn as text, so the two band edges show as one "80% band" entry."""
+    runs = []
+    for name, col, mark in keys:
+        runs += [(mark + " ", 9, col, FONT), (name + "     ", 9, C["ink2"], FONT)]
+    p.label(vname, x, y, 600, 26, runs)
+
+
 def build_pages() -> list[Page]:
     pages = []
     line_styles = {
@@ -859,8 +866,10 @@ def build_pages() -> list[Page]:
     p.kpi("kpi_latest", M + 2 * tw, TILE_Y, tw, "Market benchmark", "Latest Rate", "Latest Rate Caption")
     p.kpi("kpi_ets3", M + 3 * tw, TILE_Y, tw, "3-month forecast", "ETS 3-Month Forecast", "ETS 3-Month Caption", C["teal"])
     panel_title(p, "outlook", M, 244, LEFT_W, "Mortgage rate outlook", "5-year+ fixed, uninsured")
-    p.line_chart("outlook_chart", M + 8, 282, LEFT_W - 16, 250, ("Calendar", "Month"),
-                 ["Observed Rate", "ETS Forecast", "Band Low", "Band High"], line_styles, filters=date_from("2021-01-01"))
+    rate_legend(p, "outlook_legend", M + 12, 280, [("Observed", C["blue"], "●"), ("ETS forecast", C["teal"], "●"),
+                                                   ("80% band", C["teal_dim"], "┈")])
+    p.line_chart("outlook_chart", M + 8, 302, LEFT_W - 16, 230, ("Calendar", "Month"),
+                 ["Observed Rate", "ETS Forecast", "Band Low", "Band High"], line_styles, filters=date_from("2021-01-01"), legend=False)
     panel_title(p, "stress", RIGHT_X, 244, RIGHT_W, "Rate stress test", "Portfolio scenario")
     p.slicer("stress_slicer", RIGHT_X + 12, 284, RIGHT_W - 24, 44, "Scenario", "Scenario", "Base")
     p.bar_chart("stress_bars", RIGHT_X + 8, 334, RIGHT_W - 16, 166, ("Scenario Axis", "Scenario"), "Share Above, Each Scenario",
@@ -886,9 +895,12 @@ def build_pages() -> list[Page]:
     p.kpi("kpi_bond", M + tw, TILE_Y, tw, "Bond-yield model, average miss", "Bond-yield MAE", "Bond-yield MAE Caption", C["purple"])
     p.kpi("kpi_naive", M + 2 * tw, TILE_Y, tw, "Naive, average miss", "Naive MAE", "Naive MAE Caption")
     p.kpi("kpi_pass", M + 3 * tw, TILE_Y, tw, "Bond-yield pass-through", "Pass-through Share", "Pass-through Caption")
-    panel_title(p, "history", M, 244, LEFT_W, "Rate history and the two forecasts", "Dotted: ETS 80% band")
-    p.line_chart("history_chart", M + 8, 280, LEFT_W - 16, 186, ("Calendar", "Month"),
-                 ["Observed Rate", "ETS Forecast", "Bond-yield Forecast", "Band Low", "Band High"], line_styles, filters=date_from("2016-01-01"))
+    panel_title(p, "history", M, 244, LEFT_W, "Rate history and the two forecasts", "5-year+ fixed, uninsured")
+    rate_legend(p, "history_legend", M + 12, 278, [("Observed", C["blue"], "●"), ("ETS forecast", C["teal"], "●"),
+                                                   ("Bond-yield forecast", C["purple"], "●"), ("ETS 80% band", C["teal_dim"], "┈")])
+    p.line_chart("history_chart", M + 8, 298, LEFT_W - 16, 168, ("Calendar", "Month"),
+                 ["Observed Rate", "ETS Forecast", "Bond-yield Forecast", "Band Low", "Band High"], line_styles,
+                 filters=date_from("2016-01-01"), legend=False, y_start=1)
     panel_title(p, "models", RIGHT_X, 244, RIGHT_W, "Average miss by model")
     p.slicer("horizon_slicer", RIGHT_X + 210, 252, RIGHT_W - 222, 32, "Horizon Choice", "Horizon label", "3 months")
     p.bar_chart("models_bars", RIGHT_X + 8, 290, RIGHT_W - 16, 176, ("Model Accuracy", "Model label"), "MAE at Horizon",

@@ -106,9 +106,9 @@ def single_scenario_rank(book: pd.DataFrame, which: str) -> pd.DataFrame:
 
 
 def capacity_table(book: pd.DataFrame) -> pd.DataFrame:
-    over = book.set_index("loan_id")["payment_change_base"] > THRESHOLD
-    rise = book.set_index("loan_id")["payment_change_base"]
-    seg = book.set_index("loan_id")["segment_order"]
+    b = book.set_index("loan_id")
+    rise, seg = b["payment_change_base"], b["segment_order"]
+    over = rise > THRESHOLD
     by_date = book.assign(segment_order=1)           # first come, first served: renewal date only
     rows = []
     for c in CAPACITIES:
@@ -126,7 +126,7 @@ def capacity_table(book: pd.DataFrame) -> pd.DataFrame:
             "over_contacted": int((hit & over).sum()),
             "over_missed": int((~hit & over).sum()),
             # renew inside the notice period from day one: nobody can reach these, whatever the rule
-            "over_too_soon_to_reach": int((over & (book.set_index("loan_id")["renewal_date"] - START
+            "over_too_soon_to_reach": int((over & (b["renewal_date"] - START
                                                    < pd.Timedelta(days=MIN_NOTICE_DAYS))).sum()),
             "segment1_missed": int((~hit & (seg == 1)).sum()),
             "segment2_missed": int((~hit & (seg == 2)).sum()),

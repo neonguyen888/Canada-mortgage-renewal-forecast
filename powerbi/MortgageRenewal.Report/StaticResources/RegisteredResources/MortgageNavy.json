@@ -26,7 +26,7 @@
   "textClasses": {
     "callout": {
       "fontSize": 26,
-      "fontFace": "DIN",
+      "fontFace": "Segoe UI Light",
       "color": "#E9EEF5"
     },
     "title": {
@@ -195,7 +195,7 @@
               }
             },
             "fontSize": 26,
-            "fontFamily": "DIN"
+            "fontFamily": "Segoe UI Light"
           }
         ],
         "categoryLabels": [

@@ -42,7 +42,7 @@ CREATE TABLE fact_rate_actual (
 );
 
 -- Latest forecast, 1 to 6 months ahead, for each model.       (forecast_latest.csv)
--- is_selected_model = the model actually used (ETS).
+-- is_selected_model = the model the selection rule picked.
 CREATE TABLE fact_forecast (
     origin_month       date             NOT NULL,
     target_month       date             NOT NULL,
@@ -92,12 +92,11 @@ CREATE TABLE fact_dm_test (
 -- Lookups
 -- ---------------------------------------------------------------------------------------------
 
--- The example loan used for every dollar figure ($400k, 20 years left, old rate 2.2%).
+-- Example loan behind the CAD error ($400k, 20 years left). Matches config.py.
 CREATE TABLE dim_profile AS
 SELECT
     400000.0::double precision AS balance,
-    20                         AS years_remaining,
-    2.2::double precision      AS old_rate_pct;
+    20                         AS years_remaining;
 
 -- Four rate periods, used to see when the models went wrong.
 CREATE TABLE dim_rate_period (

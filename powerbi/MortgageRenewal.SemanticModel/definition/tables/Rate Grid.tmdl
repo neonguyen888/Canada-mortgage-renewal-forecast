@@ -4,19 +4,10 @@ table 'Rate Grid'
 
 	column Rate
 		dataType: double
-		formatString: 0.00
+		formatString: 0.00\%
 		lineageTag: ab872cba-8181-580a-a8af-1ff9de7411b1
 		summarizeBy: none
 		sourceColumn: Rate
-
-		annotation SummarizationSetBy = User
-
-	column 'Rate bps'
-		dataType: int64
-		isHidden
-		lineageTag: 7a679c0f-4852-5026-a37e-8978a5d985b1
-		summarizeBy: none
-		sourceColumn: Rate bps
 
 		annotation SummarizationSetBy = User
 
@@ -29,10 +20,10 @@ table 'Rate Grid'
 				    Raw = if IsWeb then Web.Contents(Folder & "vw_rate_grid.csv") else File.Contents(Folder & "vw_rate_grid.csv"),
 				    Source = Csv.Document(Raw, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
 				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
-				    Kept = Table.SelectColumns(Promoted, {"rate_pct", "rate_bps"}),
+				    Kept = Table.SelectColumns(Promoted, {"rate_pct"}),
 				    Blanks = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, Table.ColumnNames(Kept)),
-				    Typed = Table.TransformColumnTypes(Blanks, {{"rate_pct", type number}, {"rate_bps", Int64.Type}}, "en-US"),
-				    Renamed = Table.RenameColumns(Typed, {{"rate_pct", "Rate"}, {"rate_bps", "Rate bps"}})
+				    Typed = Table.TransformColumnTypes(Blanks, {{"rate_pct", type number}}, "en-US"),
+				    Renamed = Table.RenameColumns(Typed, {{"rate_pct", "Rate"}})
 				in
 				    Renamed
 

@@ -49,16 +49,12 @@ def save(fig, name: str, note: str = SOURCE):
     print("  wrote", name)
 
 
-def q(con, sql: str) -> pd.DataFrame:
-    return query(con, sql)
-
-
 # ---------------------------------------------------------------------------------------------
 # Rate outlook
 # ---------------------------------------------------------------------------------------------
 def chart_rate_outlook(con):
-    a = q(con, "SELECT month, rate_pct FROM fact_rate_actual ORDER BY month")
-    f = q(con, "SELECT month, rate_pct, lower_80_pct, upper_80_pct FROM vw_rate_outlook_band WHERE series='Forecast' ORDER BY month")
+    a = query(con, "SELECT month, rate_pct FROM fact_rate_actual ORDER BY month")
+    f = query(con, "SELECT month, rate_pct, lower_80_pct, upper_80_pct FROM vw_rate_outlook_band WHERE series='Forecast' ORDER BY month")
     f.loc[f.lower_80_pct.isna(), ["lower_80_pct", "upper_80_pct"]] = f.loc[f.lower_80_pct.isna(), "rate_pct"]
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.plot(a.month, a.rate_pct, color=NAVY, lw=2, label="Actual")
@@ -78,7 +74,7 @@ def chart_rate_outlook(con):
 
 
 def chart_monthly_change(con):
-    d = q(con, "SELECT month, change_bps FROM vw_rate_monthly WHERE change_bps IS NOT NULL ORDER BY month")
+    d = query(con, "SELECT month, change_bps FROM vw_rate_monthly WHERE change_bps IS NOT NULL ORDER BY month")
     fig, ax = plt.subplots(figsize=(10, 3.8))
     colours = np.where(d.change_bps >= 0, NAVY, GREY)
     ax.bar(d.month, d.change_bps, width=22, color=colours)
@@ -96,7 +92,7 @@ def chart_monthly_change(con):
 # Backtest
 # ---------------------------------------------------------------------------------------------
 def chart_backtest_paths(con):
-    d = q(con, "SELECT target_month, model, horizon_months, forecast_rate_pct, actual_rate_pct FROM vw_backtest_detail ORDER BY target_month")
+    d = query(con, "SELECT target_month, model, horizon_months, forecast_rate_pct, actual_rate_pct FROM vw_backtest_detail ORDER BY target_month")
     fig, axes = plt.subplots(2, 1, figsize=(10, 7), sharex=True)
     for ax, h in zip(axes, (3, 6)):
         x = d[d.horizon_months == h]
@@ -112,7 +108,7 @@ def chart_backtest_paths(con):
 
 
 def shade_periods(ax, con):
-    p = q(con, "SELECT period_name, start_month, end_month FROM dim_rate_period ORDER BY period_order")
+    p = query(con, "SELECT period_name, start_month, end_month FROM dim_rate_period ORDER BY period_order")
     for i, r in p.iterrows():
         if i % 2:
             ax.axvspan(r.start_month, r.end_month + pd.DateOffset(months=1), color="#F2F4F6", zorder=0)
@@ -121,7 +117,7 @@ def shade_periods(ax, con):
 
 
 def chart_error_over_time(con):
-    d = q(con, "SELECT target_month, model, abs(error_bps) AS abs_err FROM vw_backtest_detail WHERE horizon_months=6 ORDER BY target_month")
+    d = query(con, "SELECT target_month, model, abs(error_bps) AS abs_err FROM vw_backtest_detail WHERE horizon_months=6 ORDER BY target_month")
     fig, ax = plt.subplots(figsize=(10, 4.5))
     shade_periods(ax, con)
     for m, c in MODEL_COLOURS.items():
@@ -135,7 +131,7 @@ def chart_error_over_time(con):
 
 
 def chart_mae_summary(con):
-    d = q(con, "SELECT model, horizon_months, mae_bps, mae_cad_per_month FROM vw_backtest_summary")
+    d = query(con, "SELECT model, horizon_months, mae_bps, mae_cad_per_month FROM vw_backtest_summary")
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
     for ax, col, title, fmt in [(axes[0], "mae_bps", "MAE in basis points", "{:.1f} bps"),
                                 (axes[1], "mae_cad_per_month", "MAE in CAD per month ($400k, 20 yrs)", "${:.0f}")]:
@@ -153,7 +149,7 @@ def chart_mae_summary(con):
 
 
 def chart_mae_by_period(con):
-    d = q(con, "SELECT period_order, period_name, model, mae_bps FROM vw_backtest_by_period WHERE horizon_months=6 ORDER BY period_order")
+    d = query(con, "SELECT period_order, period_name, model, mae_bps FROM vw_backtest_by_period WHERE horizon_months=6 ORDER BY period_order")
     periods = d.drop_duplicates("period_order").period_name.tolist()
     fig, ax = plt.subplots(figsize=(10, 4))
     for i, (m, c) in enumerate(MODEL_COLOURS.items()):
@@ -174,7 +170,7 @@ def chart_mae_by_period(con):
 # Payment impact (illustrative loan)
 # ---------------------------------------------------------------------------------------------
 def chart_payment_curve(con):
-    latest = q(con, "SELECT latest_rate_pct FROM vw_kpi").iloc[0, 0]
+    latest = query(con, "SELECT latest_rate_pct FROM vw_kpi").iloc[0, 0]
     rates = np.arange(1.0, 7.01, 0.01)
     change = [payment_change(PROFILE_BALANCE, PROFILE_YEARS_REMAINING, PROFILE_OLD_RATE, r) for r in rates]
     fig, ax = plt.subplots(figsize=(10, 5))
@@ -222,7 +218,7 @@ def chart_sensitivity_heatmap():
 
 
 def chart_scenarios(con):
-    latest = q(con, "SELECT latest_rate_pct FROM vw_kpi").iloc[0, 0]
+    latest = query(con, "SELECT latest_rate_pct FROM vw_kpi").iloc[0, 0]
     before = monthly_payment(PROFILE_BALANCE, PROFILE_YEARS_REMAINING, PROFILE_OLD_RATE)
     labels, vals = ["Before renewal\n(2.20%)"], [before]
     for name, shift in [("Rate -50 bps", -0.5), ("Latest market rate", 0.0), ("Rate +50 bps", 0.5)]:
@@ -246,7 +242,7 @@ def chart_scenarios(con):
 # 90-day renewal portfolio
 # ---------------------------------------------------------------------------------------------
 def chart_portfolio_cohorts(con):
-    d = q(con, """SELECT renewal_month, n_loans, n_above_threshold, pct_above_threshold
+    d = query(con, """SELECT renewal_month, n_loans, n_above_threshold, pct_above_threshold
                   FROM vw_renewal_cohort WHERE threshold_cad=250 AND shift_bps=0 ORDER BY renewal_month""")
     fig, ax = plt.subplots(figsize=(10, 4.5))
     x = d.renewal_month.dt.strftime("%b %Y")
@@ -263,7 +259,7 @@ def chart_portfolio_cohorts(con):
 
 
 def chart_portfolio_distribution(con):
-    d = q(con, "SELECT scenario, shift_bps, payment_change FROM vw_portfolio_payment")
+    d = query(con, "SELECT scenario, shift_bps, payment_change FROM vw_portfolio_payment")
     fig, axes = plt.subplots(1, 3, figsize=(11, 3.8), sharey=True)
     bins = np.arange(0, 1801, 50)
     for ax, (shift, name) in zip(axes, [(-50, "Rate -50 bps"), (0, "Forecast rate"), (50, "Rate +50 bps")]):
@@ -279,7 +275,7 @@ def chart_portfolio_distribution(con):
 
 
 def chart_balance_bands(con):
-    d = q(con, "SELECT balance_band, shift_bps, scenario, pct_above_250 FROM vw_balance_band_cohort ORDER BY balance_band, shift_bps")
+    d = query(con, "SELECT balance_band, shift_bps, scenario, pct_above_250 FROM vw_balance_band_cohort ORDER BY balance_band, shift_bps")
     bands = d.balance_band.unique().tolist()
     fig, ax = plt.subplots(figsize=(10, 4))
     styles = {-50: ("#B9C3CC", "Rate -50 bps"), 0: (NAVY, "Forecast rate"), 50: (AMBER, "Rate +50 bps")}
@@ -302,7 +298,7 @@ def chart_balance_bands(con):
 # Bond-yield regression
 # ---------------------------------------------------------------------------------------------
 def chart_rate_vs_yield(con):
-    d = q(con, "SELECT month, rate_pct, yield_pct, spread_bps FROM vw_rate_vs_yield ORDER BY month")
+    d = query(con, "SELECT month, rate_pct, yield_pct, spread_bps FROM vw_rate_vs_yield ORDER BY month")
     fig, (ax, ax2) = plt.subplots(2, 1, figsize=(10, 6.5), sharex=True, gridspec_kw={"height_ratios": [2.2, 1]})
     ax.plot(d.month, d.rate_pct, color=NAVY, lw=2)
     ax.plot(d.month, d.yield_pct, color=MUTED, lw=1.6)
@@ -323,7 +319,7 @@ def chart_rate_vs_yield(con):
 
 
 def chart_lag_coefficients(con):
-    c = q(con, "SELECT lag_months, coef, ci95_low, ci95_high, cumulative_pass_through FROM fact_regression_coef "
+    c = query(con, "SELECT lag_months, coef, ci95_low, ci95_high, cumulative_pass_through FROM fact_regression_coef "
                "WHERE lag_months IS NOT NULL ORDER BY lag_months")
     fig, ax = plt.subplots(figsize=(10, 4.5))
     x = c.lag_months.astype(int)
@@ -344,7 +340,7 @@ def chart_lag_coefficients(con):
 
 
 def chart_model_comparison(con):
-    d = q(con, "SELECT model, horizon_months, mae_bps FROM vw_model_comparison ORDER BY horizon_months")
+    d = query(con, "SELECT model, horizon_months, mae_bps FROM vw_model_comparison ORDER BY horizon_months")
     style = {
         "Naive (last observed)": dict(color=GREY, ls="-", marker="s"),
         "ETS damped trend": dict(color=TEAL, ls="-", marker="o"),
@@ -368,9 +364,9 @@ def chart_model_comparison(con):
 
 
 def chart_forecast_comparison(con):
-    a = q(con, "SELECT month, rate_pct FROM fact_rate_actual WHERE month >= DATE '2024-01-01' ORDER BY month")
-    band = q(con, "SELECT target_month, forecast_rate_pct, lower_80_pct, upper_80_pct FROM fact_forecast_interval ORDER BY target_month")
-    r = q(con, "SELECT target_month, regression_rate_pct, ets_rate_pct, yield_known FROM vw_forecast_comparison ORDER BY target_month")
+    a = query(con, "SELECT month, rate_pct FROM fact_rate_actual WHERE month >= DATE '2024-01-01' ORDER BY month")
+    band = query(con, "SELECT target_month, forecast_rate_pct, lower_80_pct, upper_80_pct FROM fact_forecast_interval ORDER BY target_month")
+    r = query(con, "SELECT target_month, regression_rate_pct, ets_rate_pct, yield_known FROM vw_forecast_comparison ORDER BY target_month")
     last = a.iloc[-1]
     start = pd.DataFrame({"target_month": [last.month], "regression_rate_pct": [last.rate_pct], "ets_rate_pct": [last.rate_pct]})
     rr = pd.concat([start, r], ignore_index=True)
@@ -400,7 +396,7 @@ def chart_forecast_comparison(con):
 # Renewal triage
 # ---------------------------------------------------------------------------------------------
 def chart_triage_capacity(con):
-    d = q(con, "SELECT * FROM fact_triage_capacity ORDER BY capacity_per_week")
+    d = query(con, "SELECT * FROM fact_triage_capacity ORDER BY capacity_per_week")
     fig, ax = plt.subplots(figsize=(10, 4.6))
     x = np.arange(len(d))
     for off, col, colour, label in [(-0.19, "over_missed_if_by_date_only", GREY, "Call in renewal-date order"),

@@ -3,11 +3,11 @@
   "name": "history_chart",
   "position": {
     "x": 32,
-    "y": 280,
-    "z": 2900,
-    "height": 186,
+    "y": 298,
+    "z": 3000,
+    "height": 168,
     "width": 744,
-    "tabOrder": 2900
+    "tabOrder": 3000
   },
   "visual": {
     "visualType": "lineChart",
@@ -92,7 +92,7 @@
               },
               "queryRef": "measures_calc.Band Low",
               "nativeQueryRef": "Band Low",
-              "displayName": "80% band"
+              "displayName": "80% band, low"
             },
             {
               "field": {
@@ -107,7 +107,7 @@
               },
               "queryRef": "measures_calc.Band High",
               "nativeQueryRef": "Band High",
-              "displayName": "80% band (upper)"
+              "displayName": "80% band, high"
             }
           ]
         }
@@ -372,7 +372,7 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
@@ -499,6 +499,13 @@
               "expr": {
                 "Literal": {
                   "Value": "'solid'"
+                }
+              }
+            },
+            "start": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }

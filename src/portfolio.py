@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 from config import PROCESSED_DIR
-from mortgage import monthly_payment
+from mortgage import monthly_payment, monthly_rate
 
 SEED = 42
 N_LOANS = 5_000
@@ -32,7 +32,7 @@ AMORT_CHOICES, AMORT_WEIGHTS = (25, 30), (0.75, 0.25)
 def remaining_balance(principal: float, amort_years: int, rate_pct: float, months_paid: int) -> float:
     """Balance left after `months_paid` regular payments (standard annuity formula)."""
     pmt = monthly_payment(principal, amort_years, rate_pct)
-    i = (1 + rate_pct / 200) ** (1 / 6) - 1
+    i = monthly_rate(rate_pct)
     if i == 0:
         return principal - pmt * months_paid
     g = (1 + i) ** months_paid

@@ -3,11 +3,11 @@
   "name": "outlook_chart",
   "position": {
     "x": 32,
-    "y": 282,
-    "z": 2900,
-    "height": 250,
+    "y": 302,
+    "z": 3000,
+    "height": 230,
     "width": 744,
-    "tabOrder": 2900
+    "tabOrder": 3000
   },
   "visual": {
     "visualType": "lineChart",
@@ -77,7 +77,7 @@
               },
               "queryRef": "measures_calc.Band Low",
               "nativeQueryRef": "Band Low",
-              "displayName": "80% band"
+              "displayName": "80% band, low"
             },
             {
               "field": {
@@ -92,7 +92,7 @@
               },
               "queryRef": "measures_calc.Band High",
               "nativeQueryRef": "Band High",
-              "displayName": "80% band (upper)"
+              "displayName": "80% band, high"
             }
           ]
         }
@@ -311,7 +311,7 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },

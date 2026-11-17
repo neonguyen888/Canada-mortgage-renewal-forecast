@@ -14,8 +14,8 @@ always look related even when they are not.
 
 - K (number of lags) is chosen by BIC on 2013-2015 only, before the backtest starts.
 - The yield is published daily, the mortgage rate about 2 months late, so at each origin the
-  model already knows 2 extra months of yields. A second version without that head start
-  shows how much of the gain it explains.
+  model already knows 2 extra months of yields. Two more versions, with 1 month of extra yields
+  or none, show how much of the gain comes from that head start.
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-from config import HAC_LAGS, LAG_SELECTION_END, PROCESSED_DIR, REG_MAX_LAG, YIELD_KNOWN_MONTHS
+from config import HAC_LAGS, HORIZONS, LAG_SELECTION_END, PROCESSED_DIR, REG_MAX_LAG, YIELD_KNOWN_MONTHS
 from forecast import MAX_H, MODELS, backtest_origins, load_actuals, score
 from intervals import diebold_mariano
 
@@ -133,7 +133,7 @@ def coefficient_table(fit) -> tuple[pd.DataFrame, dict]:
 def main():
     m, y = load_actuals(), load_yields()
     if y.index[-1] < m.index[-1] + pd.DateOffset(months=YIELD_KNOWN_MONTHS):
-        warnings.warn("Bond yields do not yet cover two months past the last mortgage month; "
+        warnings.warn(f"Bond yields do not yet cover {YIELD_KNOWN_MONTHS} months past the last mortgage month; "
                       "the latest forecast will use fewer known yields than the backtest did.")
 
     lag, lag_table = select_lag(m, y)
@@ -144,7 +144,7 @@ def main():
     bt_scored, summ = score(bt, m)
 
     dm_rows = []
-    for h in (3, 6):
+    for h in HORIZONS:
         w = bt_scored[bt_scored.horizon_months == h].pivot(index="origin_month", columns="model", values="error_bps")
         for other in (ETS, NAIVE):
             diff_bps, stat, p = diebold_mariano(w[REG_MODEL].values / 100, w[other].values / 100, h)

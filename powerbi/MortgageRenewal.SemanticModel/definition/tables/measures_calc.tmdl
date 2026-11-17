@@ -86,13 +86,6 @@ table measures_calc
 		displayFolder: Rates
 		lineageTag: f2abd705-0377-5d7a-8128-8a1fc5ed3c0f
 
-	measure 'Latest Bond Yield' =
-			VAR _m = CALCULATE(MAX('Rate vs Yield'[Month]), REMOVEFILTERS())
-			RETURN CALCULATE(MAX('Rate vs Yield'[Bond yield]), 'Rate vs Yield'[Month] = _m, REMOVEFILTERS())
-		formatString: 0.00\%
-		displayFolder: Rates
-		lineageTag: 4943880a-15b9-5f79-b73f-daedb5ef6f3d
-
 	/// Rate scenario picked on the overview page, in bps.
 	measure 'Scenario Shift' = SELECTEDVALUE('Scenario'[Shift bps], 0)
 		formatString: 0
@@ -181,26 +174,12 @@ table measures_calc
 		displayFolder: Accuracy
 		lineageTag: b1e4f367-88c9-5ef9-99e0-4412df39ba7c
 
-	measure 'ETS MAE CAD' =
-			VAR _h = [Selected Horizon]
-			RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), 'Model Accuracy'[Model] = "ETS damped trend", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
-		formatString: \$#,0.00
-		displayFolder: Accuracy
-		lineageTag: 64fb1ef2-5cfb-5b7a-9f40-d5cbb64392fc
-
 	measure 'Naive MAE' =
 			VAR _h = [Selected Horizon]
 			RETURN CALCULATE(MAX('Model Accuracy'[MAE bps]), 'Model Accuracy'[Model] = "Naive (last observed)", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
 		formatString: 0.0" bps"
 		displayFolder: Accuracy
 		lineageTag: a280e130-071d-59ec-9469-6aa6d7752daa
-
-	measure 'Naive MAE CAD' =
-			VAR _h = [Selected Horizon]
-			RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), 'Model Accuracy'[Model] = "Naive (last observed)", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
-		formatString: \$#,0.00
-		displayFolder: Accuracy
-		lineageTag: 6a02184a-df70-5b7d-a765-7537e77c92fb
 
 	measure 'Bond-yield MAE' =
 			VAR _h = [Selected Horizon]
@@ -209,12 +188,12 @@ table measures_calc
 		displayFolder: Accuracy
 		lineageTag: 8f0351ca-fff0-51fb-b531-cb8adae19faa
 
-	measure 'Bond-yield MAE CAD' =
+	measure 'Naive MAE CAD' =
 			VAR _h = [Selected Horizon]
-			RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), 'Model Accuracy'[Model] = "Bond-yield regression", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
+			RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), 'Model Accuracy'[Model] = "Naive (last observed)", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
 		formatString: \$#,0.00
 		displayFolder: Accuracy
-		lineageTag: ac1ef253-efe4-5051-ad42-ed2a51dcf38f
+		lineageTag: 6a02184a-df70-5b7d-a765-7537e77c92fb
 
 	measure 'ETS MAE Caption' =
 			VAR _h = [Selected Horizon]

@@ -22,7 +22,7 @@ SERIES_ID = "V122667786"
 VALET_OBS_URL = f"https://www.bankofcanada.ca/valet/observations/{SERIES_ID}/json"
 VALET_SERIES_URL = f"https://www.bankofcanada.ca/valet/series/{SERIES_ID}/json"
 
-# Backtest design. A horizon counts months after the last observed month, the same way at every origin.
+# Backtest design
 HORIZONS = (3, 6)                 # months ahead of the forecast origin (last observed month)
 MIN_TRAIN_MONTHS = 36             # expanding window; series starts 2013-01, so first origin has 3 years of history
 EVAL_START = "2016-01"            # first forecast origin evaluated (same for both models)
@@ -36,9 +36,7 @@ PROFILE_OLD_RATE = 2.2            # % at the original 5-year term (illustrative)
 # Power BI can't solve an equation, so it searches this 1 bp grid for the threshold rate instead.
 GRID_MIN_RATE, GRID_MAX_RATE, GRID_STEP = 0.00, 10.00, 0.01   # percent
 
-# Pre-registered model-selection rule (written before results were seen):
-#   ETS (damped) is adopted only if its MAE in bps is lower than the naive baseline at BOTH
-#   the 3- and 6-month horizons over identical origins. Otherwise the naive baseline is used.
+# Model-selection rule, fixed before any backtest was run.
 SELECTION_RULE = (
     "Adopt damped-trend ETS only if its MAE (bps) beats the naive baseline at both "
     "3- and 6-month horizons on identical origins; otherwise use the naive baseline."

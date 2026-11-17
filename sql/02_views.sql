@@ -42,7 +42,6 @@ CREATE VIEW vw_rate_monthly AS
 SELECT
     month,
     rate_pct,
-    LAG(month) OVER w AS prev_month,
     CASE
         WHEN LAG(month) OVER w = month - INTERVAL '1 month'
         THEN round(((rate_pct - LAG(rate_pct) OVER w) * 100)::numeric, 1)
@@ -60,8 +59,7 @@ SELECT
     month,
     rate_pct,
     'Actual'::text   AS series,
-    NULL::integer    AS horizon_months,
-    NULL::text       AS model
+    NULL::integer    AS horizon_months
 FROM fact_rate_actual
 
 UNION ALL
@@ -71,8 +69,7 @@ SELECT
     (SELECT max(month) FROM fact_rate_actual),
     (SELECT rate_pct FROM fact_rate_actual ORDER BY month DESC LIMIT 1),
     'Forecast',
-    0,
-    (SELECT any_value(model) FROM fact_forecast WHERE is_selected_model)
+    0
 
 UNION ALL
 
@@ -81,8 +78,7 @@ SELECT
     target_month,
     forecast_rate_pct,
     'Forecast',
-    horizon_months,
-    model
+    horizon_months
 FROM fact_forecast
 WHERE is_selected_model;
 
@@ -186,8 +182,7 @@ ORDER BY p.period_order, d.horizon_months, d.model;
 -- Power BI searches this list for the rate where the payment rise hits the threshold.
 CREATE VIEW vw_rate_grid AS
 SELECT
-    round(k * 0.01, 2)::double precision  AS rate_pct,
-    k                                     AS rate_bps
+    round(k * 0.01, 2)::double precision AS rate_pct
 FROM generate_series(0, 1000) AS t(k);
 
 
@@ -196,20 +191,14 @@ FROM generate_series(0, 1000) AS t(k);
 -- =============================================================================================
 
 -- vw_portfolio_payment
--- Each loan under 3 scenarios (rate -50 bps, forecast, +50 bps): payment before, after, change.
+-- Each loan under 3 scenarios (rate -50 bps, forecast, +50 bps) and its payment change.
 CREATE VIEW vw_portfolio_payment AS
 SELECT
     l.loan_id,
     l.renewal_month,
-    l.renewal_date,
-    l.original_rate_pct,
     l.balance_at_renewal,
-    l.years_remaining,
     s.scenario,
     s.shift_bps,
-    l.renewal_rate_pct + s.shift_bps / 100.0 AS scenario_rate_pct,
-    monthly_payment(l.balance_at_renewal, l.years_remaining, l.original_rate_pct) AS payment_before,
-    monthly_payment(l.balance_at_renewal, l.years_remaining, l.renewal_rate_pct + s.shift_bps / 100.0) AS payment_after,
     monthly_payment(l.balance_at_renewal, l.years_remaining, l.renewal_rate_pct + s.shift_bps / 100.0)
       - monthly_payment(l.balance_at_renewal, l.years_remaining, l.original_rate_pct) AS payment_change,
     -- a) b) c) d) keep the bands in the right order

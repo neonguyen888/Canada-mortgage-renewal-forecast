@@ -5,7 +5,7 @@ Author: Neo Nguyen
 The backtest replays history. Starting in January 2016, we pretend each month is "today", fit
 both models on the data up to that month only, and forecast 3 and 6 months ahead. Then we move
 forward one month and do it again: 122 times in total. Comparing those forecasts with what the
-rate actually did gives an honest view of how each model would have performed in real use.
+rate actually did shows how each model would have done in real use.
 
 A horizon of h means h months after the last observed month, not after the day the data is
 published. The Bank of Canada releases this series about 2-3 months late, so in calendar terms a
@@ -80,7 +80,7 @@ def run_backtest(s: pd.Series) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def score(bt: pd.DataFrame, s: pd.Series) -> pd.DataFrame:
+def score(bt: pd.DataFrame, s: pd.Series) -> tuple[pd.DataFrame, pd.DataFrame]:
     bt = bt.copy()
     bt["actual_rate_pct"] = bt["target_month"].map(s)
     bt["error_bps"] = (bt["forecast_rate_pct"] - bt["actual_rate_pct"]) * 100
@@ -126,7 +126,7 @@ def main():
     chosen = select_model(summ)
     fc = final_forecast(s, chosen)
 
-    fmt = lambda d: d.assign(**{c: d[c].dt.strftime("%Y-%m-01") for c in d.columns if c.endswith("_month") and c != "horizon_months"})
+    fmt = lambda d: d.assign(**{c: d[c].dt.strftime("%Y-%m-01") for c in d.columns if c.endswith("_month")})
     fmt(bt).to_csv(PROCESSED_DIR / "backtest_forecasts.csv", index=False)
     fmt(fc).to_csv(PROCESSED_DIR / "forecast_latest.csv", index=False)
     summ_out = summ.assign(first_origin=summ.first_origin.dt.strftime("%Y-%m"), last_origin=summ.last_origin.dt.strftime("%Y-%m"))

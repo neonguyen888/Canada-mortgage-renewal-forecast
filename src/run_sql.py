@@ -30,7 +30,7 @@ LOADS = {
     "fact_triage_capacity": "triage_capacity.csv",
 }
 
-# The views the Power BI report reads (powerbi/build_pbip.py), one CSV each, grouped by page.
+# Tables and views the Power BI report reads, one CSV each, grouped by page.
 EXPORTS = [
     # Overview
     "vw_rate_outlook_band", "dim_month", "vw_forecast_comparison", "fact_triage_loan",

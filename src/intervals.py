@@ -32,7 +32,6 @@ def errors_all_horizons(s: pd.Series, model: str) -> pd.DataFrame:
     """Actual minus forecast for horizons 1..6, using the same origins as the main backtest."""
     fn = MODELS[model]
     rows = []
-    # Same origins as forecast.run_backtest, so the band and the MAE table describe the same test.
     for o in backtest_origins(s):
         fc = fn(s.loc[:o], MAX_H)
         for h in range(1, MAX_H + 1):

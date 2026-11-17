@@ -47,11 +47,11 @@ The slicer tables (scenario, threshold, balance and so on) are small lookup tabl
 
 ## Measures
 
-All 74 measures live in the `measures_calc` table, grouped in five folders: Rates, Renewal book, Accuracy, Payment impact and Triage. The payment formula in DAX is the same Canadian semi-annual one used in `src/mortgage.py` and in the SQL function. The threshold rate is the lowest rate on a 1 bp grid where the payment rise reaches the threshold.
+All 71 measures live in the `measures_calc` table, grouped in five folders: Rates, Renewal book, Accuracy, Payment impact and Triage. The payment formula in DAX is the same Canadian semi-annual one used in `src/mortgage.py` and in the SQL function. The threshold rate is the lowest rate on a 1 bp grid where the payment rise reaches the threshold.
 
 ## Design
 
-Navy canvas, amber for whatever needs attention, teal for the ETS forecast, light blue for observed data and lavender for the bond-yield model. The panels are drawn into a background image at twice the page size, and the visuals sit on top with transparent backgrounds. Text uses Segoe UI, with DIN for the large numbers. Both fonts ship with Power BI.
+Navy canvas, amber for whatever needs attention, teal for the ETS forecast, light blue for observed data and lavender for the bond-yield model. The panels are drawn into a background image at twice the page size, and the visuals sit on top with transparent backgrounds. Text uses Segoe UI throughout, with the light weight for the large numbers, so it looks the same on any Windows machine.
 
 ## Reference values
 
@@ -71,7 +71,7 @@ With the default slicer choices, the cards should match the written report:
 
 ## Rebuilding the project
 
-`build_pbip.py` writes every file in this folder: the data model, all 109 visuals, the theme and the four background images. To change the layout, colours or a measure, edit the script and run:
+`build_pbip.py` writes every file in this folder: the data model, all 111 visuals, the theme and the four background images. To change the layout, colours or a measure, edit the script and run:
 
 ```bash
 .venv/bin/python powerbi/build_pbip.py

@@ -30,8 +30,7 @@ def monthly_payment(balance: float, years_remaining: float, annual_rate_pct: flo
     if n <= 0:
         raise ValueError("years_remaining must be positive")
     i = monthly_rate(annual_rate_pct)
-    # At 0% there is no interest to amortize, the annuity formula divides by zero, and the
-    # payment is just the balance split evenly across the remaining months.
+    # At 0% the annuity formula divides by zero, so the balance is split evenly.
     if abs(i) < 1e-15:
         return balance / n
     return balance * i / (1 - (1 + i) ** -n)
@@ -52,11 +51,9 @@ def threshold_rate(
 ) -> float | None:
     """Renewal rate (%) at which the payment rises by exactly `threshold_cad` vs the old rate.
 
-    The payment is strictly increasing in the rate, so bisection on [lo, hi] is exact.
+    The payment rises with the rate, so bisection on [lo, hi] finds the one crossing.
     Returns None when the solution lies outside [lo, hi], the 0% to 10% range the report searches.
     """
-    # A higher rate always means a higher payment, so the gap between the payment increase and the
-    # threshold changes sign exactly once. Halving the interval until it is tiny finds that point.
     f = lambda r: payment_change(balance, years_remaining, old_rate_pct, r) - threshold_cad
     f_lo, f_hi = f(lo), f(hi)
     if f_lo > 0 or f_hi < 0:
@@ -82,11 +79,8 @@ def threshold_rate_grid(
     hi: float = GRID_MAX_RATE,
     step: float = GRID_STEP,
 ) -> float | None:
-    """Grid version, the same search the SQL view and the Power BI measure do: the lowest grid rate
-    whose increase reaches the threshold.
-
-    Result is always within one step (1 bp by default) ABOVE the exact solution.
-    """
+    """Lowest rate on the 1 bp grid whose increase reaches the threshold, as the Power BI measure
+    finds it. Always within one step above the exact answer."""
     k_max = round((hi - lo) / step)
     for k in range(k_max + 1):
         r = round(lo + k * step, 6)
@@ -94,5 +88,3 @@ def threshold_rate_grid(
         if payment_change(balance, years_remaining, old_rate_pct, r) >= threshold_cad - 1e-9:
             return r
     return None
-
-

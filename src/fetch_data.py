@@ -4,9 +4,9 @@ Author: Neo Nguyen
 
 The series is V122667786: the average 5-year-and-over fixed rate on uninsured residential
 mortgages, for funds advanced each month. In the Bank's definition, funds advanced covers new
-loans, renewals and refinancing, so renewing borrowers are part of this average. Each run keeps a dated copy of the raw response,
-so the forecast can always be traced back to the exact data it was built on, even after the
-Bank revises past months.
+loans, renewals and refinancing, so renewing borrowers are part of this average. Each run keeps
+a dated copy of the raw response, so the forecast can be traced back to the exact data it was
+built on, even after the Bank revises past months.
 
 The Government of Canada 5-year bond yield comes from the same API. It is published daily, so
 it gets averaged to months here. Only complete months are kept: a half-finished month would

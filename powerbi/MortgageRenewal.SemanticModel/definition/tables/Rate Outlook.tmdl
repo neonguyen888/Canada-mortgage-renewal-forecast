@@ -41,15 +41,6 @@ table 'Rate Outlook'
 
 		annotation SummarizationSetBy = User
 
-	column Model
-		dataType: string
-		isHidden
-		lineageTag: 5dc9abdf-f023-590b-b7a0-4faf7af01298
-		summarizeBy: none
-		sourceColumn: Model
-
-		annotation SummarizationSetBy = User
-
 	column 'Lower 80'
 		dataType: double
 		isHidden
@@ -77,10 +68,10 @@ table 'Rate Outlook'
 				    Raw = if IsWeb then Web.Contents(Folder & "vw_rate_outlook_band.csv") else File.Contents(Folder & "vw_rate_outlook_band.csv"),
 				    Source = Csv.Document(Raw, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
 				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
-				    Kept = Table.SelectColumns(Promoted, {"month", "rate_pct", "series", "horizon_months", "model", "lower_80_pct", "upper_80_pct"}),
+				    Kept = Table.SelectColumns(Promoted, {"month", "rate_pct", "series", "horizon_months", "lower_80_pct", "upper_80_pct"}),
 				    Blanks = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, Table.ColumnNames(Kept)),
-				    Typed = Table.TransformColumnTypes(Blanks, {{"month", type date}, {"rate_pct", type number}, {"series", type text}, {"horizon_months", Int64.Type}, {"model", type text}, {"lower_80_pct", type number}, {"upper_80_pct", type number}}, "en-US"),
-				    Renamed = Table.RenameColumns(Typed, {{"month", "Month"}, {"rate_pct", "Rate"}, {"series", "Series"}, {"horizon_months", "Horizon"}, {"model", "Model"}, {"lower_80_pct", "Lower 80"}, {"upper_80_pct", "Upper 80"}})
+				    Typed = Table.TransformColumnTypes(Blanks, {{"month", type date}, {"rate_pct", type number}, {"series", type text}, {"horizon_months", Int64.Type}, {"lower_80_pct", type number}, {"upper_80_pct", type number}}, "en-US"),
+				    Renamed = Table.RenameColumns(Typed, {{"month", "Month"}, {"rate_pct", "Rate"}, {"series", "Series"}, {"horizon_months", "Horizon"}, {"lower_80_pct", "Lower 80"}, {"upper_80_pct", "Upper 80"}})
 				in
 				    Renamed
 

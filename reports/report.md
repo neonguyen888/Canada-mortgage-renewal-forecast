@@ -52,11 +52,11 @@ The rate used throughout is Bank of Canada series **V122667786**: the average in
 
 | Item | Value |
 |---|---|
-| Source | Bank of Canada Valet API, `https://www.bankofcanada.ca/valet/observations/V122667786/json` |
+| Source | Bank of Canada Valet API, [V122667786](https://www.bankofcanada.ca/valet/observations/V122667786/json) |
 | Coverage | January 2013 to August 2026, 164 months |
 | Unit | Annual rate in percent; 1 bp = 0.01 percentage point |
 | Checks on download | No missing months, no duplicate months, no blank values |
-| Second series | GoC 5-year benchmark bond yield, `BD.CDN.5YR.DQ.YLD`, daily, averaged to months. Complete months only, through October 2026 |
+| Second series | GoC 5-year benchmark bond yield, [BD.CDN.5YR.DQ.YLD](https://www.bankofcanada.ca/valet/observations/BD.CDN.5YR.DQ.YLD/json), daily, averaged to months. Complete months only, through October 2026 |
 
 Every run saves the raw JSON response with the download date, plus a metadata file recording the URL, the latest observed month and the unit convention.
 
