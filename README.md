@@ -75,16 +75,6 @@ Bank of Canada series [`BD.CDN.5YR.DQ.YLD`](https://www.bankofcanada.ca/valet/ob
 
 Every run saves the raw response and a metadata file with the URL, download time and latest month.
 
-## Run the pipeline
-
-You only need this to rebuild the numbers; opening the Power BI report doesn't. The script is for macOS or Linux (on Windows, use WSL). You need Python 3 (tested on 3.15) and PostgreSQL 14 or later running on `localhost:5432`. On a Mac the simplest way to get PostgreSQL is [Postgres.app](https://postgresapp.com): install it, open it, click Initialize. The pipeline creates the `mortgage_renewal` database and a `mortgage` schema by itself. To use another server, set `MORTGAGE_PG_DSN`, for example `host=localhost dbname=mortgage_renewal user=me password=...`.
-
-```bash
-./run_pipeline.sh
-```
-
-The script creates `.venv` on first run. Then it downloads and validates the data, runs the backtest and forecast, builds the uncertainty band and significance test, fits and backtests the bond-yield regression, simulates the portfolio, builds the triage call list, rebuilds the PostgreSQL schema and its 30 checks in one transaction, exports the CSVs the Power BI report reads, reconciles SQL against Python, redraws the charts, rebuilds the Power BI project and runs 45 tests.
-
 ## Project layout
 
 ```
@@ -127,6 +117,16 @@ reports/           report.md and figures/
 
 - Keep scoring both models on each newly published month. September 2026 came in at 4.66%: ETS forecast 4.66% and the regression 4.65%. Switch the headline forecast if the regression keeps winning on October to December.
 - Rerun the triage at each backtest origin from 2018 to see whether a better rate forecast changes who gets called.
+
+## Reproduce
+
+Needs Python 3 and PostgreSQL 14 or later on `localhost:5432` (macOS or Linux; on Windows, use WSL). One command downloads the data, rebuilds every number, chart and the Power BI project, and runs the 30 SQL checks and 45 tests:
+
+```bash
+./run_pipeline.sh
+```
+
+The Power BI report doesn't need this. It reads the CSVs straight from this repository.
 
 ## Licence
 
