@@ -3,7 +3,7 @@
 Author: Neo Nguyen
 
 Everything is read back from the PostgreSQL views, so the charts show exactly the numbers the
-SQL checks and the Power BI CSVs use. Colours follow the dashboard brief: navy for actual data
+SQL checks and the Power BI CSVs use. Colours follow the dashboard: blue for actual data
 and headers, teal for forecasts, amber for anything above the payment threshold, grey for the
 comparison model, purple for the bond-yield regression. Forecasts are always dashed so they can
 be told apart without colour.
