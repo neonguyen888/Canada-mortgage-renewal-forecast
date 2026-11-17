@@ -155,7 +155,8 @@ def chart_mae_summary(con):
             xs = np.arange(len(y)) + (i - 0.5) * 0.32
             bars = ax.bar(xs, y[col], width=0.32, color=c, label=m, **BAR)
             for b, v in zip(bars, y[col]):
-                ax.text(b.get_x() + b.get_width() / 2, v, fmt.format(v), ha="center", va="bottom", fontsize=8.5)
+                # SQL stores 2 decimals (39.65), and a float 39.65 prints as 39.6; nudge it to round half up like the report
+                ax.text(b.get_x() + b.get_width() / 2, v, fmt.format(v + 1e-9), ha="center", va="bottom", fontsize=8.5)
         ax.set_xticks([0, 1], ["3 months ahead", "6 months ahead"])
         ax.set_title(title)
     axes[0].legend(loc="upper left")
