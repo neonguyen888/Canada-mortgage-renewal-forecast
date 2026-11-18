@@ -215,6 +215,16 @@ def test_kpi_values_set_display_units(model):
                 assert "labelDisplayUnits" in v["visual"]["objects"]["labels"][0]["properties"], v["name"]
 
 
+def test_paired_column_labels_show_full_numbers(model):
+    # Auto units turn 3,477 into 3.5K on the bar labels.
+    _, pages = model
+    for page in pages:
+        for v in page.visuals:
+            if v["name"] in ("capacity_chart", "periods_chart"):
+                labels = v["visual"]["objects"]["labels"][0]["properties"]
+                assert labels["labelDisplayUnits"]["expr"]["Literal"]["Value"] == "1D", v["name"]
+
+
 def test_analysis_pages_have_a_data_headline(model):
     _, pages = model
     want = {"overview": "Overview Headline", "accuracy": "Accuracy Headline",

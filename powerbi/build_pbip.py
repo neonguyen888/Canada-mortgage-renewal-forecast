@@ -843,11 +843,12 @@ class Page:
                       "sortDefinition": {"sort": [{"field": cref(*category), "direction": "Ascending"}], "isDefaultSort": True}},
             "objects": {
                 "dataPoint": [series(f"measures_calc.{m}", fill=colour(c)) for m, c in zip(measures, colours)],
-                "labels": props(show=boolean(True), color=colour(C["ink"]), fontSize=num(9)),
+                # Auto units would turn 3,477 into 3.5K
+                "labels": props(show=boolean(True), color=colour(C["ink"]), fontSize=num(9), labelDisplayUnits=num(1)),
                 "legend": props(show=boolean(True), position=text("Top"), labelColor=colour(C["ink2"]), fontSize=num(9), showTitle=boolean(False)),
                 "valueAxis": props(labelColor=colour(C["ink3"]), fontSize=num(9), showAxisTitle=boolean(False),
                                    gridlineColor=colour(C["grid"]), gridlineStyle=text("solid")),
-                "categoryAxis": props(labelColor=colour(C["ink2"]), fontSize=num(10), showAxisTitle=boolean(False)),
+                "categoryAxis": props(labelColor=colour(C["ink2"]), fontSize=num(9), showAxisTitle=boolean(False)),
             },
             "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
 
@@ -1051,7 +1052,7 @@ def build_pages() -> list[Page]:
                  ["Observed Rate", "ETS Forecast", "Bond-yield Forecast", "Band Low", "Band High"], line_styles,
                  filters=date_from("2016-01-01"), legend=False, y_start=1)
     panel_title(p, "models", RIGHT_X, PANEL_Y, RIGHT_W, "Average miss by model")
-    p.slicer("horizon_slicer", RIGHT_X + RIGHT_W - 192, PANEL_Y + 8, 180, 32, "Horizon Choice", "Horizon label", "3 months")
+    p.slicer("horizon_slicer", RIGHT_X + RIGHT_W - 232, PANEL_Y + 6, 220, 34, "Horizon Choice", "Horizon label", "3 months")
     p.bar_chart("models_bars", RIGHT_X + 8, PANEL_Y + 46, RIGHT_W - 16, half - 52, ("Model Accuracy", "Model label"), "MAE at Horizon",
                 colour_measure="Model Bar Colour")
     panel_title(p, "yield", X0, low_y, LEFT_W, "Mortgage rate and the 5-year bond yield", "The yield moves first")
@@ -1127,7 +1128,7 @@ def build_pages() -> list[Page]:
     panel_title(p, "segments", RIGHT_X, PANEL_Y, RIGHT_W, "Segments", "Called at 300 a week")
     p.table("segments_table", RIGHT_X + 10, PANEL_Y + 40, RIGHT_W - 20, seg_h - 48,
             [("Segments", "Segment"), ("Segments", "Loans"), ("Segments", "Median rise"), ("Segments", "Called at 300 a week")],
-            sort=("Segments", "Segment"))
+            sort=("Segments", "Segment"), size=9, row_padding=4)
     panel_title(p, "rule", RIGHT_X, rule_y, RIGHT_W, "How the call list works")
     p.label("rule_text", RIGHT_X + 10, rule_y + 34, RIGHT_W - 20, PANEL_BOTTOM - rule_y - 38, [
         ("A borrower can be called from 60 days to 7 days before renewal. Each week the team first calls the people for whom "
@@ -1141,7 +1142,7 @@ def build_pages() -> list[Page]:
     col_w = (CONTENT_W - 12) / 2
     right_x = X0 + col_w + 12
     left = [("problem", 150), ("audience", 110), ("data", PANEL_BOTTOM - TILE_Y - 150 - 110 - 24)]
-    right = [("methods", 268), ("colours", 140), ("tools", PANEL_BOTTOM - TILE_Y - 268 - 140 - 24)]
+    right = [("methods", 318), ("colours", 112), ("tools", PANEL_BOTTOM - TILE_Y - 318 - 112 - 24)]
     boxes, bg = {}, []
     for x, column in ((X0, left), (right_x, right)):
         y = TILE_Y
