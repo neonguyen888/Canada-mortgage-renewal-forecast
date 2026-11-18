@@ -5,3 +5,7 @@ __pycache__/
 powerbi/**/.pbi/localSettings.json
 powerbi/**/.pbi/cache.abf
 .DS_Store
+powerbi/**/.pbi/
+powerbi/**/.platform
+powerbi/**/definition/cultures/
+powerbi/**/diagramLayout.json

@@ -184,6 +184,29 @@ def test_accuracy_headline_handles_ets_winning(model):
     assert "less than ETS" in e and "more than ETS" in e
 
 
+def test_triage_measures_ignore_chart_clicks(model):
+    # Clicking a column in the capacity chart filters 'Call Capacity'; the KPI tiles and headline must
+    # still read the capacity picked in the slicer, and a blank must not turn into "the same number".
+    tables, _ = model
+    for name in ("Missed with Triage", "Missed in Date Order", "Near-certain Missed", "Near-certain Missed, Date Order",
+                 "Missed Rise with Triage", "Missed Rise in Date Order"):
+        assert "REMOVEFILTERS('Call Capacity')" in _expr(tables, name), name
+    assert "ISBLANK(_x)" in _expr(tables, "Triage Headline")
+
+
+def test_accuracy_measures_ignore_bar_clicks(model):
+    # Clicking a model bar filters 'Model Accuracy' (label and its sort column); the KPIs and headline
+    # pick their own model and horizon, so they clear the whole table first.
+    tables, _ = model
+    for name in ("ETS MAE", "Naive MAE", "Bond-yield MAE", "Naive MAE CAD"):
+        assert "REMOVEFILTERS('Model Accuracy')" in _expr(tables, name), name
+
+
+def test_forecast_caption_handles_a_missing_forecast(model):
+    tables, _ = model
+    assert "ISBLANK(" in _expr(tables, "ETS 3-Month Caption")
+
+
 def test_triage_headline_handles_no_gain(model):
     tables, _ = model
     e = _expr(tables, "Triage Headline")

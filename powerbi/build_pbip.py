@@ -371,8 +371,9 @@ def add_measures(t: Table) -> None:
     t.measure("ETS 3-Month Forecast", "CALCULATE(MAX('Forecast Comparison'[ETS rate]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())", pct, F)
     t.measure("ETS 3-Month Caption", f"""
         VAR _m = CALCULATE(MAX('Forecast Comparison'[Target month]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())
-        VAR _d = ROUND(([ETS 3-Month Forecast] - [Latest Rate]) * 100, 0)
-        RETURN {delta_text("_d")} & " vs today, " & FORMAT(_m, "mmm yyyy")
+        VAR _f = [ETS 3-Month Forecast]
+        VAR _d = ROUND((_f - [Latest Rate]) * 100, 0)
+        RETURN IF(ISBLANK(_f), BLANK(), {delta_text("_d")} & " vs today, " & FORMAT(_m, "mmm yyyy"))
         """, None, F)
     t.measure("Observed Rate", "CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = \"Actual\")", pct, F)
     t.measure("ETS Forecast", "CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = \"Forecast\")", pct, F,
@@ -437,11 +438,11 @@ def add_measures(t: Table) -> None:
     for short, model in [("ETS", "ETS damped trend"), ("Naive", "Naive (last observed)"), ("Bond-yield", "Bond-yield regression")]:
         t.measure(f"{short} MAE", f"""
             VAR _h = [Selected Horizon]
-            RETURN CALCULATE(MAX('Model Accuracy'[MAE bps]), 'Model Accuracy'[Model] = "{model}", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
+            RETURN CALCULATE(MAX('Model Accuracy'[MAE bps]), REMOVEFILTERS('Model Accuracy'), 'Model Accuracy'[Model] = "{model}", 'Model Accuracy'[Horizon] = _h)
             """, '0.0" bps"', F)
     t.measure("Naive MAE CAD", """
         VAR _h = [Selected Horizon]
-        RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), 'Model Accuracy'[Model] = "Naive (last observed)", 'Model Accuracy'[Horizon] = _h, REMOVEFILTERS('Model Accuracy'[Model label]))
+        RETURN CALCULATE(MAX('Model Accuracy'[MAE CAD]), REMOVEFILTERS('Model Accuracy'), 'Model Accuracy'[Model] = "Naive (last observed)", 'Model Accuracy'[Horizon] = _h)
         """, cad2, F)
     t.measure("ETS MAE Caption", """
         VAR _h = [Selected Horizon]
@@ -559,15 +560,15 @@ def add_measures(t: Table) -> None:
     ]:
         t.measure(name, f"""
             VAR _c = [Chosen Calls per Week]
-            RETURN CALCULATE(SUM('Call Capacity'[{col}]), 'Call Capacity'[Calls per week] = _c)
+            RETURN CALCULATE(SUM('Call Capacity'[{col}]), REMOVEFILTERS('Call Capacity'), 'Call Capacity'[Calls per week] = _c)
             """, cad if "Rise" in name else "#,0", F, desc)
     t.measure("Extra Borrowers Reached", "[Missed in Date Order] - [Missed with Triage]", "+#,0;-#,0;0", F)
     t.measure("Triage Headline", """
         VAR _x = [Extra Borrowers Reached]
         VAR _lead = "At " & FORMAT([Chosen Calls per Week], "#,0") & " calls a week, "
-        RETURN _lead & IF(_x > 0, "triage reaches " & FORMAT(_x, "#,0") & " more at-risk borrowers than calling by date",
+        RETURN IF(ISBLANK(_x), BLANK(), _lead & IF(_x > 0, "triage reaches " & FORMAT(_x, "#,0") & " more at-risk borrowers than calling by date",
                    IF(_x = 0, "triage and calling by date reach the same number of at-risk borrowers",
-                      "calling by date reaches " & FORMAT(-_x, "#,0") & " more at-risk borrowers than triage"))
+                      "calling by date reaches " & FORMAT(-_x, "#,0") & " more at-risk borrowers than triage")))
         """, None, F, "Headline for the triage page, at the call capacity picked there.")
     t.measure("Missed with Triage Caption", '"borrowers over +$250 never called"', None, F)
     t.measure("Missed in Date Order Caption", '"same capacity, calling by renewal date"', None, F)
@@ -1187,12 +1188,12 @@ def build_pages() -> list[Page]:
         "Triage: each week the team first calls borrowers for whom it's the last chance, then fills spare calls with "
         "the most certain cases.", *body))
     section("colours", "How to read the colours",
-            ("■ ", 9.5, C["blue"], FONT), ("Navy: observed data     ", *body),
-            ("■ ", 9.5, C["teal"], FONT), ("Teal: ETS forecast\n", *body),
+            ("■ ", 9.5, C["blue"], FONT), ("Navy: observed data and main lines     ", *body),
+            ("■ ", 9.5, C["teal"], FONT), ("Teal: ETS forecast, triage rule\n", *body),
             ("■ ", 9.5, C["purple"], FONT), ("Purple: bond-yield model     ", *body),
-            ("■ ", 9.5, C["slate"], FONT), ("Grey: comparison\n", *body),
+            ("■ ", 9.5, C["slate"], FONT), ("Grey: comparisons\n", *body),
             ("■ ", 9.5, C["amber"], FONT), ("Amber: needs attention, such as a rise above the threshold or the option you picked\n", *body),
-            ("▲ ▼ show the change since the month before.", *body))
+            ("▲ ▼ give the direction and size of a change, in basis points.", *body))
     section("tools", "Tools and author",
             ("Python (pandas, statsmodels, matplotlib), PostgreSQL, and Power BI with DAX. The whole report, this page "
              "included, is generated from code in the repository.\n\nNeo Nguyen, ", *body),
