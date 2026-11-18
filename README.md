@@ -1,12 +1,12 @@
 # Canadian Mortgage Renewal | Rate Forecast & Payment Impact
 
-**Author:** Neo Nguyen · **Stack:** Python (pandas, statsmodels, matplotlib) · PostgreSQL · Power BI
+Neo Nguyen · Python (pandas, statsmodels, matplotlib), PostgreSQL, Power BI
 
-A household that locked in a 5-year fixed rate of 2.2% in 2021 and renews today, with $400,000 left to pay, owes about $496 more every month.
+If you locked in a 5-year fixed rate of 2.2% in 2021 and renew today with $400,000 left to pay, your payment goes up by about $496 a month.
 
-This project forecasts where the 5-year fixed rate goes next, using Bank of Canada data, and works out what that means at renewal: for one borrower, and for a lender with 5,000 loans renewing in the next 90 days that has to decide whom to call first.
+I built this project to answer the questions a lender's renewal team would ask about that jump: where the 5-year fixed rate goes next, what it means for one borrower, and which of the 5,000 borrowers renewing in the next 90 days to call first when the team can't reach everyone. It uses Bank of Canada data, a backtested forecast, a PostgreSQL model and a Power BI dashboard.
 
-**[Read the full report with charts](reports/report.md)**
+[Read the full report with charts](reports/report.md)
 
 ![Rate history and forecast](reports/figures/01_rate_history_forecast.png)
 
@@ -58,7 +58,7 @@ All 17 charts are in the [full report](reports/report.md).
 
 ## Power BI report
 
-A five-page report in the same light finance style as the charts above: an overview of the renewal book, forecast accuracy, payment impact for one borrower, the triage call list, and an About page that explains the data and methods. A navy rail on the left moves between pages. Each page opens with a headline worked out from the data, such as "92.5% of renewing borrowers face a payment rise above $250 a month", and the rate cards show the change since the month before. Slicers change the rate scenario, the forecast horizon, the loan and the weekly call capacity. It is saved as a Power BI Project (PBIP), so the model, the DAX and every visual are plain text in this repository. [How to open it and check the numbers](powerbi/README.md).
+The dashboard has five pages in the same light finance style as the charts above: the renewal book, forecast accuracy, payment impact for one borrower, the triage call list, and an About page with the data and methods. A navy rail on the left switches pages. Each analysis page opens with a headline computed from the data, such as "92.5% of renewing borrowers face a payment rise above $250 a month", and the rate cards show changes in basis points with ▲ and ▼. Slicers change the rate scenario, the forecast horizon, the loan and the weekly call capacity. It's saved as a Power BI Project (PBIP), so the model, the DAX and every visual are plain text in this repository. [How to open it and check the numbers](powerbi/README.md).
 
 | | |
 |---|---|
@@ -122,7 +122,7 @@ reports/           report.md and figures/
 
 ## Reproduce
 
-Needs Python 3 and PostgreSQL 14 or later on `localhost:5432` (macOS or Linux; on Windows, use WSL). One command downloads the data, rebuilds every number, chart and the Power BI project, and runs the 30 SQL checks and 45 tests:
+Needs Python 3 and PostgreSQL 14 or later on `localhost:5432` (macOS or Linux; on Windows, use WSL). One command downloads the data, rebuilds every number, chart and the Power BI project, and runs the 30 SQL checks and 71 tests:
 
 ```bash
 ./run_pipeline.sh

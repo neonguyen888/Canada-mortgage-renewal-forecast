@@ -55,11 +55,10 @@ PAGE_W, PAGE_H = 1280, 720
 DEFAULT_DATA_FOLDER = "https://raw.githubusercontent.com/neonguyen888/Canada-mortgage-renewal-forecast/main/data/powerbi/"
 
 # ---------------------------------------------------------------------------------------------
-# Design tokens. A light finance-report look that matches the charts in reports/figures: light grey
-# canvas, white panels, a navy navigation rail, and the same series colours as src/charts.py
-# (navy for actual data, teal for the ETS forecast, amber for whatever needs attention, purple for
-# the bond-yield model, grey for comparisons), which passed a colour-blind check there.
-# "blue" keeps its old key so every chart call still reads "actual data".
+# Design tokens: light grey canvas, white panels and a navy rail, to match reports/figures.
+# Series colours come from src/charts.py, where they passed a colour-blind check: navy for actual
+# data (kept under the key "blue"), teal for the ETS forecast, purple for the bond-yield model,
+# grey for comparisons and amber for whatever needs attention.
 # ---------------------------------------------------------------------------------------------
 C = {
     "canvas": "#F4F6F9", "panel": "#FFFFFF", "line": "#D5DAE0", "tile_hi": "#FFF7EE",
@@ -1003,7 +1002,7 @@ def build_pages() -> list[Page]:
     }
     full_h = PANEL_BOTTOM - PANEL_Y
 
-    # ---- 1. Overview: the shape of the brief -------------------------------------------------
+    # ---- 1. Overview: the renewal book and the rate outlook ------------------------------------
     bg, tw = tiles(4, highlight_first=True)
     bg += [("panel", X0, PANEL_Y, LEFT_W, 300), ("panel", RIGHT_X, PANEL_Y, RIGHT_W, 300),
            ("panel", X0, 524, CONTENT_W, PANEL_BOTTOM - 524)]

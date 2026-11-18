@@ -4,13 +4,13 @@
 
 ## Summary
 
-Many Canadian households that locked in a 5-year fixed rate during the pandemic lows are renewing now, at rates roughly two points higher. This report looks at three questions about that renewal:
+A borrower who locked in a 5-year fixed rate of 2.20% and renews today, with $400,000 left over 20 years, pays $495.86 more every month. Many Canadian households that fixed during the pandemic lows are renewing now, at rates roughly two points higher. This report looks at three questions about that renewal:
 
 1. How much does the monthly payment change under different rate scenarios?
 2. What renewal rate pushes the payment up by $250 a month (or $100, or $500)?
 3. If the rate forecast is wrong, how many dollars a month is the payment estimate off by?
 
-For an illustrative loan with $400,000 left and 20 years to go, renewing from 2.20% at the latest market reference rate of 4.66% raises the payment from $2,059.72 to $2,555.58, which is $495.86 more each month. The payment crosses the $250 threshold at a renewal rate of about 3.48%, so today's market rate is already 118 bps past it.
+At the latest market reference rate of 4.66%, the payment on that loan goes from $2,059.72 to $2,555.58. It crosses the $250 threshold at a renewal rate of about 3.48%, so today's market rate is already 118 bps past it.
 
 A damped-trend ETS model forecasts the rate at 4.81% for December 2026 and 4.89% for March 2027. Over 123 rolling backtests it beat a naive "no change" forecast at both horizons: 19.0 vs 24.3 bps at 3 months and 39.7 vs 42.8 bps at 6 months. In payment terms that is $39.10 vs $49.82 a month, and $81.75 vs $87.52. The 3-month gain is close to statistically significant (p = 0.058). The 6-month gain is not (p = 0.51), and during the 2024 to 2026 easing period the naive model did slightly better.
 
@@ -380,7 +380,7 @@ The whole PostgreSQL rebuild runs in one transaction. Primary and foreign keys r
 - **Triage.** The four segments add up to 5,000 loans and match the scenario counts in section 10 (3,792 over at -50 bps, 4,626 over at the forecast). Priority ranks run from 1 to 5,000 with no gaps, no call is booked within 7 days of renewal, and more call capacity never means more borrowers missed.
 - **SQL vs Python.** MAE in bps and CAD matches to within 0.01 for all four model and horizon pairs in the main backtest and all 30 in the model comparison. The triage segments match between Python and SQL. Threshold rates match on 12 profiles. The portfolio's total payment change and count above $250 match exactly.
 
-In total there are 30 SQL checks and 45 unit tests. The tests cover the payment formula, the threshold solver (rate up, down, unchanged, 0% old rate, an exact hit on the threshold, and a solution outside the 0% to 10% search range), the balance calculation, the Diebold-Mariano helper, and the regression: it recovers known lag weights from fake data, uses known yields and then holds them flat, and picks its lag count without looking past 2015. The triage tests check the segment mapping, the rank order, the 7-day notice and 60-day lookahead, and that a last-chance borrower is called before a more certain one who can wait. The Power BI tests check that no measure shares a name with a table or column, that no two visuals on a page share a name, that every visual points at a field that exists, that every visual fits on its page, and that each slicer's default is one of its options.
+In total there are 30 SQL checks and 71 unit tests. The tests cover the payment formula, the threshold solver (rate up, down, unchanged, 0% old rate, an exact hit on the threshold, and a solution outside the 0% to 10% search range), the balance calculation, the Diebold-Mariano helper, and the regression: it recovers known lag weights from fake data, uses known yields and then holds them flat, and picks its lag count without looking past 2015. The triage tests check the segment mapping, the rank order, the 7-day notice and 60-day lookahead, and that a last-chance borrower is called before a more certain one who can wait. The Power BI tests check that no measure shares a name with a table or column, that no two visuals on a page share a name, that every visual points at a field that exists, that every visual fits on its page, and that each slicer's default is one of its options. They also pin the formatting rules Power BI Desktop applies without warning: every page has the navigation rail, headlines and captions stay true when a rate falls, doesn't change or is missing, card values set their display units, fonts are ones Power BI knows, tile slicers have room for every option, and clicking a chart can't make a headline wrong.
 
 ## 13. Limitations
 
@@ -392,7 +392,29 @@ In total there are 30 SQL checks and 45 unit tests. The tests cover the payment 
 - The regression assumes the bond yield stays flat after the last published month. A sharp move in yields after October 2026 would make its 4- to 6-month forecasts too low or too high.
 - The link between yields and mortgage rates was steady over 2013 to 2026, but lenders can change their spread, as they did in 2020. The regression has no way to see that coming.
 
-## 14. Reproduce
+## 14. The Power BI dashboard
+
+The dashboard puts these results on five pages that a renewal team can use without reading this report. It uses the same light style and colours as the charts here. Each analysis page opens with a headline computed from the data and the page's slicers, so the sentence changes when a slicer does. Four KPI cards and two or three charts sit under it, and a navy rail on the left switches pages.
+
+![Overview page](../powerbi/screenshots/01_overview.png)
+
+Overview: the share of the book above $250 a month in the chosen scenario, the rate outlook (section 6) and renewals by month (section 10).
+
+![Rates and accuracy page](../powerbi/screenshots/02_accuracy.png)
+
+Rates & accuracy: the average miss of each model at 3 or 6 months, and the bond yield against the mortgage rate (sections 4, 5 and 7).
+
+![Payment impact page](../powerbi/screenshots/03_payment.png)
+
+Payment impact: pick a balance, years left, old rate, renewal rate and threshold, and the page works out the payment with the same formula as section 8.
+
+![Renewal triage page](../powerbi/screenshots/04_triage.png)
+
+Renewal triage: borrowers missed at each weekly call capacity, and the segments behind the call list (section 11).
+
+The fifth page, About, sums up the problem, the data, the methods and how to read the colours. `powerbi/README.md` explains how to open the report and check its numbers.
+
+## 15. Reproduce
 
 ```bash
 ./run_pipeline.sh
