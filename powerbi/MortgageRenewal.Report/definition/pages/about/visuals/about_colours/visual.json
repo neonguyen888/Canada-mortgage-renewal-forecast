@@ -35,7 +35,7 @@
                     }
                   },
                   {
-                    "value": "Navy: observed data     ",
+                    "value": "Navy: observed data and main lines     ",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9.5pt",
@@ -51,7 +51,7 @@
                     }
                   },
                   {
-                    "value": "Teal: ETS forecast\n",
+                    "value": "Teal: ETS forecast, triage rule\n",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9.5pt",
@@ -83,7 +83,7 @@
                     }
                   },
                   {
-                    "value": "Grey: comparison\n",
+                    "value": "Grey: comparisons\n",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9.5pt",
@@ -107,7 +107,7 @@
                     }
                   },
                   {
-                    "value": "▲ ▼ show the change since the month before.",
+                    "value": "▲ ▼ give the direction and size of a change, in basis points.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9.5pt",
