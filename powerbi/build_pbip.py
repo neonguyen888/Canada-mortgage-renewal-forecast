@@ -1145,7 +1145,7 @@ def build_pages() -> list[Page]:
     col_w = (CONTENT_W - 12) / 2
     right_x = X0 + col_w + 12
     left = [("problem", 150), ("audience", 110), ("data", PANEL_BOTTOM - TILE_Y - 150 - 110 - 24)]
-    right = [("methods", 300), ("colours", 136), ("tools", PANEL_BOTTOM - TILE_Y - 300 - 136 - 24)]
+    right = [("methods", 300), ("colours", 124), ("tools", PANEL_BOTTOM - TILE_Y - 300 - 124 - 24)]
     boxes, bg = {}, []
     for x, column in ((X0, left), (right_x, right)):
         y = TILE_Y
