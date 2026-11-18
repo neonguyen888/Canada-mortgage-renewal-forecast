@@ -23,6 +23,10 @@ def model():
 PAGE_IDS = ["overview", "accuracy", "payment", "triage", "about"]
 
 
+def _state(entries, sid="default"):
+    return next(e["properties"] for e in entries if e.get("selector", {}).get("id") == sid)
+
+
 def test_pages_are_in_order(model):
     _, pages = model
     assert [p.name for p in pages] == PAGE_IDS
@@ -52,9 +56,44 @@ def test_current_page_button_is_highlighted(model):
         buttons = [v for v in page.visuals if v["name"].startswith("nav_")]
         assert len(buttons) == len(PAGE_IDS), page.name
         for v in buttons:
-            fill = v["visual"]["objects"]["fill"][0]["properties"]
+            fill = _state(v["visual"]["objects"]["fill"])
             want = "'#2F5F96'" if v["name"] == f"nav_{page.name}" else "'#1F3A5F'"
             assert fill["fillColor"]["solid"]["color"]["expr"]["Literal"]["Value"] == want
+
+
+def test_rail_button_integers_are_typed_as_integers(model):
+    # Power BI ignores a button's formatting when an integer property is written as a decimal ("12D").
+    _, pages = model
+    for page in pages:
+        for v in page.visuals:
+            if v["name"].startswith("nav_"):
+                objs = v["visual"]["objects"]
+                assert _state(objs["text"])["leftMargin"]["expr"]["Literal"]["Value"].endswith("L")
+                assert objs["shape"][0]["properties"]["roundEdge"]["expr"]["Literal"]["Value"].endswith("L")
+
+
+def test_rail_button_show_flags_apply_to_every_state(model):
+    # In a button, "show" lives in an entry without a state selector; Power BI ignores it inside a state.
+    _, pages = model
+    for page in pages:
+        for v in page.visuals:
+            if v["name"].startswith("nav_"):
+                for obj, entries in v["visual"]["objects"].items():
+                    for e in entries:
+                        if "show" in e["properties"]:
+                            assert "selector" not in e, (v["name"], obj)
+
+
+def test_headline_cards_use_multi_row_card_properties(model):
+    # An unknown property ("outline" instead of "outlineStyle") makes Power BI drop all of a visual's formatting.
+    known = {"barColor", "barShow", "barWeight", "cardBackground", "cardPadding", "outlineColor", "outlineStyle", "outlineWeight"}
+    _, pages = model
+    for page in pages:
+        for v in page.visuals:
+            if v["visual"]["visualType"] == "multiRowCard":
+                card = v["visual"]["objects"]["card"][0]["properties"]
+                assert set(card) <= known, (page.name, v["name"], set(card) - known)
+                assert card["outlineStyle"]["expr"]["Literal"]["Value"].endswith("L")
 
 
 def test_content_clears_the_rail(model):

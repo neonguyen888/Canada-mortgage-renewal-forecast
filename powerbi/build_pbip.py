@@ -632,6 +632,11 @@ def num(n) -> dict:
     return lit(f"{n}D")
 
 
+def integer(n: int) -> dict:
+    """Integer-typed property. Power BI drops a visual's formatting if one is written as a decimal."""
+    return lit(f"{n}L")
+
+
 def boolean(b: bool) -> dict:
     return lit("true" if b else "false")
 
@@ -746,7 +751,7 @@ class Page:
             "query": {"queryState": {"Values": {"projections": [proj_m(measure)]}}},
             "objects": {"dataLabels": props(color=colour(colour_hex), fontSize=num(size), fontFamily=text(font)),
                         "categoryLabels": props(show=boolean(False)),
-                        "card": props(outline=text("None"), barShow=boolean(False), cardPadding=num(0))},
+                        "card": props(outlineStyle=integer(0), barShow=boolean(False), cardPadding=num(0))},
             "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
 
     def kpi(self, prefix, x, y, w, title, value_measure, caption_measure, accent=None, millions=False):
@@ -906,18 +911,23 @@ def nav_button(p: Page, target: str, label: str, y: float) -> None:
     """A button on the rail that opens another page. The current page's button is filled."""
     current = target == p.name
     fill, ink = (C["rail_sel"], C["rail_ink"]) if current else (C["rail"], C["rail_ink2"])
+    # "show" goes in an entry without a selector (it applies to every state); colours and text go in
+    # the default and hover states.
     state = lambda sid, **kw: {"properties": kw, "selector": {"id": sid}}
+    every = lambda **kw: {"properties": kw}
     p.add(f"nav_{target}", 12, y, RAIL_W - 24, 36, {
         "visualType": "actionButton",
         "objects": {
-            "fill": [state("default", show=boolean(True), fillColor=colour(fill), transparency=num(0)),
-                     state("hover", show=boolean(True), fillColor=colour(C["rail_hover"] if not current else fill), transparency=num(0))],
-            "text": [state("default", show=boolean(True), text=text(label), fontColor=colour(ink), fontSize=num(10),
-                           fontFamily=text(FONT_SEMI if current else FONT), horizontalAlignment=text("left"), leftMargin=num(12)),
-                     state("hover", fontColor=colour(C["rail_ink"]))],
-            "icon": [state("default", show=boolean(False))],
-            "outline": [state("default", show=boolean(False))],
-            "shape": props(tileShape=text("rectangleRounded"), roundEdge=num(6)),
+            "fill": [every(show=boolean(True)),
+                     state("default", fillColor=colour(fill), transparency=num(0)),
+                     state("hover", fillColor=colour(C["rail_hover"] if not current else fill), transparency=num(0))],
+            "text": [every(show=boolean(True)),
+                     state("default", text=text(label), fontColor=colour(ink), fontSize=num(10),
+                           fontFamily=text(FONT_SEMI if current else FONT), horizontalAlignment=text("left"), leftMargin=integer(12)),
+                     state("hover", text=text(label), fontColor=colour(C["rail_ink"]))],
+            "icon": [every(show=boolean(False))],
+            "outline": [every(show=boolean(False))],
+            "shape": props(tileShape=text("rectangleRounded"), roundEdge=integer(6)),
         },
         "visualContainerObjects": {**NO_CHROME, "visualLink": props(
             show=boolean(True), type=text("PageNavigation"), navigationSection=text(target))},
@@ -927,7 +937,7 @@ def nav_button(p: Page, target: str, label: str, y: float) -> None:
 def rail(p: Page) -> None:
     """Report name, one button per page, and the month the data runs to. The rail itself is drawn
     into the background image."""
-    p.label("rail_title", 14, 18, RAIL_W - 28, 64,
+    p.label("rail_title", 14, 16, RAIL_W - 28, 76,
             [("Mortgage renewal\n", 12, C["rail_ink"], FONT_BOLD), ("Canada, 5-year fixed", 9, C["rail_ink2"], FONT)])
     for i, (name, display) in enumerate(PAGES):
         nav_button(p, name, display, 96 + i * 44)
