@@ -120,6 +120,42 @@ def test_triage_headline_handles_no_gain(model):
     assert "more at-risk borrowers than calling by date" in e and "calling by date reaches" in e
 
 
+def test_tile_slicers_have_room_for_every_option(model):
+    # Power BI won't shrink a tile below about 66 px; a narrower slicer hides options behind an arrow.
+    tables, pages = model
+    for page in pages:
+        for v in page.visuals:
+            vis = v["visual"]
+            if vis["visualType"] != "slicer":
+                continue
+            if vis["objects"]["data"][0]["properties"]["mode"]["expr"]["Literal"]["Value"] == "'Dropdown'":
+                continue
+            table = vis["query"]["queryState"]["Values"]["projections"][0]["field"]["Column"]["Expression"]["SourceRef"]["Entity"]
+            n = tables[table].m_source.count('{"')  # one row literal per option in the #table source
+            assert n >= 2, table
+            assert v["position"]["width"] >= 70 * n, (page.name, v["name"], n)
+
+
+def test_kpi_values_set_display_units(model):
+    # The card's default "Auto" units turn $2,059.72 into $2.06K.
+    _, pages = model
+    for page in pages:
+        for v in page.visuals:
+            if v["name"].startswith("kpi_") and v["name"].endswith("_value"):
+                assert "labelDisplayUnits" in v["visual"]["objects"]["labels"][0]["properties"], v["name"]
+
+
+def test_analysis_pages_have_a_data_headline(model):
+    _, pages = model
+    want = {"overview": "Overview Headline", "accuracy": "Accuracy Headline",
+            "payment": "Payment Headline", "triage": "Triage Headline"}
+    for page in pages:
+        if page.name in want:
+            hl = next(v for v in page.visuals if v["name"] == "hdr_headline")
+            prop = hl["visual"]["query"]["queryState"]["Values"]["projections"][0]["field"]["Measure"]["Property"]
+            assert prop == want[page.name]
+
+
 def test_measure_names_do_not_clash_with_tables_or_columns(model):
     tables, _ = model
     pb.check_names(list(tables.values()))

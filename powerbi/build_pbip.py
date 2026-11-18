@@ -417,7 +417,8 @@ def add_measures(t: Table) -> None:
     t.measure("Renewal Window Label", """
         VAR _a = CALCULATE(MIN('Loans'[Renewal date]), REMOVEFILTERS())
         VAR _b = CALCULATE(MAX('Loans'[Renewal date]), REMOVEFILTERS())
-        RETURN "90-day renewal window, " & FORMAT(_a, "d mmm yyyy") & " to " & FORMAT(_b, "d mmm yyyy")
+        VAR _n = CALCULATE([Loan Count], REMOVEFILTERS())
+        RETURN FORMAT(_n, "#,0") & " simulated loans renewing in the next 90 days, " & FORMAT(_a, "d mmm yyyy") & " to " & FORMAT(_b, "d mmm yyyy")
         """, None, F)
     t.measure("Share Above, Each Scenario", f"""
         VAR _s = SELECTEDVALUE('Scenario Axis'[Shift bps])
@@ -986,7 +987,7 @@ def build_pages() -> list[Page]:
            ("panel", X0, 524, CONTENT_W, PANEL_BOTTOM - 524)]
     p = Page("overview", "Overview", bg)
     rail(p)
-    header(p, headline_text="Canadian Mortgage Renewal", subtitle_measure="Renewal Window Label")
+    header(p, headline_measure="Overview Headline", subtitle_measure="Renewal Window Label")
     p.kpi("kpi_above", X0, TILE_Y, tw, "Loans above +$250 a month", "Loans Above Threshold", "Loans Above Caption", C["amber"])
     p.kpi("kpi_total", X0 + tw, TILE_Y, tw, "Total payment increase", "Total Payment Increase", "Payment Increase Caption", millions=True)
     p.kpi("kpi_latest", X0 + 2 * tw, TILE_Y, tw, "Market benchmark", "Latest Rate", "Latest Rate Caption")
@@ -1018,7 +1019,7 @@ def build_pages() -> list[Page]:
            ("panel", X0, low_y, LEFT_W, half), ("panel", RIGHT_X, low_y, RIGHT_W, half)]
     p = Page("accuracy", "Rates & accuracy", bg)
     rail(p)
-    header(p, headline_text="Where rates are heading, and how far to trust it", subtitle_text=f"Backtest: {backtest_span()}")
+    header(p, headline_measure="Accuracy Headline", subtitle_text=f"Backtest: {backtest_span()}")
     p.kpi("kpi_ets", X0, TILE_Y, tw, "ETS, average miss", "ETS MAE", "ETS MAE Caption", C["teal"])
     p.kpi("kpi_bond", X0 + tw, TILE_Y, tw, "Bond-yield model, average miss", "Bond-yield MAE", "Bond-yield MAE Caption", C["purple"])
     p.kpi("kpi_naive", X0 + 2 * tw, TILE_Y, tw, "Naive, average miss", "Naive MAE", "Naive MAE Caption")
@@ -1051,7 +1052,7 @@ def build_pages() -> list[Page]:
     bg += tb + [("panel", X0, main_y, LEFT_W, PANEL_BOTTOM - main_y), ("panel", RIGHT_X, main_y, RIGHT_W, PANEL_BOTTOM - main_y)]
     p = Page("payment", "Payment impact", bg)
     rail(p)
-    header(p, headline_text="What renewal costs one borrower",
+    header(p, headline_measure="Payment Headline",
            subtitle_text="Fixed-rate renewal, Canadian semi-annual compounding, principal and interest only")
     # Power BI won't shrink a tile below about 66 px, so the three number pickers are dropdowns and the
     # renewal rate and threshold, the two what-if choices, stay as tiles with room for every option.
@@ -1091,7 +1092,7 @@ def build_pages() -> list[Page]:
            ("panel", RIGHT_X, rule_y, RIGHT_W, PANEL_BOTTOM - rule_y)]
     p = Page("triage", "Renewal triage", bg)
     rail(p)
-    header(p, headline_text="Who the renewal team should call first",
+    header(p, headline_measure="Triage Headline",
            subtitle_text="Each week: borrowers whose last chance it is, then by segment, renewal date and size of rise")
     p.kpi("kpi_missed", X0, TILE_Y, tw, "Missed with triage", "Missed with Triage", "Missed with Triage Caption", C["amber"])
     p.kpi("kpi_date", X0 + tw, TILE_Y, tw, "Missed in date order", "Missed in Date Order", "Missed in Date Order Caption")
