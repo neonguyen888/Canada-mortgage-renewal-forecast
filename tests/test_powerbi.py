@@ -20,6 +20,60 @@ def model():
     return {t.name: t for t in tables}, pb.build_pages()
 
 
+PAGE_IDS = ["overview", "accuracy", "payment", "triage", "about"]
+
+
+def test_pages_are_in_order(model):
+    _, pages = model
+    assert [p.name for p in pages] == PAGE_IDS
+
+
+def test_theme_is_light():
+    t = pb.theme()
+    assert t["visualStyles"]["page"]["*"]["background"][0]["color"]["solid"]["color"] == "#F4F6F9"
+    assert t["dataColors"][:4] == ["#2F5F96", "#16917F", "#C26B12", "#6E52A3"]
+
+
+def test_every_page_has_a_rail_button_for_every_page(model):
+    _, pages = model
+    for page in pages:
+        buttons = {v["name"]: v for v in page.visuals if v["name"].startswith("nav_")}
+        assert set(buttons) == {f"nav_{n}" for n in PAGE_IDS}, page.name
+        for name, v in buttons.items():
+            assert v["visual"]["visualType"] == "actionButton"
+            link = v["visual"]["visualContainerObjects"]["visualLink"][0]["properties"]
+            assert link["type"]["expr"]["Literal"]["Value"] == "'PageNavigation'"
+            assert link["navigationSection"]["expr"]["Literal"]["Value"] == f"'{name[4:]}'"
+
+
+def test_current_page_button_is_highlighted(model):
+    _, pages = model
+    for page in pages:
+        buttons = [v for v in page.visuals if v["name"].startswith("nav_")]
+        assert len(buttons) == len(PAGE_IDS), page.name
+        for v in buttons:
+            fill = v["visual"]["objects"]["fill"][0]["properties"]
+            want = "'#2F5F96'" if v["name"] == f"nav_{page.name}" else "'#1F3A5F'"
+            assert fill["fillColor"]["solid"]["color"]["expr"]["Literal"]["Value"] == want
+
+
+def test_content_clears_the_rail(model):
+    _, pages = model
+    for page in pages:
+        for v in page.visuals:
+            if v["name"].startswith(("nav_", "rail_")):
+                assert v["position"]["x"] + v["position"]["width"] <= pb.RAIL_W, v["name"]
+            else:
+                assert v["position"]["x"] >= pb.RAIL_W, (page.name, v["name"])
+
+
+def test_headline_box_is_wide_enough(model):
+    _, pages = model
+    for page in pages:
+        hl = next(v for v in page.visuals if v["name"] == "hdr_headline")
+        assert hl["position"]["width"] >= pb.CONTENT_W - 10, page.name
+
+
 def test_measure_names_do_not_clash_with_tables_or_columns(model):
     tables, _ = model
     pb.check_names(list(tables.values()))

@@ -55,16 +55,23 @@ PAGE_W, PAGE_H = 1280, 720
 DEFAULT_DATA_FOLDER = "https://raw.githubusercontent.com/neonguyen888/Canada-mortgage-renewal-forecast/main/data/powerbi/"
 
 # ---------------------------------------------------------------------------------------------
-# Design tokens. Navy canvas, one warm accent (amber) for whatever needs attention, teal for the
-# ETS forecast, light blue for observed data, lavender for the bond-yield model.
+# Design tokens. A light finance-report look that matches the charts in reports/figures: light grey
+# canvas, white panels, a navy navigation rail, and the same series colours as src/charts.py
+# (navy for actual data, teal for the ETS forecast, amber for whatever needs attention, purple for
+# the bond-yield model, grey for comparisons), which passed a colour-blind check there.
+# "blue" keeps its old key so every chart call still reads "actual data".
 # ---------------------------------------------------------------------------------------------
 C = {
-    "canvas": "#0A1322", "panel": "#0F1B2D", "line": "#1C2A40", "tile_hi": "#1A1C26",
-    "ink": "#E9EEF5", "ink2": "#A3B0C2", "ink3": "#6D7C91", "grid": "#1A2639",
-    "blue": "#7FB2F0", "teal": "#4FD1B5", "teal_dim": "#2F7F6E", "amber": "#F2B05E",
-    "purple": "#B49CF5", "purple2": "#8E7CC3", "purple3": "#6B5E96", "slate": "#3B4B63", "coral": "#F27E6B",
+    "canvas": "#F4F6F9", "panel": "#FFFFFF", "line": "#D5DAE0", "tile_hi": "#FFF7EE",
+    "ink": "#1B1F24", "ink2": "#5B6670", "ink3": "#6B7682", "grid": "#ECEEF1",
+    "blue": "#2F5F96", "teal": "#16917F", "teal_dim": "#8CCFC3", "amber": "#C26B12",
+    "purple": "#6E52A3", "purple2": "#9A86C8", "purple3": "#C2B6E0", "slate": "#A7B0BA", "coral": "#B5473A",
+    "rail": "#1F3A5F", "rail_sel": "#2F5F96", "rail_hover": "#28497A", "rail_ink": "#FFFFFF", "rail_ink2": "#B5C6DB",
 }
-FONT, FONT_SEMI, FONT_BOLD, FONT_NUM = "Segoe UI", "Segoe UI Semibold", "Segoe (Bold)", "Segoe UI Light"
+FONT, FONT_SEMI, FONT_BOLD, FONT_NUM = "Segoe UI", "Segoe UI Semibold", "Segoe UI Bold", "Segoe UI Semibold"
+# Pages in navigation order. Overview opens first.
+PAGES = [("overview", "Overview"), ("accuracy", "Rates & accuracy"), ("payment", "Payment impact"),
+         ("triage", "Renewal triage"), ("about", "About")]
 
 SCHEMA = "https://developer.microsoft.com/json-schemas/fabric"
 S_VISUAL = f"{SCHEMA}/item/report/definition/visualContainer/2.0.0/schema.json"
@@ -340,7 +347,8 @@ def add_measures(t: Table) -> None:
         RETURN CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = "Actual", 'Rate Outlook'[Month] = _m, REMOVEFILTERS())
         """, pct, F, "Market reference rate in the latest published month.")
     t.measure("Latest Rate Caption", 'FORMAT([Last Actual Month], "mmm yyyy") & ", observed"', None, F)
-    t.measure("Data Through Label", '"BANK OF CANADA DATA THROUGH " & UPPER(FORMAT([Last Actual Month], "mmm yyyy"))', None, F)
+    t.measure("Data Through Short", '"Data to " & FORMAT([Last Actual Month], "mmm yyyy")', None, F,
+              "Shown at the foot of the navigation rail.")
     t.measure("ETS 3-Month Forecast", "CALCULATE(MAX('Forecast Comparison'[ETS rate]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())", pct, F)
     t.measure("ETS 3-Month Caption", """
         VAR _m = CALCULATE(MAX('Forecast Comparison'[Target month]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())
@@ -678,11 +686,22 @@ class Page:
                         "categoryLabels": props(show=boolean(False))},
             "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
 
+    def headline(self, vname, x, y, w, h, measure, size=18, colour_hex=C["ink"], font=FONT_BOLD):
+        """Left-aligned text from a measure. A card centres its value, so this uses a multi-row card
+        with the category label, accent bar and outline turned off."""
+        self.add(vname, x, y, w, h, {
+            "visualType": "multiRowCard",
+            "query": {"queryState": {"Values": {"projections": [proj_m(measure)]}}},
+            "objects": {"dataLabels": props(color=colour(colour_hex), fontSize=num(size), fontFamily=text(font)),
+                        "categoryLabels": props(show=boolean(False)),
+                        "card": props(outline=text("None"), barShow=boolean(False), cardPadding=num(0))},
+            "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
+
     def kpi(self, prefix, x, y, w, title, value_measure, caption_measure, accent=None, millions=False):
-        self.label(f"{prefix}_label", x + 8, y + 10, w - 16, 26, [(title, 10, C["ink2"], FONT)], align="center")
-        self.card(f"{prefix}_value", x + 8, y + 34, w - 16, 44, value_measure, 26, accent or C["ink"],
+        self.label(f"{prefix}_label", x + 8, y + 8, w - 16, 26, [(title, 10, C["ink2"], FONT)], align="center")
+        self.card(f"{prefix}_value", x + 8, y + 30, w - 16, 40, value_measure, 24, accent or C["ink"],
                   millions=millions, full=not millions)
-        self.card(f"{prefix}_caption", x + 8, y + 76, w - 16, 26, caption_measure, 10, C["ink2"], FONT)
+        self.card(f"{prefix}_caption", x + 8, y + 66, w - 16, 26, caption_measure, 10, C["ink2"], FONT)
 
     def slicer(self, vname, x, y, w, h, table, col, default, header=None, item_size=10, dropdown=False):
         objects = {
@@ -817,21 +836,69 @@ def date_from(day: str) -> list:
 
 
 # ---- page layouts --------------------------------------------------------------------------------
-M = 24                      # outer margin
-TILE_Y, TILE_H = 128, 104
-LEFT_W, RIGHT_X = 760, 800  # two-column panels
+# A navy rail on the left holds the page buttons. The content area to its right has a headline band,
+# a row of four KPI tiles and the main panels, with a source line at the foot.
+M = 24                              # outer margin
+RAIL_W = 168                        # navigation rail
+X0 = RAIL_W + M                     # left edge of the content area
+CONTENT_W = PAGE_W - X0 - M
+TILE_Y, TILE_H = 104, 96            # KPI row under the headline band
+PANEL_Y, PANEL_BOTTOM = 212, 680    # main panels
+LEFT_W = round(CONTENT_W * 0.6) - 6  # two-column panels: about 3/5 and 2/5
+RIGHT_X = X0 + LEFT_W + 12
 RIGHT_W = PAGE_W - M - RIGHT_X
+SOURCE_RATE = "Source: Bank of Canada series V122667786 (uninsured 5-year+ fixed). Loans are simulated."
 
 
-def header(p: Page, section: str, title: str, subtitle_measure: str | None = None, subtitle_text: str | None = None):
-    p.label("hdr_brand", M, 10, 420, 28, [("●  ", 9, C["teal"], FONT), (section, 9, C["teal"], FONT_SEMI)])
-    # cards centre their text, so these boxes are sized to the text to keep it near the margins
-    p.card("hdr_data_through", PAGE_W - M - 340, 8, 330, 30, "Data Through Label", 9, C["ink3"], FONT)
-    p.label("hdr_title", M - 4, 52, 900, 46, [(title, 24, C["ink"], FONT_BOLD)])
+def nav_button(p: Page, target: str, label: str, y: float) -> None:
+    """A button on the rail that opens another page. The current page's button is filled."""
+    current = target == p.name
+    fill, ink = (C["rail_sel"], C["rail_ink"]) if current else (C["rail"], C["rail_ink2"])
+    state = lambda sid, **kw: {"properties": kw, "selector": {"id": sid}}
+    p.add(f"nav_{target}", 12, y, RAIL_W - 24, 36, {
+        "visualType": "actionButton",
+        "objects": {
+            "fill": [state("default", show=boolean(True), fillColor=colour(fill), transparency=num(0)),
+                     state("hover", show=boolean(True), fillColor=colour(C["rail_hover"] if not current else fill), transparency=num(0))],
+            "text": [state("default", show=boolean(True), text=text(label), fontColor=colour(ink), fontSize=num(10),
+                           fontFamily=text(FONT_SEMI if current else FONT), horizontalAlignment=text("left"), leftMargin=num(12)),
+                     state("hover", fontColor=colour(C["rail_ink"]))],
+            "icon": [state("default", show=boolean(False))],
+            "outline": [state("default", show=boolean(False))],
+            "shape": props(tileShape=text("rectangleRounded"), roundEdge=num(6)),
+        },
+        "visualContainerObjects": {**NO_CHROME, "visualLink": props(
+            show=boolean(True), type=text("PageNavigation"), navigationSection=text(target))},
+        "drillFilterOtherVisuals": True})
+
+
+def rail(p: Page) -> None:
+    """Report name, one button per page, and the month the data runs to. The rail itself is drawn
+    into the background image."""
+    p.label("rail_title", 14, 18, RAIL_W - 28, 64,
+            [("Mortgage renewal\n", 12, C["rail_ink"], FONT_BOLD), ("Canada, 5-year fixed", 9, C["rail_ink2"], FONT)])
+    for i, (name, display) in enumerate(PAGES):
+        nav_button(p, name, display, 96 + i * 44)
+    p.card("rail_data", 12, PAGE_H - 52, RAIL_W - 24, 30, "Data Through Short", 9, C["rail_ink2"], FONT)
+
+
+def header(p: Page, headline_measure: str | None = None, headline_text: str | None = None,
+           subtitle_measure: str | None = None, subtitle_text: str | None = None) -> None:
+    """Headline that states the finding, with a grey line of scope and units under it. A short navy
+    rule above the headline is drawn into the background, as in the report's charts."""
+    if headline_measure:
+        p.headline("hdr_headline", X0 - 8, 26, CONTENT_W + 8, 46, headline_measure)
+    else:
+        p.label("hdr_headline", X0 - 4, 26, CONTENT_W + 4, 46, [(headline_text, 18, C["ink"], FONT_BOLD)])
     if subtitle_measure:
-        p.card("hdr_subtitle", M - 6, 96, 340, 26, subtitle_measure, 10, C["ink2"], FONT)
+        p.headline("hdr_subtitle", X0 - 8, 66, CONTENT_W + 8, 30, subtitle_measure, size=10, colour_hex=C["ink2"], font=FONT)
     elif subtitle_text:
-        p.label("hdr_subtitle", M - 4, 94, 900, 28, [(subtitle_text, 10, C["ink2"], FONT)])
+        p.label("hdr_subtitle", X0 - 4, 64, CONTENT_W + 4, 28, [(subtitle_text, 10, C["ink2"], FONT)])
+
+
+def footer(p: Page, source: str) -> None:
+    p.label("footer_left", X0 - 4, 684, CONTENT_W - 200, 20, [(source, 8, C["ink3"], FONT)])
+    p.label("footer_right", PAGE_W - M - 200, 684, 200, 20, [("Neo Nguyen", 8, C["ink3"], FONT)], align="right")
 
 
 def panel_title(p: Page, vname, x, y, w, title, note=None):
@@ -841,11 +908,11 @@ def panel_title(p: Page, vname, x, y, w, title, note=None):
 
 
 def tiles(n, highlight_first=False, y=TILE_Y, h=TILE_H):
-    w = (PAGE_W - 2 * M) / n
-    out = [("tilebar", M, y, PAGE_W - 2 * M, h)]
+    w = CONTENT_W / n
+    out = [("tilebar", X0, y, CONTENT_W, h)]
     if highlight_first:
-        out.append(("tile_hi", M, y, w, h))
-    out += [("divider", M + i * w, y + 14, 1, h - 28) for i in range(1, n)]
+        out.append(("tile_hi", X0, y, w, h))
+    out += [("divider", X0 + i * w, y + 14, 1, h - 28) for i in range(1, n)]
     return out, w
 
 
@@ -866,122 +933,150 @@ def build_pages() -> list[Page]:
         "Band High": {"colour": C["teal_dim"], "width": 1, "dash": "dotted"},
         "Bond-yield Forecast": {"colour": C["purple"], "width": 2.5, "dash": "dashed"},
     }
+    full_h = PANEL_BOTTOM - PANEL_Y
 
     # ---- 1. Overview: the shape of the brief -------------------------------------------------
     bg, tw = tiles(4, highlight_first=True)
-    bg += [("panel", M, 244, LEFT_W, 296), ("panel", RIGHT_X, 244, RIGHT_W, 296), ("panel", M, 552, PAGE_W - 2 * M, 148)]
+    bg += [("panel", X0, PANEL_Y, LEFT_W, 300), ("panel", RIGHT_X, PANEL_Y, RIGHT_W, 300),
+           ("panel", X0, 524, CONTENT_W, PANEL_BOTTOM - 524)]
     p = Page("overview", "Overview", bg)
-    header(p, "MORTGAGE ANALYTICS", "Canadian Mortgage Renewal", subtitle_measure="Renewal Window Label")
-    p.kpi("kpi_above", M, TILE_Y, tw, "Loans above +$250 a month", "Loans Above Threshold", "Loans Above Caption", C["amber"])
-    p.kpi("kpi_total", M + tw, TILE_Y, tw, "Total payment increase", "Total Payment Increase", "Payment Increase Caption", millions=True)
-    p.kpi("kpi_latest", M + 2 * tw, TILE_Y, tw, "Market benchmark", "Latest Rate", "Latest Rate Caption")
-    p.kpi("kpi_ets3", M + 3 * tw, TILE_Y, tw, "3-month forecast", "ETS 3-Month Forecast", "ETS 3-Month Caption", C["teal"])
-    panel_title(p, "outlook", M, 244, LEFT_W, "Mortgage rate outlook", "5-year+ fixed, uninsured")
-    rate_legend(p, "outlook_legend", M + 12, 280, [("Observed", C["blue"], "—"), ("ETS forecast", C["teal"], "- -"),
-                                                   ("80% band", C["teal_dim"], "···")])
-    p.line_chart("outlook_chart", M + 8, 308, LEFT_W - 16, 224, ("Calendar", "Month"),
+    rail(p)
+    header(p, headline_text="Canadian Mortgage Renewal", subtitle_measure="Renewal Window Label")
+    p.kpi("kpi_above", X0, TILE_Y, tw, "Loans above +$250 a month", "Loans Above Threshold", "Loans Above Caption", C["amber"])
+    p.kpi("kpi_total", X0 + tw, TILE_Y, tw, "Total payment increase", "Total Payment Increase", "Payment Increase Caption", millions=True)
+    p.kpi("kpi_latest", X0 + 2 * tw, TILE_Y, tw, "Market benchmark", "Latest Rate", "Latest Rate Caption")
+    p.kpi("kpi_ets3", X0 + 3 * tw, TILE_Y, tw, "3-month forecast", "ETS 3-Month Forecast", "ETS 3-Month Caption", C["teal"])
+    panel_title(p, "outlook", X0, PANEL_Y, LEFT_W, "Mortgage rate outlook", "% a year, 5-year+ fixed")
+    rate_legend(p, "outlook_legend", X0 + 12, PANEL_Y + 34, [("Observed", C["blue"], "—"), ("ETS forecast", C["teal"], "- -"),
+                                                             ("80% band", C["teal_dim"], "···")])
+    p.line_chart("outlook_chart", X0 + 8, PANEL_Y + 60, LEFT_W - 16, 232, ("Calendar", "Month"),
                  ["Observed Rate", "ETS Forecast", "Band Low", "Band High"], line_styles, filters=date_from("2021-01-01"), legend=False)
-    panel_title(p, "stress", RIGHT_X, 244, RIGHT_W, "Rate stress test", "Portfolio scenario")
-    p.slicer("stress_slicer", RIGHT_X + 12, 284, RIGHT_W - 24, 44, "Scenario", "Scenario", "Base")
-    p.bar_chart("stress_bars", RIGHT_X + 8, 334, RIGHT_W - 16, 166, ("Scenario Axis", "Scenario"), "Share Above, Each Scenario",
+    panel_title(p, "stress", RIGHT_X, PANEL_Y, RIGHT_W, "Rate stress test", "Portfolio scenario")
+    p.slicer("stress_slicer", RIGHT_X + 12, PANEL_Y + 40, RIGHT_W - 24, 44, "Scenario", "Scenario", "Base")
+    p.bar_chart("stress_bars", RIGHT_X + 8, PANEL_Y + 90, RIGHT_W - 16, 168, ("Scenario Axis", "Scenario"), "Share Above, Each Scenario",
                 colour_measure="Scenario Bar Colour")
-    p.label("stress_caption", RIGHT_X + 12, 502, RIGHT_W - 24, 30, [("Share of renewing loans with a payment rise above $250 a month", 9, C["ink3"], FONT)])
-    panel_title(p, "months", M, 552, PAGE_W - 2 * M, "Renewals by month", "Chosen scenario. November and February are part months.")
-    # Compact rows so all four renewal months fit above the footer without a scrollbar.
-    p.table("months_table", M + 10, 581, PAGE_W - 2 * M - 20, 113,
+    p.label("stress_caption", RIGHT_X + 12, PANEL_Y + 258, RIGHT_W - 24, 30,
+            [("Share of renewing loans with a payment rise above $250 a month", 9, C["ink3"], FONT)])
+    panel_title(p, "months", X0, 524, CONTENT_W, "Renewals by month", "Chosen scenario. November and February are part months.")
+    # Compact rows so all four renewal months fit without a scrollbar.
+    p.table("months_table", X0 + 10, 556, CONTENT_W - 20, 116,
             [("Loans", "Renewal month"), "Loan Count", "Loans Above Threshold", "Share Above Threshold"], sort=("Loans", "Renewal month"),
             size=9, row_padding=1)
-    p.label("footer_left", M - 4, 700, 640, 20, [("Source: Bank of Canada series V122667786. Loans are simulated.", 8, C["ink3"], FONT)])
-    p.label("footer_right", 900, 700, PAGE_W - M - 900, 20, [("Neo Nguyen", 8, C["ink3"], FONT)], align="right")
+    footer(p, SOURCE_RATE)
     pages.append(p)
 
     # ---- 2. Rates and forecast accuracy -------------------------------------------------------
     bg, tw = tiles(4)
-    bg += [("panel", M, 244, LEFT_W, 228), ("panel", RIGHT_X, 244, RIGHT_W, 228),
-           ("panel", M, 484, LEFT_W, 216), ("panel", RIGHT_X, 484, RIGHT_W, 216)]
+    half = (full_h - 12) / 2
+    low_y = PANEL_Y + half + 12
+    bg += [("panel", X0, PANEL_Y, LEFT_W, half), ("panel", RIGHT_X, PANEL_Y, RIGHT_W, half),
+           ("panel", X0, low_y, LEFT_W, half), ("panel", RIGHT_X, low_y, RIGHT_W, half)]
     p = Page("accuracy", "Rates & accuracy", bg)
-    header(p, "RATE FORECAST", "Where rates are heading, and how far to trust it",
-           subtitle_text=f"Backtest: {backtest_span()}")
-    p.kpi("kpi_ets", M, TILE_Y, tw, "ETS, average miss", "ETS MAE", "ETS MAE Caption", C["teal"])
-    p.kpi("kpi_bond", M + tw, TILE_Y, tw, "Bond-yield model, average miss", "Bond-yield MAE", "Bond-yield MAE Caption", C["purple"])
-    p.kpi("kpi_naive", M + 2 * tw, TILE_Y, tw, "Naive, average miss", "Naive MAE", "Naive MAE Caption")
-    p.kpi("kpi_pass", M + 3 * tw, TILE_Y, tw, "Bond-yield pass-through", "Pass-through Share", "Pass-through Caption")
-    panel_title(p, "history", M, 244, LEFT_W, "Rate history and the two forecasts", "5-year+ fixed, uninsured")
-    rate_legend(p, "history_legend", M + 12, 278, [("Observed", C["blue"], "—"), ("ETS forecast", C["teal"], "- -"),
-                                                   ("Bond-yield forecast", C["purple"], "- -"), ("ETS 80% band", C["teal_dim"], "···")])
-    p.line_chart("history_chart", M + 8, 304, LEFT_W - 16, 162, ("Calendar", "Month"),
+    rail(p)
+    header(p, headline_text="Where rates are heading, and how far to trust it", subtitle_text=f"Backtest: {backtest_span()}")
+    p.kpi("kpi_ets", X0, TILE_Y, tw, "ETS, average miss", "ETS MAE", "ETS MAE Caption", C["teal"])
+    p.kpi("kpi_bond", X0 + tw, TILE_Y, tw, "Bond-yield model, average miss", "Bond-yield MAE", "Bond-yield MAE Caption", C["purple"])
+    p.kpi("kpi_naive", X0 + 2 * tw, TILE_Y, tw, "Naive, average miss", "Naive MAE", "Naive MAE Caption")
+    p.kpi("kpi_pass", X0 + 3 * tw, TILE_Y, tw, "Bond-yield pass-through", "Pass-through Share", "Pass-through Caption")
+    panel_title(p, "history", X0, PANEL_Y, LEFT_W, "Rate history and the two forecasts", "% a year, 5-year+ fixed")
+    rate_legend(p, "history_legend", X0 + 12, PANEL_Y + 32, [("Observed", C["blue"], "—"), ("ETS forecast", C["teal"], "- -"),
+                                                             ("Bond-yield forecast", C["purple"], "- -"), ("ETS 80% band", C["teal_dim"], "···")])
+    p.line_chart("history_chart", X0 + 8, PANEL_Y + 56, LEFT_W - 16, half - 62, ("Calendar", "Month"),
                  ["Observed Rate", "ETS Forecast", "Bond-yield Forecast", "Band Low", "Band High"], line_styles,
                  filters=date_from("2016-01-01"), legend=False, y_start=1)
-    panel_title(p, "models", RIGHT_X, 244, RIGHT_W, "Average miss by model")
-    p.slicer("horizon_slicer", RIGHT_X + 210, 252, RIGHT_W - 222, 32, "Horizon Choice", "Horizon label", "3 months")
-    p.bar_chart("models_bars", RIGHT_X + 8, 290, RIGHT_W - 16, 176, ("Model Accuracy", "Model label"), "MAE at Horizon",
+    panel_title(p, "models", RIGHT_X, PANEL_Y, RIGHT_W, "Average miss by model")
+    p.slicer("horizon_slicer", RIGHT_X + RIGHT_W - 192, PANEL_Y + 8, 180, 32, "Horizon Choice", "Horizon label", "3 months")
+    p.bar_chart("models_bars", RIGHT_X + 8, PANEL_Y + 46, RIGHT_W - 16, half - 52, ("Model Accuracy", "Model label"), "MAE at Horizon",
                 colour_measure="Model Bar Colour")
-    panel_title(p, "yield", M, 484, LEFT_W, "Mortgage rate and the 5-year bond yield", "The yield moves first")
-    p.line_chart("yield_chart", M + 8, 520, LEFT_W - 16, 174, ("Rate vs Yield", "Month"), ["Mortgage Rate Line", "Bond Yield Line"],
+    panel_title(p, "yield", X0, low_y, LEFT_W, "Mortgage rate and the 5-year bond yield", "The yield moves first")
+    p.line_chart("yield_chart", X0 + 8, low_y + 36, LEFT_W - 16, half - 42, ("Rate vs Yield", "Month"), ["Mortgage Rate Line", "Bond Yield Line"],
                  {"Mortgage Rate Line": {"colour": C["blue"], "width": 2.5}, "Bond Yield Line": {"colour": C["purple"], "width": 2}})
-    panel_title(p, "periods", RIGHT_X, 484, RIGHT_W, "ETS and naive, by rate period", "Average miss, bps")
-    p.column_pair("periods_chart", RIGHT_X + 8, 520, RIGHT_W - 16, 174, ("Accuracy By Period", "Period"),
+    panel_title(p, "periods", RIGHT_X, low_y, RIGHT_W, "ETS and naive, by rate period", "Average miss, bps")
+    p.column_pair("periods_chart", RIGHT_X + 8, low_y + 36, RIGHT_W - 16, half - 42, ("Accuracy By Period", "Period"),
                   ["ETS MAE by Period", "Naive MAE by Period"], [C["teal"], C["slate"]])
+    footer(p, "Source: Bank of Canada series V122667786 and BD.CDN.5YR.DQ.YLD (5-year Government of Canada bond yield).")
     pages.append(p)
 
     # ---- 3. Payment impact for one borrower --------------------------------------------------
-    bg = [("panel", M, 126, PAGE_W - 2 * M, 72)]
-    tb, tw = tiles(4, y=210, h=100)
-    bg += tb + [("panel", M, 322, LEFT_W, 378), ("panel", RIGHT_X, 322, RIGHT_W, 378)]
+    strip_y, strip_h = TILE_Y, 76
+    kpi_y = strip_y + strip_h + 12
+    main_y = kpi_y + TILE_H + 12
+    bg = [("panel", X0, strip_y, CONTENT_W, strip_h)]
+    tb, tw = tiles(4, y=kpi_y)
+    bg += tb + [("panel", X0, main_y, LEFT_W, PANEL_BOTTOM - main_y), ("panel", RIGHT_X, main_y, RIGHT_W, PANEL_BOTTOM - main_y)]
     p = Page("payment", "Payment impact", bg)
-    header(p, "PAYMENT IMPACT", "What renewal costs one borrower",
+    rail(p)
+    header(p, headline_text="What renewal costs one borrower",
            subtitle_text="Fixed-rate renewal, Canadian semi-annual compounding, principal and interest only")
-    # Power BI won't shrink a tile below about 66 px, so five tile slicers would need ~1,280 px in a
-    # 1,188 px strip. The two four-option number pickers are dropdowns so the other three fit.
-    x = M + 22
+    # Power BI won't shrink a tile below about 66 px, so the three number pickers are dropdowns and the
+    # renewal rate and threshold, the two what-if choices, stay as tiles with room for every option.
+    x = X0 + 12
     for vname, w, table, col, default, head, dropdown in [
-        ("s_balance", 202, "Balance Choice", "Balance label", "$400k", "Balance at renewal", True),
-        ("s_years", 202, "Years Choice", "Years label", "20 yrs", "Years left to pay", False),
-        ("s_before", 202, "Rate Before Choice", "Rate before label", "2.2%", "Rate before renewal", True),
+        ("s_balance", 143, "Balance Choice", "Balance label", "$400k", "Balance at renewal", True),
+        ("s_years", 143, "Years Choice", "Years label", "20 yrs", "Years left to pay", True),
+        ("s_before", 143, "Rate Before Choice", "Rate before label", "2.2%", "Rate before renewal", True),
         ("s_renewal", 362, "Renewal Rate Choice", "Renewal rate option", "Latest", "Renewal rate", False),
-        ("s_threshold", 204, "Threshold", "Threshold label", "$250", "Payment rise to watch", False),
+        ("s_threshold", 216, "Threshold", "Threshold label", "$250", "Payment rise to watch", False),
     ]:
-        p.slicer(vname, x, 130, w, 64, table, col, default, header=head, item_size=9, dropdown=dropdown)
-        x += w + 4
-    p.kpi("kpi_before", M, 210, tw, "Payment before renewal", "Payment Before", "Payment Before Caption")
-    p.kpi("kpi_after", M + tw, 210, tw, "Payment after renewal", "Payment After", "Payment After Caption")
-    p.kpi("kpi_change", M + 2 * tw, 210, tw, "Change each month", "Monthly Change", "Monthly Change Caption", C["amber"])
-    p.kpi("kpi_threshold", M + 3 * tw, 210, tw, "Rate where the rise hits the threshold", "Threshold Rate", "Threshold Rate Caption", C["teal"])
-    panel_title(p, "curve", M, 322, LEFT_W, "Change in monthly payment by renewal rate", "Dot: chosen rate. Dashed: threshold")
-    p.line_chart("curve_chart", M + 8, 358, LEFT_W - 16, 334, ("Rate Grid", "Rate"), ["Change on Curve", "Threshold Line", "Selected Rate Point"],
+        p.slicer(vname, x, strip_y + 6, w, 64, table, col, default, header=head, item_size=9, dropdown=dropdown)
+        x += w + 8
+    p.kpi("kpi_before", X0, kpi_y, tw, "Payment before renewal", "Payment Before", "Payment Before Caption")
+    p.kpi("kpi_after", X0 + tw, kpi_y, tw, "Payment after renewal", "Payment After", "Payment After Caption")
+    p.kpi("kpi_change", X0 + 2 * tw, kpi_y, tw, "Change each month", "Monthly Change", "Monthly Change Caption", C["amber"])
+    p.kpi("kpi_threshold", X0 + 3 * tw, kpi_y, tw, "Rate where the rise hits the threshold", "Threshold Rate", "Threshold Rate Caption", C["teal"])
+    main_h = PANEL_BOTTOM - main_y
+    panel_title(p, "curve", X0, main_y, LEFT_W, "Change in monthly payment by renewal rate", "Dot: chosen rate. Dashed: threshold")
+    p.line_chart("curve_chart", X0 + 8, main_y + 36, LEFT_W - 16, main_h - 44, ("Rate Grid", "Rate"),
+                 ["Change on Curve", "Threshold Line", "Selected Rate Point"],
                  {"Change on Curve": {"colour": C["blue"], "width": 2.5},
                   "Threshold Line": {"colour": C["amber"], "width": 1.5, "dash": "dashed"},
                   "Selected Rate Point": {"colour": C["amber"], "width": 0, "marker": True}}, legend=False)
-    panel_title(p, "scen", RIGHT_X, 322, RIGHT_W, "Same borrower, rate 50 bps lower or higher")
-    p.bar_chart("scen_bars", RIGHT_X + 8, 362, RIGHT_W - 16, 300, ("Scenario Axis", "Scenario"), "Change at Scenario",
+    panel_title(p, "scen", RIGHT_X, main_y, RIGHT_W, "Same borrower, rate 50 bps lower or higher")
+    p.bar_chart("scen_bars", RIGHT_X + 8, main_y + 40, RIGHT_W - 16, main_h - 80, ("Scenario Axis", "Scenario"), "Change at Scenario",
                 colour_measure="Scenario Change Colour", horizontal=False)
-    p.label("scen_note", RIGHT_X + 12, 664, RIGHT_W - 24, 30, [("Amber: rise above the threshold", 9, C["ink3"], FONT)])
+    p.label("scen_note", RIGHT_X + 12, PANEL_BOTTOM - 40, RIGHT_W - 24, 30, [("Amber: rise above the threshold", 9, C["ink3"], FONT)])
+    footer(p, "Payments use the Canadian semi-annual compounding formula, the same one as the Python and SQL code.")
     pages.append(p)
 
     # ---- 4. Renewal triage ---------------------------------------------------------------------
     bg, tw = tiles(4)
-    bg += [("panel", M, 244, LEFT_W, 456), ("panel", RIGHT_X, 244, RIGHT_W, 236), ("panel", RIGHT_X, 492, RIGHT_W, 208)]
+    seg_h = 236
+    rule_y = PANEL_Y + seg_h + 12
+    bg += [("panel", X0, PANEL_Y, LEFT_W, full_h), ("panel", RIGHT_X, PANEL_Y, RIGHT_W, seg_h),
+           ("panel", RIGHT_X, rule_y, RIGHT_W, PANEL_BOTTOM - rule_y)]
     p = Page("triage", "Renewal triage", bg)
-    header(p, "RENEWAL TRIAGE", "Who the renewal team should call first",
+    rail(p)
+    header(p, headline_text="Who the renewal team should call first",
            subtitle_text="Each week: borrowers whose last chance it is, then by segment, renewal date and size of rise")
-    p.slicer("capacity_slicer", 960, 60, PAGE_W - M - 960, 58, "Capacity Choice", "Calls per week label", "300", header="Calls per week")
-    p.kpi("kpi_missed", M, TILE_Y, tw, "Missed with triage", "Missed with Triage", "Missed with Triage Caption", C["amber"])
-    p.kpi("kpi_date", M + tw, TILE_Y, tw, "Missed in date order", "Missed in Date Order", "Missed in Date Order Caption")
-    p.kpi("kpi_extra", M + 2 * tw, TILE_Y, tw, "Extra borrowers reached", "Extra Borrowers Reached", "Extra Reached Caption", C["teal"])
-    p.kpi("kpi_certain", M + 3 * tw, TILE_Y, tw, "Near-certain cases missed", "Near-certain Missed", "Near-certain Caption")
-    panel_title(p, "capacity", M, 244, LEFT_W, "Borrowers over +$250 not reached, by weekly capacity", "339 renew in week one, before any call")
-    p.column_pair("capacity_chart", M + 8, 284, LEFT_W - 16, 408, ("Call Capacity", "Capacity"),
+    p.kpi("kpi_missed", X0, TILE_Y, tw, "Missed with triage", "Missed with Triage", "Missed with Triage Caption", C["amber"])
+    p.kpi("kpi_date", X0 + tw, TILE_Y, tw, "Missed in date order", "Missed in Date Order", "Missed in Date Order Caption")
+    p.kpi("kpi_extra", X0 + 2 * tw, TILE_Y, tw, "Extra borrowers reached", "Extra Borrowers Reached", "Extra Reached Caption", C["teal"])
+    p.kpi("kpi_certain", X0 + 3 * tw, TILE_Y, tw, "Near-certain cases missed", "Near-certain Missed", "Near-certain Caption")
+    panel_title(p, "capacity", X0, PANEL_Y, LEFT_W, "Borrowers over +$250 not reached, by weekly capacity")
+    p.slicer("capacity_slicer", X0 + 12, PANEL_Y + 40, 300, 52, "Capacity Choice", "Calls per week label", "300", header="Calls per week")
+    p.label("capacity_note", X0 + 330, PANEL_Y + 58, LEFT_W - 342, 26,
+            [("339 renew in week one, before any call", 9, C["ink3"], FONT)], align="right")
+    p.column_pair("capacity_chart", X0 + 8, PANEL_Y + 100, LEFT_W - 16, full_h - 108, ("Call Capacity", "Capacity"),
                   ["Missed by Capacity, Date Order", "Missed by Capacity, Triage"], [C["slate"], C["teal"]])
-    panel_title(p, "segments", RIGHT_X, 244, RIGHT_W, "Segments", "Called at 300 a week")
-    p.table("segments_table", RIGHT_X + 10, 282, RIGHT_W - 20, 190,
+    panel_title(p, "segments", RIGHT_X, PANEL_Y, RIGHT_W, "Segments", "Called at 300 a week")
+    p.table("segments_table", RIGHT_X + 10, PANEL_Y + 40, RIGHT_W - 20, seg_h - 48,
             [("Segments", "Segment"), ("Segments", "Loans"), ("Segments", "Median rise"), ("Segments", "Called at 300 a week")],
             sort=("Segments", "Segment"))
-    panel_title(p, "rule", RIGHT_X, 492, RIGHT_W, "How the call list works")
-    p.label("rule_text", RIGHT_X + 10, 520, RIGHT_W - 20, 178, [
+    panel_title(p, "rule", RIGHT_X, rule_y, RIGHT_W, "How the call list works")
+    p.label("rule_text", RIGHT_X + 10, rule_y + 34, RIGHT_W - 20, PANEL_BOTTOM - rule_y - 38, [
         ("A borrower can be called from 60 days to 7 days before renewal. Each week the team first calls the people for whom "
          "this week is the last chance, then fills spare slots with the most certain cases.\n\n"
          "Ranking by segment alone did worse than calling by date, because certain cases renewing in two months took the slots.\n\n"
          "A rise over $250 is not the same as unaffordable. That needs income and other debts.", 9, C["ink2"], FONT)])
+    footer(p, "Loans are simulated (5,000 renewing in the next 90 days, fixed seed).")
+    pages.append(p)
+
+    # ---- 5. About this project -----------------------------------------------------------------
+    p = Page("about", "About", [])
+    rail(p)
+    header(p, headline_text="About this project",
+           subtitle_text="What this report answers, where the data comes from and how it was built")
+    footer(p, "Built from code: Python, PostgreSQL and a generated Power BI project.")
     pages.append(p)
     return pages
 
@@ -993,10 +1088,10 @@ def theme() -> dict:
     ink, ink2, ink3 = C["ink"], C["ink2"], C["ink3"]
     solid = lambda h: {"solid": {"color": h}}
     return {
-        "name": "Mortgage Navy",
-        "dataColors": [C["blue"], C["teal"], C["amber"], C["purple"], C["slate"], C["coral"], "#5E8BC7", "#8FD9C4"],
+        "name": "Mortgage Finance Light",
+        "dataColors": [C["blue"], C["teal"], C["amber"], C["purple"], C["slate"], C["coral"], "#6F93BF", "#8CCFC3"],
         "foreground": ink, "foregroundNeutralSecondary": ink2, "foregroundNeutralTertiary": ink3,
-        "background": C["panel"], "backgroundLight": "#16243B", "backgroundNeutral": C["line"],
+        "background": C["panel"], "backgroundLight": C["canvas"], "backgroundNeutral": C["line"],
         "tableAccent": C["teal"], "good": C["teal"], "neutral": C["amber"], "bad": C["coral"],
         "maximum": C["amber"], "center": C["slate"], "minimum": C["panel"],
         "textClasses": {
@@ -1016,7 +1111,7 @@ def theme() -> dict:
                 "legend": [{"labelColor": solid(ink2)}],
                 "outspacePane": [{"backgroundColor": solid(C["panel"]), "foregroundColor": solid(ink), "transparency": 0,
                                   "borderColor": solid(C["line"])}],
-                "filterCard": [{"$id": "Applied", "backgroundColor": solid("#16243B"), "foregroundColor": solid(ink), "transparency": 0},
+                "filterCard": [{"$id": "Applied", "backgroundColor": solid("#EAF0F7"), "foregroundColor": solid(ink), "transparency": 0},
                                {"$id": "Available", "backgroundColor": solid(C["panel"]), "foregroundColor": solid(ink), "transparency": 0}],
             }},
             "page": {"*": {"background": [{"color": solid(C["canvas"]), "transparency": 0}],
@@ -1034,7 +1129,8 @@ def theme() -> dict:
 
 
 def draw_background(page: Page, path: Path) -> None:
-    """2x PNG with the panels and tiles. Visuals sit on top with transparent backgrounds."""
+    """2x PNG with the rail, the headline rule, panels and tiles. Visuals sit on top with transparent
+    backgrounds."""
     s = 2
     fig = plt.figure(figsize=(PAGE_W * s / 100, PAGE_H * s / 100), dpi=100)
     ax = fig.add_axes([0, 0, 1, 1])
@@ -1042,14 +1138,15 @@ def draw_background(page: Page, path: Path) -> None:
     ax.set_ylim(PAGE_H, 0)
     ax.axis("off")
     fig.patch.set_facecolor(C["canvas"])
-    ax.add_patch(Rectangle((0, 46), PAGE_W, 1, color=C["line"], lw=0))           # under the brand line
+    ax.add_patch(Rectangle((0, 0), RAIL_W, PAGE_H, color=C["rail"], lw=0))       # navigation rail
+    ax.add_patch(Rectangle((X0, 18), 40, 4, color=C["blue"], lw=0))               # rule above the headline
     for kind, x, y, w, h in page.bg_panels:
         if kind in ("panel", "tilebar"):
-            ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0,rounding_size=10",
-                                        facecolor=C["panel"], edgecolor=C["line"], linewidth=1.2))
+            ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0,rounding_size=8",
+                                        facecolor=C["panel"], edgecolor=C["line"], linewidth=1.0))
         elif kind == "tile_hi":
-            ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0,rounding_size=10",
-                                        facecolor=C["tile_hi"], edgecolor=C["line"], linewidth=1.2))
+            ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0,rounding_size=8",
+                                        facecolor=C["tile_hi"], edgecolor=C["line"], linewidth=1.0))
             ax.add_patch(Rectangle((x + 1, y), w - 2, 3, color=C["amber"], lw=0))
         elif kind == "divider":
             ax.add_patch(Rectangle((x, y), w, h, color=C["line"], lw=0))
