@@ -68,7 +68,7 @@ C = {
     "purple": "#6E52A3", "purple2": "#9A86C8", "purple3": "#C2B6E0", "slate": "#A7B0BA", "coral": "#B5473A",
     "rail": "#1F3A5F", "rail_sel": "#2F5F96", "rail_hover": "#28497A", "rail_ink": "#FFFFFF", "rail_ink2": "#B5C6DB",
 }
-FONT, FONT_SEMI, FONT_BOLD, FONT_NUM = "Segoe UI", "Segoe UI Semibold", "Segoe UI Bold", "Segoe UI Semibold"
+FONT, FONT_SEMI, FONT_BOLD, FONT_NUM = "Segoe UI", "Segoe UI Semibold", "Segoe (Bold)", "Segoe UI Semibold"  # Power BI's own font names
 # Pages in navigation order. Overview opens first.
 PAGES = [("overview", "Overview"), ("accuracy", "Rates & accuracy"), ("payment", "Payment impact"),
          ("triage", "Renewal triage"), ("about", "About")]
@@ -745,11 +745,13 @@ class Page:
 
     def headline(self, vname, x, y, w, h, measure, size=18, colour_hex=C["ink"], font=FONT_BOLD):
         """Left-aligned text from a measure. A card centres its value, so this uses a multi-row card
-        with the category label, accent bar and outline turned off."""
+        with the category label, accent bar and outline turned off. It draws a text value as its card
+        title, so the style goes on cardTitle as well as dataLabels."""
+        style = dict(color=colour(colour_hex), fontSize=num(size), fontFamily=text(font))
         self.add(vname, x, y, w, h, {
             "visualType": "multiRowCard",
             "query": {"queryState": {"Values": {"projections": [proj_m(measure)]}}},
-            "objects": {"dataLabels": props(color=colour(colour_hex), fontSize=num(size), fontFamily=text(font)),
+            "objects": {"cardTitle": props(**style), "dataLabels": props(**style),
                         "categoryLabels": props(show=boolean(False)),
                         "card": props(outlineStyle=integer(0), barShow=boolean(False), cardPadding=num(0))},
             "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})

@@ -96,6 +96,30 @@ def test_headline_cards_use_multi_row_card_properties(model):
                 assert card["outlineStyle"]["expr"]["Literal"]["Value"].endswith("L")
 
 
+def test_headline_text_is_styled_as_the_card_title(model):
+    # A multi-row card draws a text value as its card title, so the headline style must go on cardTitle.
+    _, pages = model
+    for page in pages:
+        hl = next(v for v in page.visuals if v["name"] == "hdr_headline")
+        if hl["visual"]["visualType"] != "multiRowCard":
+            continue
+        title = hl["visual"]["objects"]["cardTitle"][0]["properties"]
+        assert title["fontSize"]["expr"]["Literal"]["Value"] == "18D", page.name
+        assert title["color"]["solid"]["color"]["expr"]["Literal"]["Value"] == "'#1B1F24'", page.name
+
+
+def test_fonts_are_ones_power_bi_knows(model):
+    # An unknown font name ("Segoe UI Bold") falls back to a serif face in cards.
+    import re
+    known = {"Segoe UI", "Segoe UI Light", "Segoe UI Semibold", "Segoe (Bold)"}
+    _, pages = model
+    for page in pages:
+        blob = json.dumps([v["visual"] for v in page.visuals])
+        used = set(re.findall(r'"fontFamily": \{"expr": \{"Literal": \{"Value": "\'([^\']+)\'"', blob))
+        used |= set(re.findall(r'"fontFamily": "([^"]+)"', blob))
+        assert used <= known, (page.name, used - known)
+
+
 def test_content_clears_the_rail(model):
     _, pages = model
     for page in pages:
