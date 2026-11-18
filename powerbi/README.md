@@ -1,6 +1,6 @@
 # Power BI report
 
-A four-page Power BI report built on the CSVs the pipeline exports to `data/powerbi/`. It is saved as a Power BI Project (PBIP): plain-text files that Power BI Desktop opens like a `.pbix`, and that Git can diff.
+A five-page Power BI report built on the CSVs the pipeline exports to `data/powerbi/`. It is saved as a Power BI Project (PBIP): plain-text files that Power BI Desktop opens like a `.pbix`, and that Git can diff.
 
 ## Pages
 
@@ -10,6 +10,9 @@ A four-page Power BI report built on the CSVs the pipeline exports to `data/powe
 | Rates & accuracy | How far off were past forecasts, and does the bond yield help? | Horizon (3 or 6 months) |
 | Payment impact | What does renewal cost one borrower? | Balance, years left, old rate, renewal rate, threshold |
 | Renewal triage | Who should the team call first with limited capacity? | Calls per week (100 to 400) |
+| About | What is this report, where does the data come from and how was it built? | Nothing; it links to this repository |
+
+Each analysis page opens with a headline worked out from the data and the page's slicers, so it stays true when the data or a choice changes. The navy rail on the left moves between pages and shows the latest month of Bank of Canada data.
 
 Screenshots from Power BI Desktop with the default slicer choices, so the numbers match the reference values below.
 
@@ -29,6 +32,10 @@ Screenshots from Power BI Desktop with the default slicer choices, so the number
 
 ![Renewal triage page](screenshots/04_triage.png)
 
+**About**
+
+![About page](screenshots/05_about.png)
+
 ## Getting started
 
 Requires a recent Power BI Desktop (2025 or later).
@@ -47,11 +54,15 @@ The slicer tables (scenario, threshold, balance and so on) are small lookup tabl
 
 ## Measures
 
-All 71 measures live in the `measures_calc` table, grouped in five folders: Rates, Renewal book, Accuracy, Payment impact and Triage. The payment formula in DAX is the same Canadian semi-annual one used in `src/mortgage.py` and in the SQL function. The threshold rate is the lowest rate on a 1 bp grid where the payment rise reaches the threshold.
+All 77 measures live in the `measures_calc` table, grouped in five folders: Rates, Renewal book, Accuracy, Payment impact and Triage. The payment formula in DAX is the same Canadian semi-annual one used in `src/mortgage.py` and in the SQL function. The threshold rate is the lowest rate on a 1 bp grid where the payment rise reaches the threshold.
 
 ## Design
 
-Navy canvas, amber for whatever needs attention, teal for the ETS forecast, light blue for observed data and lavender for the bond-yield model. The panels are drawn into a background image at twice the page size, and the visuals sit on top with transparent backgrounds. Text uses Segoe UI throughout, with the light weight for the large numbers, so it looks the same on any Windows machine.
+A light finance-report look that matches the charts in `reports/figures`: a light grey canvas, white panels and a navy navigation rail. The series colours are the same as in `src/charts.py`, which passed a colour-blind check: navy for observed data, teal for the ETS forecast, purple for the bond-yield model, grey for comparisons and amber for whatever needs attention. Up and down arrows carry the direction of a change, so the meaning never depends on colour alone.
+
+Every page follows the same grid: a headline that states the finding with a grey line of scope and units under it, a row of four KPI cards, then the charts, with the source at the foot. The rail and the panels are drawn into a background image at twice the page size, and the visuals sit on top with transparent backgrounds. Text uses Segoe UI, so it looks the same on any Windows machine.
+
+The design and the plan for this layout are in [`docs/superpowers`](../docs/superpowers).
 
 ## Reference values
 
@@ -71,7 +82,7 @@ With the default slicer choices, the cards should match the written report:
 
 ## Rebuilding the project
 
-`build_pbip.py` writes every file in this folder: the data model, all 111 visuals, the theme and the four background images. To change the layout, colours or a measure, edit the script and run:
+`build_pbip.py` writes every file in this folder: the data model, all 154 visuals, the theme and the five background images. To change the layout, colours or a measure, edit the script and run:
 
 ```bash
 .venv/bin/python powerbi/build_pbip.py

@@ -58,7 +58,7 @@ All 17 charts are in the [full report](reports/report.md).
 
 ## Power BI report
 
-A four-page report in a dark navy theme: an overview of the renewal book, forecast accuracy, payment impact for one borrower, and the triage call list. Slicers change the rate scenario, the forecast horizon, the loan and the weekly call capacity. It is saved as a Power BI Project (PBIP), so the model, the DAX and every visual are plain text in this repository. [How to open it and check the numbers](powerbi/README.md).
+A five-page report in the same light finance style as the charts above: an overview of the renewal book, forecast accuracy, payment impact for one borrower, the triage call list, and an About page that explains the data and methods. A navy rail on the left moves between pages. Each page opens with a headline worked out from the data, such as "92.5% of renewing borrowers face a payment rise above $250 a month", and the rate cards show the change since the month before. Slicers change the rate scenario, the forecast horizon, the loan and the weekly call capacity. It is saved as a Power BI Project (PBIP), so the model, the DAX and every visual are plain text in this repository. [How to open it and check the numbers](powerbi/README.md).
 
 | | |
 |---|---|
@@ -66,6 +66,8 @@ A four-page report in a dark navy theme: an overview of the renewal book, foreca
 | Overview: the renewal book and where the rate is going | Rates & accuracy: how far off past forecasts were |
 | ![Payment impact page](powerbi/screenshots/03_payment.png) | ![Renewal triage page](powerbi/screenshots/04_triage.png) |
 | Payment impact: what renewal costs one borrower | Renewal triage: who to call first with limited capacity |
+
+The fifth page, [About](powerbi/screenshots/05_about.png), sets out the problem, the data, the methods and how to read the colours.
 
 ## Data
 
