@@ -74,6 +74,52 @@ def test_headline_box_is_wide_enough(model):
         assert hl["position"]["width"] >= pb.CONTENT_W - 10, page.name
 
 
+NEW_MEASURES = ["Previous Actual Rate", "Latest Rate Change bps", "Overview Headline",
+                "Accuracy Headline", "Payment Headline", "Triage Headline"]
+
+
+def _expr(tables, name):
+    return next(m[1] for m in tables["measures_calc"].measures if m[0] == name)
+
+
+def test_new_measures_exist(model):
+    tables, _ = model
+    names = {m[0] for m in tables["measures_calc"].measures}
+    assert set(NEW_MEASURES) <= names
+
+
+def test_payment_headline_handles_a_fall(model):
+    # A renewal rate below the old rate lowers the payment: the headline must say "saves", not "adds -$".
+    tables, _ = model
+    e = _expr(tables, "Payment Headline")
+    assert '"adds"' in e and '"saves"' in e and "ABS(" in e
+
+
+def test_rate_caption_handles_no_change_and_blank(model):
+    tables, _ = model
+    e = _expr(tables, "Latest Rate Caption")
+    assert "no change" in e and "ISBLANK(" in e and "▲" in e and "▼" in e
+
+
+def test_overview_headline_names_the_scenario(model):
+    tables, _ = model
+    e = _expr(tables, "Overview Headline")
+    assert "50 bps lower" in e and "50 bps higher" in e
+
+
+def test_accuracy_headline_handles_ets_winning(model):
+    # Today the bond-yield model wins at both horizons; new data could change that.
+    tables, _ = model
+    e = _expr(tables, "Accuracy Headline")
+    assert "less than ETS" in e and "more than ETS" in e
+
+
+def test_triage_headline_handles_no_gain(model):
+    tables, _ = model
+    e = _expr(tables, "Triage Headline")
+    assert "more at-risk borrowers than calling by date" in e and "calling by date reaches" in e
+
+
 def test_measure_names_do_not_clash_with_tables_or_columns(model):
     tables, _ = model
     pb.check_names(list(tables.values()))

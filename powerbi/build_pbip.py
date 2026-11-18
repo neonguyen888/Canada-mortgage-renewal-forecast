@@ -337,6 +337,13 @@ WithOrder = Table.AddColumn(WithLabel, "Model order", each Record.FieldOrDefault
     return T
 
 
+def delta_text(d: str) -> str:
+    """DAX text for a change in basis points held in variable d: "▲ 8 bps", "▼ 3 bps" or "no change".
+    The arrow carries the direction, so the meaning doesn't depend on colour."""
+    return (f'IF({d} > 0, "▲ ", IF({d} < 0, "▼ ", "")) & '
+            f'IF({d} = 0, "no change", FORMAT(ABS({d}), "0") & " bps")')
+
+
 def add_measures(t: Table) -> None:
     pct, cad, cad2 = "0.00\\%", "\\$#,0", "\\$#,0.00"
     F = "Rates"
@@ -346,13 +353,26 @@ def add_measures(t: Table) -> None:
         VAR _m = [Last Actual Month]
         RETURN CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = "Actual", 'Rate Outlook'[Month] = _m, REMOVEFILTERS())
         """, pct, F, "Market reference rate in the latest published month.")
-    t.measure("Latest Rate Caption", 'FORMAT([Last Actual Month], "mmm yyyy") & ", observed"', None, F)
+    t.measure("Previous Actual Rate", """
+        VAR _m = EDATE([Last Actual Month], -1)
+        RETURN CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = "Actual", 'Rate Outlook'[Month] = _m, REMOVEFILTERS())
+        """, pct, F, "Market reference rate one month before the latest published month.")
+    t.measure("Latest Rate Change bps", """
+        VAR _p = [Previous Actual Rate]
+        RETURN IF(ISBLANK(_p), BLANK(), ROUND(([Latest Rate] - _p) * 100, 0))
+        """, "+0;-0;0", F, "Change in the market reference rate since the month before, in basis points.")
+    t.measure("Latest Rate Caption", f"""
+        VAR _d = [Latest Rate Change bps]
+        RETURN IF(ISBLANK(_d), FORMAT([Last Actual Month], "mmm yyyy") & ", observed",
+                  {delta_text("_d")} & " vs " & FORMAT(EDATE([Last Actual Month], -1), "mmm yyyy"))
+        """, None, F)
     t.measure("Data Through Short", '"Data to " & FORMAT([Last Actual Month], "mmm yyyy")', None, F,
               "Shown at the foot of the navigation rail.")
     t.measure("ETS 3-Month Forecast", "CALCULATE(MAX('Forecast Comparison'[ETS rate]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())", pct, F)
-    t.measure("ETS 3-Month Caption", """
+    t.measure("ETS 3-Month Caption", f"""
         VAR _m = CALCULATE(MAX('Forecast Comparison'[Target month]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())
-        RETURN FORMAT(_m, "mmm yyyy") & ", ETS forecast"
+        VAR _d = ROUND(([ETS 3-Month Forecast] - [Latest Rate]) * 100, 0)
+        RETURN {delta_text("_d")} & " vs today, " & FORMAT(_m, "mmm yyyy")
         """, None, F)
     t.measure("Observed Rate", "CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = \"Actual\")", pct, F)
     t.measure("ETS Forecast", "CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = \"Forecast\")", pct, F,
@@ -387,7 +407,13 @@ def add_measures(t: Table) -> None:
         RETURN SUMX('Loans', {rise})
         """, "\\$#,0.00", F, "Extra paid each month by the whole book in the chosen scenario.")
     t.measure("Loans Above Caption", 'FORMAT([Share Above Threshold], "0.0%") & " of " & FORMAT([Loan Count], "#,0") & " simulated loans"', None, F)
-    t.measure("Payment Increase Caption", '"CAD a month across the book"', None, F)
+    t.measure("Payment Increase Caption", 'FORMAT([Total Payment Increase] * 12 / 1000000, "$#,0.0") & "M a year across the book"', None, F)
+    t.measure("Overview Headline", """
+        VAR _s = [Scenario Shift]
+        VAR _tail = SWITCH(_s, -50, " if rates are 50 bps lower", 50, " if rates are 50 bps higher", "")
+        RETURN FORMAT([Share Above Threshold], "0.0%") & " of renewing borrowers face a payment rise above "
+            & FORMAT([Threshold Value], "$#,0") & " a month" & _tail
+        """, None, F, "Headline for the overview page, in the scenario picked there.")
     t.measure("Renewal Window Label", """
         VAR _a = CALCULATE(MIN('Loans'[Renewal date]), REMOVEFILTERS())
         VAR _b = CALCULATE(MAX('Loans'[Renewal date]), REMOVEFILTERS())
@@ -428,6 +454,13 @@ def add_measures(t: Table) -> None:
         """, None, F)
     t.measure("Naive MAE Caption", 'FORMAT([Naive MAE CAD], "$#,0.00") & " a month on a $400k loan"', None, F)
     t.measure("Pass-through Caption", '"of a 1-point yield move, within 4 months"', None, F)
+    t.measure("Accuracy Headline", """
+        VAR _b = [Bond-yield MAE]
+        VAR _e = [ETS MAE]
+        VAR _lead = "The bond-yield model misses by " & FORMAT(_b, "0.0") & " bps on average, "
+        RETURN IF(_b <= _e, _lead & FORMAT(1 - DIVIDE(_b, _e), "0%") & " less than ETS",
+                  _lead & FORMAT(DIVIDE(_b, _e) - 1, "0%") & " more than ETS")
+        """, None, F, "Headline for the accuracy page, at the horizon picked there.")
     t.measure("Model Bar Colour", f"""
         SWITCH(
             SELECTEDVALUE('Model Accuracy'[Model label]),
@@ -467,6 +500,11 @@ def add_measures(t: Table) -> None:
     t.measure("Payment Before Caption", '"at " & FORMAT([Chosen Rate Before], "0.00") & "%"', None, F)
     t.measure("Payment After Caption", '"at " & FORMAT([Chosen Renewal Rate], "0.00") & "%"', None, F)
     t.measure("Monthly Change Caption", 'FORMAT([Monthly Change] * 12, "$#,0") & " a year, threshold " & FORMAT([Threshold Value], "$#,0")', None, F)
+    t.measure("Payment Headline", """
+        VAR _c = [Monthly Change]
+        VAR _lead = "A " & FORMAT([Chosen Balance] / 1000, "$#,0") & "k renewal at " & FORMAT([Chosen Renewal Rate], "0.00") & "% "
+        RETURN _lead & IF(_c >= 0, "adds", "saves") & " " & FORMAT(ABS(_c), "$#,0.00") & " a month"
+        """, None, F, "Headline for the payment page. A renewal rate below the old rate saves money.")
     curve = payment_dax("[Chosen Balance]", "[Chosen Years Left]", "_rate")
     t.measure("Threshold Rate", f"""
         VAR _base = [Payment Before]
@@ -521,6 +559,13 @@ def add_measures(t: Table) -> None:
             RETURN CALCULATE(SUM('Call Capacity'[{col}]), 'Call Capacity'[Calls per week] = _c)
             """, cad if "Rise" in name else "#,0", F, desc)
     t.measure("Extra Borrowers Reached", "[Missed in Date Order] - [Missed with Triage]", "+#,0;-#,0;0", F)
+    t.measure("Triage Headline", """
+        VAR _x = [Extra Borrowers Reached]
+        VAR _lead = "At " & FORMAT([Chosen Calls per Week], "#,0") & " calls a week, "
+        RETURN _lead & IF(_x > 0, "triage reaches " & FORMAT(_x, "#,0") & " more at-risk borrowers than calling by date",
+                   IF(_x = 0, "triage and calling by date reach the same number of at-risk borrowers",
+                      "calling by date reaches " & FORMAT(-_x, "#,0") & " more at-risk borrowers than triage"))
+        """, None, F, "Headline for the triage page, at the call capacity picked there.")
     t.measure("Missed with Triage Caption", '"borrowers over +$250 never called"', None, F)
     t.measure("Missed in Date Order Caption", '"same capacity, calling by renewal date"', None, F)
     t.measure("Extra Reached Caption", 'FORMAT([Missed Rise in Date Order] - [Missed Rise with Triage], "$#,0") & " a month of rises caught in time"', None, F)
