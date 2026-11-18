@@ -503,7 +503,9 @@ def add_measures(t: Table) -> None:
     t.measure("Monthly Change Caption", 'FORMAT([Monthly Change] * 12, "$#,0") & " a year, threshold " & FORMAT([Threshold Value], "$#,0")', None, F)
     t.measure("Payment Headline", """
         VAR _c = [Monthly Change]
-        VAR _lead = "A " & FORMAT([Chosen Balance] / 1000, "$#,0") & "k renewal at " & FORMAT([Chosen Renewal Rate], "0.00") & "% "
+        VAR _k = FORMAT([Chosen Balance] / 1000, "0")
+        VAR _article = IF(LEFT(_k, 1) = "8" || _k = "11" || _k = "18", "An ", "A ")
+        VAR _lead = _article & FORMAT([Chosen Balance] / 1000, "$#,0") & "k renewal at " & FORMAT([Chosen Renewal Rate], "0.00") & "% "
         RETURN _lead & IF(_c >= 0, "adds", "saves") & " " & FORMAT(ABS(_c), "$#,0.00") & " a month"
         """, None, F, "Headline for the payment page. A renewal rate below the old rate saves money.")
     curve = payment_dax("[Chosen Balance]", "[Chosen Years Left]", "_rate")

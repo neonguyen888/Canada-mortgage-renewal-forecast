@@ -158,6 +158,13 @@ def test_payment_headline_handles_a_fall(model):
     assert '"adds"' in e and '"saves"' in e and "ABS(" in e
 
 
+def test_payment_headline_says_an_before_eight(model):
+    # "An $800k renewal", read as "an eight hundred k".
+    tables, _ = model
+    e = _expr(tables, "Payment Headline")
+    assert '"An "' in e and '"8"' in e
+
+
 def test_rate_caption_handles_no_change_and_blank(model):
     tables, _ = model
     e = _expr(tables, "Latest Rate Caption")
