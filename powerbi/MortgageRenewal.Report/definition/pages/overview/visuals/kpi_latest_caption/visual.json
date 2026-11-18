@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "kpi_latest_caption",
   "position": {
-    "x": 648.0,
-    "y": 204,
-    "z": 2300,
+    "x": 732.0,
+    "y": 170,
+    "z": 2800,
     "height": 26,
-    "width": 292.0,
-    "tabOrder": 2300
+    "width": 250.0,
+    "tabOrder": 2800
   },
   "visual": {
     "visualType": "card",
@@ -42,7 +42,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#A3B0C2'"
+                      "Value": "'#5B6670'"
                     }
                   }
                 }

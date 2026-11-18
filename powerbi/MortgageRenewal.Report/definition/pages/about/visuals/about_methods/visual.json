@@ -1,0 +1,100 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "about_methods",
+  "position": {
+    "x": 742.0,
+    "y": 112,
+    "z": 2300,
+    "height": 284,
+    "width": 502.0,
+    "tabOrder": 2300
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Methods\n",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI Semibold",
+                      "fontSize": "12pt",
+                      "color": "#1B1F24"
+                    }
+                  },
+                  {
+                    "value": "Forecast: an ETS damped-trend model, picked over a naive forecast by a rule I wrote down before running the backtest.\n\nBacktest: 123 rolling forecasts made each month from January 2016 to March 2026, scored by the average miss in basis points and in dollars a month.\n\nUncertainty: an 80% band built from the backtest errors. Diebold-Mariano tests check whether one model's lead over another is more than luck.\n\nChallenger: a regression on the 5-year bond yield, which moves before the mortgage rate.\n\nTriage: each week the team first calls borrowers for whom it's the last chance, then fills spare calls with the most certain cases.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "9.5pt",
+                      "color": "#5B6670"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dropShadow": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

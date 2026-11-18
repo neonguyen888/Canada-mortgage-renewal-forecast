@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "periods_note",
   "position": {
-    "x": 1005.2,
-    "y": 494,
-    "z": 3800,
+    "x": 966.7,
+    "y": 462.0,
+    "z": 4300,
     "height": 38,
-    "width": 238.8,
-    "tabOrder": 3800
+    "width": 277.3,
+    "tabOrder": 4300
   },
   "visual": {
     "visualType": "textbox",
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
-                      "color": "#6D7C91"
+                      "color": "#6B7682"
                     }
                   }
                 ],

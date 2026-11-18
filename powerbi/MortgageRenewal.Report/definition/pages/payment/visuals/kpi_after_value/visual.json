@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "kpi_after_value",
   "position": {
-    "x": 340.0,
-    "y": 244,
-    "z": 2400,
-    "height": 44,
-    "width": 292.0,
-    "tabOrder": 2400
+    "x": 466.0,
+    "y": 222,
+    "z": 2900,
+    "height": 40,
+    "width": 250.0,
+    "tabOrder": 2900
   },
   "visual": {
     "visualType": "card",
@@ -42,7 +42,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E9EEF5'"
+                      "Value": "'#1B1F24'"
                     }
                   }
                 }
@@ -51,14 +51,14 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "26D"
+                  "Value": "24D"
                 }
               }
             },
             "fontFamily": {
               "expr": {
                 "Literal": {
-                  "Value": "'Segoe UI Light'"
+                  "Value": "'Segoe UI Semibold'"
                 }
               }
             },

@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "rule_text",
   "position": {
-    "x": 810,
-    "y": 520,
-    "z": 3500,
-    "height": 178,
-    "width": 436,
-    "tabOrder": 3500
+    "x": 846,
+    "y": 494,
+    "z": 4000,
+    "height": 182,
+    "width": 400,
+    "tabOrder": 4000
   },
   "visual": {
     "visualType": "textbox",
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
-                      "color": "#A3B0C2"
+                      "color": "#5B6670"
                     }
                   }
                 ]

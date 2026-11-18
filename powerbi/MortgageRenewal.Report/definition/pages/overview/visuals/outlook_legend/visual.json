@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "outlook_legend",
   "position": {
-    "x": 36,
-    "y": 280,
-    "z": 2900,
+    "x": 204,
+    "y": 246,
+    "z": 3400,
     "height": 38,
     "width": 600,
-    "tabOrder": 2900
+    "tabOrder": 3400
   },
   "visual": {
     "visualType": "textbox",
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
-                      "color": "#7FB2F0"
+                      "color": "#2F5F96"
                     }
                   },
                   {
@@ -31,7 +31,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
-                      "color": "#A3B0C2"
+                      "color": "#5B6670"
                     }
                   },
                   {
@@ -39,7 +39,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
-                      "color": "#4FD1B5"
+                      "color": "#16917F"
                     }
                   },
                   {
@@ -47,7 +47,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
-                      "color": "#A3B0C2"
+                      "color": "#5B6670"
                     }
                   },
                   {
@@ -55,7 +55,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
-                      "color": "#2F7F6E"
+                      "color": "#8CCFC3"
                     }
                   },
                   {
@@ -63,7 +63,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
-                      "color": "#A3B0C2"
+                      "color": "#5B6670"
                     }
                   }
                 ]

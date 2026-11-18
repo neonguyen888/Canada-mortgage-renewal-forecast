@@ -16,13 +16,33 @@ table measures_calc
 		displayFolder: Rates
 		lineageTag: 308fb414-78b6-5cf7-86e9-2ad593f99503
 
-	measure 'Latest Rate Caption' = FORMAT([Last Actual Month], "mmm yyyy") & ", observed"
+	/// Market reference rate one month before the latest published month.
+	measure 'Previous Actual Rate' =
+			VAR _m = EDATE([Last Actual Month], -1)
+			RETURN CALCULATE(MAX('Rate Outlook'[Rate]), 'Rate Outlook'[Series] = "Actual", 'Rate Outlook'[Month] = _m, REMOVEFILTERS())
+		formatString: 0.00\%
+		displayFolder: Rates
+		lineageTag: c4314de9-bfd4-581a-afdd-bdf5baa332f8
+
+	/// Change in the market reference rate since the month before, in basis points.
+	measure 'Latest Rate Change bps' =
+			VAR _p = [Previous Actual Rate]
+			RETURN IF(ISBLANK(_p), BLANK(), ROUND(([Latest Rate] - _p) * 100, 0))
+		formatString: +0;-0;0
+		displayFolder: Rates
+		lineageTag: c1aa9063-b9f1-58d3-97d0-ea359d0d0e62
+
+	measure 'Latest Rate Caption' =
+			VAR _d = [Latest Rate Change bps]
+			RETURN IF(ISBLANK(_d), FORMAT([Last Actual Month], "mmm yyyy") & ", observed",
+			          IF(_d > 0, "▲ ", IF(_d < 0, "▼ ", "")) & IF(_d = 0, "no change", FORMAT(ABS(_d), "0") & " bps") & " vs " & FORMAT(EDATE([Last Actual Month], -1), "mmm yyyy"))
 		displayFolder: Rates
 		lineageTag: 5afc633e-9def-5ce8-89e5-69a15138bfaa
 
-	measure 'Data Through Label' = "BANK OF CANADA DATA THROUGH " & UPPER(FORMAT([Last Actual Month], "mmm yyyy"))
+	/// Shown at the foot of the navigation rail.
+	measure 'Data Through Short' = "Data to " & FORMAT([Last Actual Month], "mmm yyyy")
 		displayFolder: Rates
-		lineageTag: bdf230a0-03fb-5cac-b38a-9c8dae18d4f3
+		lineageTag: 0310a407-c708-53b4-875c-3d650b2cd470
 
 	measure 'ETS 3-Month Forecast' = CALCULATE(MAX('Forecast Comparison'[ETS rate]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())
 		formatString: 0.00\%
@@ -31,7 +51,8 @@ table measures_calc
 
 	measure 'ETS 3-Month Caption' =
 			VAR _m = CALCULATE(MAX('Forecast Comparison'[Target month]), 'Forecast Comparison'[Horizon] = 3, REMOVEFILTERS())
-			RETURN FORMAT(_m, "mmm yyyy") & ", ETS forecast"
+			VAR _d = ROUND(([ETS 3-Month Forecast] - [Latest Rate]) * 100, 0)
+			RETURN IF(_d > 0, "▲ ", IF(_d < 0, "▼ ", "")) & IF(_d = 0, "no change", FORMAT(ABS(_d), "0") & " bps") & " vs today, " & FORMAT(_m, "mmm yyyy")
 		displayFolder: Rates
 		lineageTag: 2cfeb4fc-d113-5353-9cfe-53c654caee2b
 
@@ -129,14 +150,24 @@ table measures_calc
 		displayFolder: Renewal book
 		lineageTag: 2044a9e6-7b89-5bc0-9f5b-841f87332e9a
 
-	measure 'Payment Increase Caption' = "CAD a month across the book"
+	measure 'Payment Increase Caption' = FORMAT([Total Payment Increase] * 12 / 1000000, "$#,0.0") & "M a year across the book"
 		displayFolder: Renewal book
 		lineageTag: 3e2c9e02-4e6e-5e02-94e1-e258f123cb55
+
+	/// Headline for the overview page, in the scenario picked there.
+	measure 'Overview Headline' =
+			VAR _s = [Scenario Shift]
+			VAR _tail = SWITCH(_s, -50, " if rates are 50 bps lower", 50, " if rates are 50 bps higher", "")
+			RETURN FORMAT([Share Above Threshold], "0.0%") & " of renewing borrowers face a payment rise above "
+			    & FORMAT([Threshold Value], "$#,0") & " a month" & _tail
+		displayFolder: Renewal book
+		lineageTag: bd401421-0706-5587-bb95-7c33ebe1ef9a
 
 	measure 'Renewal Window Label' =
 			VAR _a = CALCULATE(MIN('Loans'[Renewal date]), REMOVEFILTERS())
 			VAR _b = CALCULATE(MAX('Loans'[Renewal date]), REMOVEFILTERS())
-			RETURN "90-day renewal window, " & FORMAT(_a, "d mmm yyyy") & " to " & FORMAT(_b, "d mmm yyyy")
+			VAR _n = CALCULATE([Loan Count], REMOVEFILTERS())
+			RETURN FORMAT(_n, "#,0") & " simulated loans renewing in the next 90 days, " & FORMAT(_a, "d mmm yyyy") & " to " & FORMAT(_b, "d mmm yyyy")
 		displayFolder: Renewal book
 		lineageTag: 4dbf4a64-af94-59a9-acee-5023f590a9e9
 
@@ -150,7 +181,7 @@ table measures_calc
 		lineageTag: 044799b7-5ff1-5a40-890b-ba0edaa04858
 
 	/// Amber for the scenario picked in the slicer.
-	measure 'Scenario Bar Colour' = IF(SELECTEDVALUE('Scenario Axis'[Shift bps]) = [Scenario Shift], "#F2B05E", "#3B4B63")
+	measure 'Scenario Bar Colour' = IF(SELECTEDVALUE('Scenario Axis'[Shift bps]) = [Scenario Shift], "#C26B12", "#A7B0BA")
 		displayFolder: Renewal book
 		lineageTag: 20971863-1885-59b7-b257-08e4a2abbfc2
 
@@ -217,14 +248,24 @@ table measures_calc
 		displayFolder: Accuracy
 		lineageTag: 3d8f1d2c-d992-5e13-b3a9-d3edd670e5e5
 
+	/// Headline for the accuracy page, at the horizon picked there.
+	measure 'Accuracy Headline' =
+			VAR _b = [Bond-yield MAE]
+			VAR _e = [ETS MAE]
+			VAR _lead = "The bond-yield model misses by " & FORMAT(_b, "0.0") & " bps on average, "
+			RETURN IF(_b <= _e, _lead & FORMAT(1 - DIVIDE(_b, _e), "0%") & " less than ETS",
+			          _lead & FORMAT(DIVIDE(_b, _e) - 1, "0%") & " more than ETS")
+		displayFolder: Accuracy
+		lineageTag: 1930acda-6779-5169-b7c7-a419f4a6d3ec
+
 	measure 'Model Bar Colour' =
 			SWITCH(
 			    SELECTEDVALUE('Model Accuracy'[Model label]),
-			    "Bond-yield model", "#B49CF5",
-			    "Bond yield, 1-month head start", "#8E7CC3",
-			    "Bond yield, no head start", "#6B5E96",
-			    "ETS", "#4FD1B5",
-			    "#3B4B63"
+			    "Bond-yield model", "#6E52A3",
+			    "Bond yield, 1-month head start", "#9A86C8",
+			    "Bond yield, no head start", "#C2B6E0",
+			    "ETS", "#16917F",
+			    "#A7B0BA"
 			)
 		displayFolder: Accuracy
 		lineageTag: 5a2054a3-9ea2-54a9-b7d1-1ec6f904f826
@@ -322,6 +363,16 @@ table measures_calc
 		displayFolder: Payment impact
 		lineageTag: 5b0f7c0f-4d6a-5468-8832-87d2853d8c73
 
+	/// Headline for the payment page. A renewal rate below the old rate saves money.
+	measure 'Payment Headline' =
+			VAR _c = [Monthly Change]
+			VAR _k = FORMAT([Chosen Balance] / 1000, "0")
+			VAR _article = IF(LEFT(_k, 1) = "8" || _k = "11" || _k = "18", "An ", "A ")
+			VAR _lead = _article & FORMAT([Chosen Balance] / 1000, "$#,0") & "k renewal at " & FORMAT([Chosen Renewal Rate], "0.00") & "% "
+			RETURN _lead & IF(_c >= 0, "adds", "saves") & " " & FORMAT(ABS(_c), "$#,0.00") & " a month"
+		displayFolder: Payment impact
+		lineageTag: a5a639a7-cb72-5c73-a1f1-5c8d1c51d65a
+
 	/// Lowest rate on the 1 bp grid where the payment rise reaches the threshold. Within 1 bp of the exact answer.
 	measure 'Threshold Rate' =
 			VAR _base = [Payment Before]
@@ -392,7 +443,7 @@ table measures_calc
 		displayFolder: Payment impact
 		lineageTag: a6bb637c-6d89-50e8-b45a-3de6da22a633
 
-	measure 'Scenario Change Colour' = IF([Change at Scenario] > [Threshold Value], "#F2B05E", "#3B4B63")
+	measure 'Scenario Change Colour' = IF([Change at Scenario] > [Threshold Value], "#C26B12", "#A7B0BA")
 		displayFolder: Payment impact
 		lineageTag: d6888b57-8b71-514c-92c6-5435404d600a
 
@@ -449,6 +500,16 @@ table measures_calc
 		formatString: +#,0;-#,0;0
 		displayFolder: Triage
 		lineageTag: 2a545e5b-2af9-5ba8-b384-789a7ca8ddbc
+
+	/// Headline for the triage page, at the call capacity picked there.
+	measure 'Triage Headline' =
+			VAR _x = [Extra Borrowers Reached]
+			VAR _lead = "At " & FORMAT([Chosen Calls per Week], "#,0") & " calls a week, "
+			RETURN _lead & IF(_x > 0, "triage reaches " & FORMAT(_x, "#,0") & " more at-risk borrowers than calling by date",
+			           IF(_x = 0, "triage and calling by date reach the same number of at-risk borrowers",
+			              "calling by date reaches " & FORMAT(-_x, "#,0") & " more at-risk borrowers than triage"))
+		displayFolder: Triage
+		lineageTag: 2aa9d9ea-ec6b-5f4a-95a6-ba30119bb9b2
 
 	measure 'Missed with Triage Caption' = "borrowers over +$250 never called"
 		displayFolder: Triage

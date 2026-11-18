@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "curve_note",
   "position": {
-    "x": 366.0,
-    "y": 332,
-    "z": 3300,
+    "x": 476.40000000000003,
+    "y": 310,
+    "z": 3800,
     "height": 38,
-    "width": 406.00000000000006,
-    "tabOrder": 3300
+    "width": 335.6,
+    "tabOrder": 3800
   },
   "visual": {
     "visualType": "textbox",
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
-                      "color": "#6D7C91"
+                      "color": "#6B7682"
                     }
                   }
                 ],

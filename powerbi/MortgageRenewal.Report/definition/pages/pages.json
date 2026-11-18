@@ -4,7 +4,8 @@
     "overview",
     "accuracy",
     "payment",
-    "triage"
+    "triage",
+    "about"
   ],
   "activePageName": "overview"
 }

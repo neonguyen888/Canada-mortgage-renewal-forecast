@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "hdr_subtitle",
   "position": {
-    "x": 20,
-    "y": 94,
-    "z": 1400,
+    "x": 188,
+    "y": 64,
+    "z": 1900,
     "height": 40,
-    "width": 900,
-    "tabOrder": 1400
+    "width": 1068,
+    "tabOrder": 1900
   },
   "visual": {
     "visualType": "textbox",
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",
-                      "color": "#A3B0C2"
+                      "color": "#5B6670"
                     }
                   }
                 ]

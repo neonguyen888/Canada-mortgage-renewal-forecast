@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "stress_bars",
   "position": {
-    "x": 808,
-    "y": 334,
-    "z": 3400,
-    "height": 166,
-    "width": 440,
-    "tabOrder": 3400
+    "x": 844,
+    "y": 302,
+    "z": 3900,
+    "height": 168,
+    "width": 404,
+    "tabOrder": 3900
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -118,7 +118,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E9EEF5'"
+                      "Value": "'#1B1F24'"
                     }
                   }
                 }
@@ -169,7 +169,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#A3B0C2'"
+                      "Value": "'#5B6670'"
                     }
                   }
                 }

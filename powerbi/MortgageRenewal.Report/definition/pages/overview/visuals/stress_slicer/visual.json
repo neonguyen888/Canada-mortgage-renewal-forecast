@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "stress_slicer",
   "position": {
-    "x": 812,
-    "y": 284,
-    "z": 3300,
+    "x": 848,
+    "y": 252,
+    "z": 3800,
     "height": 44,
-    "width": 432,
-    "tabOrder": 3300
+    "width": 396,
+    "tabOrder": 3800
   },
   "visual": {
     "visualType": "slicer",
@@ -155,7 +155,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E9EEF5'"
+                      "Value": "'#1B1F24'"
                     }
                   }
                 }
@@ -166,7 +166,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0F1B2D'"
+                      "Value": "'#FFFFFF'"
                     }
                   }
                 }

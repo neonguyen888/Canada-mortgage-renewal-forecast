@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "yield_chart",
   "position": {
-    "x": 32,
-    "y": 520,
-    "z": 3600,
-    "height": 174,
-    "width": 744,
-    "tabOrder": 3600
+    "x": 200,
+    "y": 488.0,
+    "z": 4100,
+    "height": 186.0,
+    "width": 510.0,
+    "tabOrder": 4100
   },
   "visual": {
     "visualType": "lineChart",
@@ -95,7 +95,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#7FB2F0'"
+                      "Value": "'#2F5F96'"
                     }
                   }
                 }
@@ -113,7 +113,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#B49CF5'"
+                      "Value": "'#6E52A3'"
                     }
                   }
                 }
@@ -205,7 +205,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#A3B0C2'"
+                      "Value": "'#5B6670'"
                     }
                   }
                 }
@@ -243,7 +243,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#6D7C91'"
+                      "Value": "'#6B7682'"
                     }
                   }
                 }
@@ -281,7 +281,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#6D7C91'"
+                      "Value": "'#6B7682'"
                     }
                   }
                 }
@@ -306,7 +306,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#1A2639'"
+                      "Value": "'#ECEEF1'"
                     }
                   }
                 }

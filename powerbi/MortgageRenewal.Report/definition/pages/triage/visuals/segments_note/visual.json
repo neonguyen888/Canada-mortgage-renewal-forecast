@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "segments_note",
   "position": {
-    "x": 1005.2,
-    "y": 254,
-    "z": 3200,
+    "x": 1025.0,
+    "y": 222,
+    "z": 3700,
     "height": 38,
-    "width": 238.8,
-    "tabOrder": 3200
+    "width": 219.00000000000003,
+    "tabOrder": 3700
   },
   "visual": {
     "visualType": "textbox",
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
-                      "color": "#6D7C91"
+                      "color": "#6B7682"
                     }
                   }
                 ],

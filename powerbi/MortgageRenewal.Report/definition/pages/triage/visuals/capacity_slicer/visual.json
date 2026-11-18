@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "capacity_slicer",
   "position": {
-    "x": 960,
-    "y": 60,
-    "z": 1500,
-    "height": 58,
-    "width": 296,
-    "tabOrder": 1500
+    "x": 204,
+    "y": 252,
+    "z": 3300,
+    "height": 52,
+    "width": 300,
+    "tabOrder": 3300
   },
   "visual": {
     "visualType": "slicer",
@@ -155,7 +155,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E9EEF5'"
+                      "Value": "'#1B1F24'"
                     }
                   }
                 }
@@ -166,7 +166,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0F1B2D'"
+                      "Value": "'#FFFFFF'"
                     }
                   }
                 }
@@ -211,7 +211,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#A3B0C2'"
+                      "Value": "'#5B6670'"
                     }
                   }
                 }

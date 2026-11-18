@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "capacity_chart",
   "position": {
-    "x": 32,
-    "y": 284,
-    "z": 3000,
-    "height": 408,
-    "width": 744,
-    "tabOrder": 3000
+    "x": 200,
+    "y": 312,
+    "z": 3500,
+    "height": 360,
+    "width": 616,
+    "tabOrder": 3500
   },
   "visual": {
     "visualType": "clusteredColumnChart",
@@ -95,7 +95,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#3B4B63'"
+                      "Value": "'#A7B0BA'"
                     }
                   }
                 }
@@ -113,7 +113,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#4FD1B5'"
+                      "Value": "'#16917F'"
                     }
                   }
                 }
@@ -140,7 +140,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E9EEF5'"
+                      "Value": "'#1B1F24'"
                     }
                   }
                 }
@@ -150,6 +150,13 @@
               "expr": {
                 "Literal": {
                   "Value": "9D"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }
@@ -178,7 +185,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#A3B0C2'"
+                      "Value": "'#5B6670'"
                     }
                   }
                 }
@@ -209,7 +216,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#6D7C91'"
+                      "Value": "'#6B7682'"
                     }
                   }
                 }
@@ -234,7 +241,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#1A2639'"
+                      "Value": "'#ECEEF1'"
                     }
                   }
                 }
@@ -258,7 +265,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#A3B0C2'"
+                      "Value": "'#5B6670'"
                     }
                   }
                 }
@@ -267,7 +274,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
+                  "Value": "9D"
                 }
               }
             },

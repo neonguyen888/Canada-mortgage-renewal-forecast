@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "history_title",
   "position": {
-    "x": 34,
-    "y": 252,
-    "z": 2700,
+    "x": 202,
+    "y": 220,
+    "z": 3200,
     "height": 44,
-    "width": 456.0,
-    "tabOrder": 2700
+    "width": 379.2,
+    "tabOrder": 3200
   },
   "visual": {
     "visualType": "textbox",
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI Semibold",
                       "fontSize": "12pt",
-                      "color": "#E9EEF5"
+                      "color": "#1B1F24"
                     }
                   }
                 ]

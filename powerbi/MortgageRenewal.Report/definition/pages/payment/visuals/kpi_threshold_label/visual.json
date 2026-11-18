@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "kpi_threshold_label",
   "position": {
-    "x": 956.0,
-    "y": 220,
-    "z": 2900,
+    "x": 998.0,
+    "y": 200,
+    "z": 3400,
     "height": 40,
-    "width": 292.0,
-    "tabOrder": 2900
+    "width": 250.0,
+    "tabOrder": 3400
   },
   "visual": {
     "visualType": "textbox",
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",
-                      "color": "#A3B0C2"
+                      "color": "#5B6670"
                     }
                   }
                 ],

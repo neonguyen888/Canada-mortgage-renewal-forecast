@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "horizon_slicer",
   "position": {
-    "x": 1010,
-    "y": 252,
-    "z": 3200,
-    "height": 32,
-    "width": 234,
-    "tabOrder": 3200
+    "x": 1024,
+    "y": 218,
+    "z": 3700,
+    "height": 34,
+    "width": 220,
+    "tabOrder": 3700
   },
   "visual": {
     "visualType": "slicer",
@@ -155,7 +155,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E9EEF5'"
+                      "Value": "'#1B1F24'"
                     }
                   }
                 }
@@ -166,7 +166,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0F1B2D'"
+                      "Value": "'#FFFFFF'"
                     }
                   }
                 }

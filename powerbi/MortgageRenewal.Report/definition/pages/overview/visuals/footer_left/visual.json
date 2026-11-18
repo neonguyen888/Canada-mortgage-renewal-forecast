@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "footer_left",
   "position": {
-    "x": 20,
+    "x": 188,
     "y": 684,
-    "z": 3900,
+    "z": 4400,
     "height": 36,
-    "width": 640,
-    "tabOrder": 3900
+    "width": 864,
+    "tabOrder": 4400
   },
   "visual": {
     "visualType": "textbox",
@@ -19,11 +19,11 @@
               {
                 "textRuns": [
                   {
-                    "value": "Source: Bank of Canada series V122667786. Loans are simulated.",
+                    "value": "Source: Bank of Canada series V122667786 (uninsured 5-year+ fixed). Loans are simulated.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "8pt",
-                      "color": "#6D7C91"
+                      "color": "#6B7682"
                     }
                   }
                 ]

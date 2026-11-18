@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "segments_table",
   "position": {
-    "x": 810,
-    "y": 282,
-    "z": 3300,
-    "height": 190,
-    "width": 436,
-    "tabOrder": 3300
+    "x": 846,
+    "y": 252,
+    "z": 3800,
+    "height": 188,
+    "width": 400,
+    "tabOrder": 3800
   },
   "visual": {
     "visualType": "tableEx",
@@ -106,7 +106,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#A3B0C2'"
+                      "Value": "'#5B6670'"
                     }
                   }
                 }
@@ -117,7 +117,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0F1B2D'"
+                      "Value": "'#FFFFFF'"
                     }
                   }
                 }
@@ -133,7 +133,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
+                  "Value": "9D"
                 }
               }
             },
@@ -155,7 +155,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E9EEF5'"
+                      "Value": "'#1B1F24'"
                     }
                   }
                 }
@@ -166,7 +166,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0F1B2D'"
+                      "Value": "'#FFFFFF'"
                     }
                   }
                 }
@@ -177,7 +177,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E9EEF5'"
+                      "Value": "'#1B1F24'"
                     }
                   }
                 }
@@ -188,7 +188,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0F1B2D'"
+                      "Value": "'#FFFFFF'"
                     }
                   }
                 }
@@ -197,7 +197,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
+                  "Value": "9D"
                 }
               }
             },
@@ -233,7 +233,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#1C2A40'"
+                      "Value": "'#D5DAE0'"
                     }
                   }
                 }
@@ -242,7 +242,7 @@
             "rowPadding": {
               "expr": {
                 "Literal": {
-                  "Value": "5D"
+                  "Value": "4D"
                 }
               }
             },
@@ -251,7 +251,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#1C2A40'"
+                      "Value": "'#D5DAE0'"
                     }
                   }
                 }

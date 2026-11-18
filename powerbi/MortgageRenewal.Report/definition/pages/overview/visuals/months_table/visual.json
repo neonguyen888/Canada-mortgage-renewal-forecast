@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "months_table",
   "position": {
-    "x": 34,
-    "y": 581,
-    "z": 3800,
-    "height": 113,
-    "width": 1212,
-    "tabOrder": 3800
+    "x": 202,
+    "y": 556,
+    "z": 4300,
+    "height": 116,
+    "width": 1044,
+    "tabOrder": 4300
   },
   "visual": {
     "visualType": "tableEx",
@@ -109,7 +109,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#A3B0C2'"
+                      "Value": "'#5B6670'"
                     }
                   }
                 }
@@ -120,7 +120,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0F1B2D'"
+                      "Value": "'#FFFFFF'"
                     }
                   }
                 }
@@ -158,7 +158,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E9EEF5'"
+                      "Value": "'#1B1F24'"
                     }
                   }
                 }
@@ -169,7 +169,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0F1B2D'"
+                      "Value": "'#FFFFFF'"
                     }
                   }
                 }
@@ -180,7 +180,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E9EEF5'"
+                      "Value": "'#1B1F24'"
                     }
                   }
                 }
@@ -191,7 +191,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0F1B2D'"
+                      "Value": "'#FFFFFF'"
                     }
                   }
                 }
@@ -236,7 +236,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#1C2A40'"
+                      "Value": "'#D5DAE0'"
                     }
                   }
                 }
@@ -254,7 +254,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#1C2A40'"
+                      "Value": "'#D5DAE0'"
                     }
                   }
                 }

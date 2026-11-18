@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "months_title",
   "position": {
-    "x": 34,
-    "y": 560,
-    "z": 3600,
+    "x": 202,
+    "y": 532,
+    "z": 4100,
     "height": 44,
-    "width": 739.1999999999999,
-    "tabOrder": 3600
+    "width": 638.4,
+    "tabOrder": 4100
   },
   "visual": {
     "visualType": "textbox",
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI Semibold",
                       "fontSize": "12pt",
-                      "color": "#E9EEF5"
+                      "color": "#1B1F24"
                     }
                   }
                 ]

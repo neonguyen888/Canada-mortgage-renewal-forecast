@@ -75,6 +75,11 @@
           "name": "bg_triage.png",
           "path": "bg_triage.png",
           "type": "Image"
+        },
+        {
+          "name": "bg_about.png",
+          "path": "bg_about.png",
+          "type": "Image"
         }
       ]
     }

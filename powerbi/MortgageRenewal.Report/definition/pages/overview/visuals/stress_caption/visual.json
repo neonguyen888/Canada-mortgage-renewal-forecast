@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "stress_caption",
   "position": {
-    "x": 812,
-    "y": 502,
-    "z": 3500,
+    "x": 848,
+    "y": 470,
+    "z": 4000,
     "height": 38,
-    "width": 432,
-    "tabOrder": 3500
+    "width": 396,
+    "tabOrder": 4000
   },
   "visual": {
     "visualType": "textbox",
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "9pt",
-                      "color": "#6D7C91"
+                      "color": "#6B7682"
                     }
                   }
                 ]
