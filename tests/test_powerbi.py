@@ -156,6 +156,16 @@ def test_analysis_pages_have_a_data_headline(model):
             assert prop == want[page.name]
 
 
+def test_about_page_explains_the_project(model):
+    _, pages = model
+    about = next(p for p in pages if p.name == "about")
+    text = json.dumps([v["visual"] for v in about.visuals], ensure_ascii=False)
+    for must in ["V122667786", "BD.CDN.5YR.DQ.YLD", "ETS", "Diebold-Mariano", "5,000",
+                 "https://github.com/neonguyen888/Canada-mortgage-renewal-forecast"]:
+        assert must in text, must
+    assert "—" not in text  # no em dashes
+
+
 def test_measure_names_do_not_clash_with_tables_or_columns(model):
     tables, _ = model
     pb.check_names(list(tables.values()))

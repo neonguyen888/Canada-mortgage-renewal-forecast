@@ -12,7 +12,7 @@ report can be rebuilt with:
 What it writes:
   MortgageRenewal.pbip                    the file you double-click in Power BI Desktop
   MortgageRenewal.SemanticModel/          tables, relationships and DAX measures (TMDL)
-  MortgageRenewal.Report/                 4 pages, their visuals, the theme and background images
+  MortgageRenewal.Report/                 5 pages, their visuals, the theme and background images
 
 The data itself is not copied. The model reads the CSVs in data/powerbi through a parameter
 called DataFolder, which points at this repository on GitHub and can be changed to a local folder.
@@ -705,13 +705,19 @@ class Page:
 
     # ---- building blocks ---------------------------------------------------------------------
     def label(self, vname, x, y, w, h, runs, align="left"):
-        """Static text. runs = [(text, size_pt, colour, font)]."""
-        para = {"textRuns": [{"value": t, "textStyle": {"fontFamily": f, "fontSize": f"{s}pt", "color": c}} for t, s, c, f in runs]}
+        """Static text. runs = [(text, size_pt, colour, font)] or (text, size_pt, colour, font, url) for a link."""
+        def run(r):
+            t, s, c, f = r[:4]
+            out = {"value": t, "textStyle": {"fontFamily": f, "fontSize": f"{s}pt", "color": c}}
+            if len(r) > 4:
+                out["url"] = r[4]
+            return out
+        para = {"textRuns": [run(r) for r in runs]}
         if align != "left":
             para["horizontalTextAlignment"] = align
         # Power BI pads text boxes, so a box sized to the font clips the text and shows a scrollbar.
         # The text sits at the top, so a taller transparent box only adds room underneath.
-        h = max(h, label_height(max(s for _, s, _, _ in runs)))
+        h = max(h, label_height(max(r[1] for r in runs)))
         y = min(y, PAGE_H - h)
         self.add(vname, x, y, w, h, {"visualType": "textbox", "objects": {"general": props(paragraphs=[para])},
                                      "visualContainerObjects": NO_CHROME, "drillFilterOtherVisuals": True})
@@ -1118,11 +1124,63 @@ def build_pages() -> list[Page]:
     pages.append(p)
 
     # ---- 5. About this project -----------------------------------------------------------------
-    p = Page("about", "About", [])
+    col_w = (CONTENT_W - 12) / 2
+    right_x = X0 + col_w + 12
+    left = [("problem", 150), ("audience", 110), ("data", PANEL_BOTTOM - TILE_Y - 150 - 110 - 24)]
+    right = [("methods", 268), ("colours", 140), ("tools", PANEL_BOTTOM - TILE_Y - 268 - 140 - 24)]
+    boxes, bg = {}, []
+    for x, column in ((X0, left), (right_x, right)):
+        y = TILE_Y
+        for name, h in column:
+            boxes[name] = (x, y, h)
+            bg.append(("panel", x, y, col_w, h))
+            y += h + 12
+    p = Page("about", "About", bg)
     rail(p)
     header(p, headline_text="About this project",
-           subtitle_text="What this report answers, where the data comes from and how it was built")
-    footer(p, "Built from code: Python, PostgreSQL and a generated Power BI project.")
+           subtitle_text="What this report answers, who it's for, where the data comes from and how I built it")
+    body, title = (9.5, C["ink2"], FONT), (12, C["ink"], FONT_SEMI)
+
+    def section(name, heading, *runs):
+        x, y, h = boxes[name]
+        p.label(f"about_{name}", x + 12, y + 8, col_w - 24, h - 16, [(heading + "\n", *title), *runs])
+
+    section("problem", "The problem", (
+        "A household that locked in a 5-year fixed rate of 2.2% in 2021 and renews today, with $400,000 left to pay, "
+        "owes about $496 more every month. I wanted to know where the 5-year fixed rate goes next, what that means for "
+        "one borrower at renewal, and how a lender with 5,000 loans renewing in the next 90 days should decide whom to "
+        "call first.", *body))
+    section("audience", "Who it's for", (
+        "A lender's renewal team planning its calls, and anyone who wants the renewal payment shock in plain numbers. "
+        "Each page opens with a headline that states the finding; the cards and charts under it show the evidence.", *body))
+    section("data", "Data", (
+        "Mortgage rate: Bank of Canada series V122667786, the uninsured 5-year+ fixed rate on funds advanced, monthly "
+        "from January 2013.\n\n"
+        "Bond yield: series BD.CDN.5YR.DQ.YLD, the 5-year Government of Canada benchmark yield, averaged to months.\n\n"
+        "Loans: a simulated book of 5,000 mortgages renewing in the next 90 days, built with a fixed seed. No real "
+        "borrower data is used.\n\n"
+        "The rail on the left shows the latest month of Bank of Canada data in the model.", *body))
+    section("methods", "Methods", (
+        "Forecast: an ETS damped-trend model, picked over a naive forecast by a rule I wrote down before running the "
+        f"backtest.\n\nBacktest: {backtest_span()}, scored by the average miss in basis points and in dollars a month.\n\n"
+        "Uncertainty: an 80% band built from the backtest errors. Diebold-Mariano tests check whether one model's "
+        "lead over another is more than luck.\n\n"
+        "Challenger: a regression on the 5-year bond yield, which moves before the mortgage rate.\n\n"
+        "Triage: each week the team first calls borrowers for whom it's the last chance, then fills spare calls with "
+        "the most certain cases.", *body))
+    section("colours", "How to read the colours",
+            ("■ ", 9.5, C["blue"], FONT), ("Navy: observed data     ", *body),
+            ("■ ", 9.5, C["teal"], FONT), ("Teal: ETS forecast\n", *body),
+            ("■ ", 9.5, C["purple"], FONT), ("Purple: bond-yield model     ", *body),
+            ("■ ", 9.5, C["slate"], FONT), ("Grey: comparison\n", *body),
+            ("■ ", 9.5, C["amber"], FONT), ("Amber: needs attention, such as a rise above the threshold or the option you picked\n", *body),
+            ("▲ ▼ show the change since the month before.", *body))
+    section("tools", "Tools and author",
+            ("Python (pandas, statsmodels, matplotlib), PostgreSQL, and Power BI with DAX. The whole report, this page "
+             "included, is generated from code in the repository.\n\nNeo Nguyen, ", *body),
+            ("github.com/neonguyen888/Canada-mortgage-renewal-forecast", 9.5, C["blue"], FONT,
+             "https://github.com/neonguyen888/Canada-mortgage-renewal-forecast"))
+    footer(p, "Data: Bank of Canada Valet API. Loans are simulated.")
     pages.append(p)
     return pages
 
