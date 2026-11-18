@@ -1036,8 +1036,11 @@ def build_pages() -> list[Page]:
     bg, tw = tiles(4)
     half = (full_h - 12) / 2
     low_y = PANEL_Y + half + 12
+    # Bottom row split in half, so the period chart has room for labels such as "pre-pandemic".
+    low_w = (CONTENT_W - 12) / 2
+    low_rx = X0 + low_w + 12
     bg += [("panel", X0, PANEL_Y, LEFT_W, half), ("panel", RIGHT_X, PANEL_Y, RIGHT_W, half),
-           ("panel", X0, low_y, LEFT_W, half), ("panel", RIGHT_X, low_y, RIGHT_W, half)]
+           ("panel", X0, low_y, low_w, half), ("panel", low_rx, low_y, low_w, half)]
     p = Page("accuracy", "Rates & accuracy", bg)
     rail(p)
     header(p, headline_measure="Accuracy Headline", subtitle_text=f"Backtest: {backtest_span()}")
@@ -1055,11 +1058,11 @@ def build_pages() -> list[Page]:
     p.slicer("horizon_slicer", RIGHT_X + RIGHT_W - 232, PANEL_Y + 6, 220, 34, "Horizon Choice", "Horizon label", "3 months")
     p.bar_chart("models_bars", RIGHT_X + 8, PANEL_Y + 46, RIGHT_W - 16, half - 52, ("Model Accuracy", "Model label"), "MAE at Horizon",
                 colour_measure="Model Bar Colour")
-    panel_title(p, "yield", X0, low_y, LEFT_W, "Mortgage rate and the 5-year bond yield", "The yield moves first")
-    p.line_chart("yield_chart", X0 + 8, low_y + 36, LEFT_W - 16, half - 42, ("Rate vs Yield", "Month"), ["Mortgage Rate Line", "Bond Yield Line"],
+    panel_title(p, "yield", X0, low_y, low_w, "Mortgage rate and the 5-year bond yield", "The yield moves first")
+    p.line_chart("yield_chart", X0 + 8, low_y + 36, low_w - 16, half - 42, ("Rate vs Yield", "Month"), ["Mortgage Rate Line", "Bond Yield Line"],
                  {"Mortgage Rate Line": {"colour": C["blue"], "width": 2.5}, "Bond Yield Line": {"colour": C["purple"], "width": 2}})
-    panel_title(p, "periods", RIGHT_X, low_y, RIGHT_W, "ETS and naive, by rate period", "Average miss, bps")
-    p.column_pair("periods_chart", RIGHT_X + 8, low_y + 36, RIGHT_W - 16, half - 42, ("Accuracy By Period", "Period"),
+    panel_title(p, "periods", low_rx, low_y, low_w, "ETS and naive, by rate period", "Average miss, bps")
+    p.column_pair("periods_chart", low_rx + 8, low_y + 36, low_w - 16, half - 42, ("Accuracy By Period", "Period"),
                   ["ETS MAE by Period", "Naive MAE by Period"], [C["teal"], C["slate"]])
     footer(p, "Source: Bank of Canada series V122667786 and BD.CDN.5YR.DQ.YLD (5-year Government of Canada bond yield).")
     pages.append(p)
@@ -1142,7 +1145,7 @@ def build_pages() -> list[Page]:
     col_w = (CONTENT_W - 12) / 2
     right_x = X0 + col_w + 12
     left = [("problem", 150), ("audience", 110), ("data", PANEL_BOTTOM - TILE_Y - 150 - 110 - 24)]
-    right = [("methods", 318), ("colours", 112), ("tools", PANEL_BOTTOM - TILE_Y - 318 - 112 - 24)]
+    right = [("methods", 300), ("colours", 136), ("tools", PANEL_BOTTOM - TILE_Y - 300 - 136 - 24)]
     boxes, bg = {}, []
     for x, column in ((X0, left), (right_x, right)):
         y = TILE_Y
